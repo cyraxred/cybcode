@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.cybcode.tools.bixtractor.api.BiXtractor;
+import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
 import org.cybcode.tools.bixtractor.core.BiXpression;
 import org.cybcode.tools.bixtractor.core.BiXpressionRunStats;
 import org.cybcode.tools.bixtractor.pbuf.Binary;
@@ -135,13 +136,13 @@ public class ExpTest
 	private Object E(Object value, BiXtractor<?> x)
 	{
 		lastStats = new BiXpressionRunStats();
-		return BiXpression.flatten(x).compile(null).apply(value, lastStats);
+		return BiXpression.flatten(x).compile().apply(value, lastStats);
 	}
 	
 	private Object ENP(Object value, BiXtractor<?> x)
 	{
 		lastStats = new BiXpressionRunStats();
-		return BiXpression.flatten(x).compile(null).apply(value, lastStats);
+		return BiXpression.flatten(x).setConfiguration(XpressionConfiguration.getSafe()).compile().apply(value, lastStats);
 	}
 	
 	private static <T> BiXtractor<T> C(T value)

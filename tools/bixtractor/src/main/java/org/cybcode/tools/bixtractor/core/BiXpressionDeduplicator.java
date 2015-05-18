@@ -6,22 +6,48 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class OpNetOptimizer
+class BiXpressionDeduplicator
 {
+	private static final BiXpressionOptimizer OPT_INSTANCE	= new BiXpressionOptimizer() 
+	{
+		@Override public List<OpNode> optimize(List<OpNode> opNet)
+		{
+			return new BiXpressionDeduplicator(opNet).getResult();
+		}
+	};
+
+	public static BiXpressionOptimizer getInstance()
+	{
+		return OPT_INSTANCE;
+	}
+	
 	private final List<OpNode> mappedNodes;
 	private final Map<OpNodeToken, OpNode> nodeMap;
 	
-	public OpNetOptimizer(List<OpNode> nodes)
+	private BiXpressionDeduplicator(List<OpNode> nodes)
 	{
 		this.mappedNodes = new ArrayList<>(nodes.size());
 		this.nodeMap = new HashMap<>(nodes.size());
 
+		int terminalNodeIndex = nodes.size() - 1;
+		
+//		List<OpNode> verbatimNodes = new ArrayList<>();
 		List<OpNode> leafNodes = new ArrayList<>();
-		for (int i = nodes.size() - 1; i >= 0; i--) {
+		for (int i = terminalNodeIndex; i >= 0; i--) {
 			OpNode node = nodes.get(i);
 			if (node.hasReceivers()) {
-				if (node.hasParameters()) continue;
-				leafNodes.add(node);
+				if (node.hasParameters()) {
+					node.domainOwner = null;
+					continue;
+				}
+				
+//				if (node.domainOwner.nodeIndex == terminalNodeIndex /* | constant nodes */) {
+//					node.domainOwner = null;
+					leafNodes.add(node);
+//				} else {
+//					verbatimNodes.add(node);
+//					continue;
+//				}
 			}
 			nodes.set(i, null);
 		}
@@ -33,8 +59,13 @@ class OpNetOptimizer
 		for (OpNode node : leafNodes) {
 			mapNode(node);
 		}
+
+//		for (OpNode node : verbatimNodes) {
+//			//pushDomainOwner
+//			//mapNode(node);
+//		}
 		
-		for (int i = nodes.size() - 1; i >= 0; i--) {
+		for (int i = 0; i < nodes.size(); i++) {
 			OpNode node = nodes.get(i);
 			if (node == null) continue;
 			
@@ -65,6 +96,8 @@ class OpNetOptimizer
 		
 		nodeToken = mappedNode.createToken();
 		mappedNodes.add(mappedNode);
+//		mappedNode.domainOwner = mappedNodes.get(node.domainOwner.nodeIndex);
+		
 		OpNode prev = nodeMap.put(nodeToken, mappedNode);
 		if (prev != null) {
 			throw new IllegalStateException();

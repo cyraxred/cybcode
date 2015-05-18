@@ -1,6 +1,7 @@
 package org.cybcode.tools.bixtractor.core;
 
 import org.cybcode.tools.bixtractor.api.BiXtractor;
+import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
 import org.cybcode.tools.bixtractor.api.XecutionContext;
 import org.cybcode.tools.bixtractor.api.BiXourceLink;
 
@@ -21,7 +22,7 @@ class OpLink implements BiXourceLink
 				return ((PushParameter) param).pushValue(context, value);
 			}
 
-			@Override public boolean isPushLink()
+			@Override public boolean isPushLink(XpressionConfiguration config)
 			{
 				return true;
 			}
@@ -50,9 +51,9 @@ class OpLink implements BiXourceLink
 		return receiverNode.pushValueByNode(context, param, value);
 	}
 	
-	boolean isPushLink()
+	boolean isPushLink(XpressionConfiguration config)
 	{
-		return receiverNode.isPushByNodeEnabled();
+		return receiverNode.isPushByNodeEnabled(config);
 	}
 	
 	int getSourceParamIndex()

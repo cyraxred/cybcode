@@ -4,15 +4,16 @@ import java.util.List;
 
 import org.cybcode.tools.bixtractor.api.BiXource;
 import org.cybcode.tools.bixtractor.api.BiXourceContext;
+import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
 
 class OpSourceNode extends OpNode
 {
 	private OpLink parameter;
 	private BiXourceContext sourceContext;
 
-	OpSourceNode(int nodeIndex, BiXource op, int distanceFromRoot)
+	OpSourceNode(BiXource op)
 	{
-		super(nodeIndex, op, distanceFromRoot);
+		super(op);
 	}
 	
 	@Override OpSourceNode copy()
@@ -61,14 +62,14 @@ class OpSourceNode extends OpNode
 		return sourceContext;
 	}
 	
-	@Override protected void registerValueReceiver(OpLink link)
+	@Override protected OpLink[] validateReceivers(List<OpLink> receivers, OpLink[] pushReceivers)
 	{
-		if (!link.isPushLink()) {
-			throw new IllegalArgumentException("All source links must be push-able: link=" + link);
+		if (receivers != null && receivers.size() != pushReceivers.length) {
+			throw new IllegalArgumentException("All source receivers must be push-able: receivers=" + receivers);
 		}
-		super.registerValueReceiver(link);
+		return super.validateReceivers(receivers, pushReceivers);
 	}
-
+	
 	@Override protected boolean pushToReceivers(InternalXecutionContext context, Object value)
 	{
 		return BiXource.Result.STOP.equals(value);
@@ -79,9 +80,9 @@ class OpSourceNode extends OpNode
 		return true;
 	}
 	
-	@Override void compile()
+	@Override void compile(XpressionConfiguration config)
 	{
-		super.compile();
+		super.compile(config);
 		if (sourceContext != null) throw new IllegalStateException();
 		sourceContext = ((BiXource) op).buildContext(getPushReceivers().clone());
 	}
@@ -91,7 +92,7 @@ class OpSourceNode extends OpNode
 		throw new IllegalStateException("Can't be called");
 	}
 
-	@Override protected boolean canPushByNode()
+	@Override protected boolean canPushByNode(XpressionConfiguration config)
 	{
 		return false; //push behavior is controlled by source operation
 	}

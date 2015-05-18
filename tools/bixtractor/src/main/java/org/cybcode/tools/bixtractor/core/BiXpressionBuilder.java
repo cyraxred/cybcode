@@ -1,6 +1,7 @@
 package org.cybcode.tools.bixtractor.core;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ class BiXpressionBuilder implements XpressionRegistrator
 	private OpNode currentNode;
 	private List<OpLink> currentNodeLinks;
 	private OpLink currentNodeSingleLink;
+	private OpNode currentDomainOwner;
 	private int currentDistanceFromRoot;
 	
 	public static void flatten(BiXtractor<?> xtractor, List<OpNode> nodes)
@@ -28,7 +30,7 @@ class BiXpressionBuilder implements XpressionRegistrator
 	private BiXpressionBuilder(BiXtractor<?> xtractor, List<OpNode> nodes)
 	{
 		this.nodes = nodes;
-		OpNode node = new OpValueNode(0, xtractor, 0) 
+		OpNode node = new OpValueNode(xtractor) 
 		{
 			@Override public boolean evaluate(InternalXecutionContext context)
 			{
@@ -41,6 +43,9 @@ class BiXpressionBuilder implements XpressionRegistrator
 				return true;
 			}
 		};
+		node.distanceFromRoot = 0;
+		node.domainOwner = node;
+		this.currentDomainOwner = node;
 		this.nodes.add(node);
 		nodeMap.put(node.op, node);
 	}
@@ -51,7 +56,7 @@ class BiXpressionBuilder implements XpressionRegistrator
 			currentNode = nodes.get(i);
 			currentDistanceFromRoot = currentNode.distanceFromRoot + Math.max(1, currentNode.op.getOperationComplexity());
 			
-			currentNode.op.visit(this); //list of nodes will expand here
+			currentNode.op.visit(this); //list of nodes expands here
 			if (currentNodeSingleLink != null) {
 				currentNode.setParameter(currentNodeSingleLink);
 				currentNodeSingleLink = null;
@@ -61,6 +66,10 @@ class BiXpressionBuilder implements XpressionRegistrator
 				currentNode.setParameters(currentNodeLinks.toArray(new OpLink[currentNodeLinks.size()]));
 			}
 			currentNodeLinks = null;
+		}
+		Collections.reverse(nodes);
+		for (int i = nodes.size() - 1; i >= 0; i--) {
+			nodes.get(i).nodeIndex = i;
 		}
 	}
 	
@@ -92,17 +101,25 @@ class BiXpressionBuilder implements XpressionRegistrator
 	{
 		OpNode node = nodeMap.get(op);
 		if (node != null) {
+			if (node.domainOwner.nodeIndex != currentDomainOwner.nodeIndex) {
+				throw new IllegalStateException();
+			}
+			
 			if (node.distanceFromRoot > currentDistanceFromRoot) {
 				node.distanceFromRoot = currentDistanceFromRoot; 
 			}
 			return node;
-		} 
+		}
 
 		if (op instanceof BiXource) {
-			node = new OpSourceNode(nodes.size(), (BiXource) op, currentDistanceFromRoot);
+			node = new OpSourceNode((BiXource) op);
 		} else {
-			node = new OpValueNode(nodes.size(), op, currentDistanceFromRoot);
+			node = new OpValueNode(op);
 		}
+		node.distanceFromRoot = currentDistanceFromRoot;
+		node.nodeIndex = nodes.size();
+		node.domainOwner = currentDomainOwner;
+		
 		if (currentNode != null && !currentNode.isPushEnabled()) {
 			node.disablePush();
 		}

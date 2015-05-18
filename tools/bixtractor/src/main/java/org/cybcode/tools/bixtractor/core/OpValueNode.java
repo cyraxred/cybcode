@@ -4,14 +4,15 @@ import java.util.List;
 
 import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.BiXourceContext;
+import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
 
 class OpValueNode extends OpNode
 {
 	private OpLink[] parameters;
 	
-	OpValueNode(int nodeIndex, BiXtractor<?> op, int distanceFromRoot)
+	OpValueNode(BiXtractor<?> op)
 	{
-		super(nodeIndex, op, distanceFromRoot);
+		super(op);
 	}
 
 	@Override OpValueNode copy()
@@ -90,8 +91,9 @@ class OpValueNode extends OpNode
 		}
 	}
 
-	@Override protected boolean canPushByNode()
+	@Override protected boolean canPushByNode(XpressionConfiguration config)
 	{
-		return parameters.length == 1 || parameters.length == 2;
+		int paramLen = parameters.length;
+		return paramLen > 0 && paramLen <= 2 && paramLen <= config.getMaxEarlyCompletionArguments();
 	}
 }

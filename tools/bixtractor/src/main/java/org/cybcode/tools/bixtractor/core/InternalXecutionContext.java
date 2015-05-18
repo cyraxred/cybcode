@@ -9,7 +9,7 @@ class InternalXecutionContext implements XecutionContext
 	private final Object[] context;
 	
 	private OpNode node;
-	
+
 	public InternalXecutionContext(Object rootValue, int count)
 	{
 		this.rootValue = rootValue;

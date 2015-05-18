@@ -2,18 +2,18 @@ package org.cybcode.tools.bixtractor.core;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.RandomAccess;
 
 import org.cybcode.tools.bixtractor.api.BiXtractor;
+import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
 
 import com.google.common.base.Function;
 
 public class BiXpression<T> extends AbstractList<BiXtractor<?>> implements RandomAccess, Function<Object, T>
 {
 	private List<OpNode> opNet;
-	private boolean enableEarlyCompletion;
+	private XpressionConfiguration configuration;
 
 	public static <T> BiXpression<T> flatten(BiXtractor<T> op)
 	{
@@ -54,26 +54,15 @@ public class BiXpression<T> extends AbstractList<BiXtractor<?>> implements Rando
 		if (isCompiled()) throw new IllegalStateException();
 		if (optimizer != null) {
 			opNet = optimizer.optimize(opNet);
-		} else {
-			Collections.reverse(opNet);
-			int sz = opNet.size() - 1;
-			for (OpNode node : opNet) {
-				node.nodeIndex = sz - node.nodeIndex;
-			}
 		}
+		XpressionConfiguration ñfg = getConfiguration();
 		for (OpNode node : opNet) {
-			node.compile();
+			node.compile(ñfg);
 		}
 		return this;
 	}
 	
-	private static final BiXpressionOptimizer DEFAULT_COMPILER = new BiXpressionOptimizer()
-	{
-		@Override public List<OpNode> optimize(List<OpNode> opNet)
-		{
-			return new OpNetOptimizer(opNet).getResult();
-		}
-	};			
+	private static final BiXpressionOptimizer DEFAULT_COMPILER = BiXpressionDeduplicator.getInstance();
 	
 	public BiXpression<T> compile()
 	{
@@ -103,13 +92,14 @@ public class BiXpression<T> extends AbstractList<BiXtractor<?>> implements Rando
 		return apply(input, DUMMY);
 	}
 
-	public boolean isEnableEarlyCompletion()
+	public XpressionConfiguration getConfiguration()
 	{
-		return enableEarlyCompletion;
+		return configuration != null ? configuration : XpressionConfiguration.getDefault();
 	}
 
-	public void setEnableEarlyCompletion(boolean enableEarlyCompletion)
+	public BiXpression<T> setConfiguration(XpressionConfiguration configuration)
 	{
-		this.enableEarlyCompletion = enableEarlyCompletion;
+		this.configuration = configuration;
+		return this;
 	}
 }
