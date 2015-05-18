@@ -1,0 +1,56 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+<!-- 
+	<parent>
+		<artifactId>rpl-df-parent</artifactId>
+		<groupId>com.db.gm.rpl.df</groupId>
+		<version>1.0.8</version>
+	</parent>
+-->
+ 
+	<groupId>org.cybcode.tools</groupId>
+	<artifactId>bixtractor</artifactId>
+	<version>1.0-SNAPSHOT</version>
+
+<!--
+	<scm>
+		<connection>scm:svn:https://www.dbcde.com/svn/repos/data-fabric/rpl-tools/rpl-tools-protobuf/trunk</connection>
+		<developerConnection>scm:svn:https://www.dbcde.com/svn/repos/data-fabric/rpl-tools/rpl-tools-protobuf/trunk</developerConnection>
+		<url>https://www.dbcde.com/svn/repos/data-fabric/rpl-tools/rpl-tools-protobuf/trunk</url>
+	</scm>
+-->
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.10</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+			<version>2.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>15.0</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
