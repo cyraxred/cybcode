@@ -8,10 +8,15 @@ public class PbufXtractorField<T> extends AbstractBiXtractorField<T> implements 
 {
 	private final Token<T> token;
 
-	public PbufXtractorField(int fieldId, Function<PbufFieldValue, T> converter, PbufXtractorSource p0)
+	public PbufXtractorField(int fieldId, boolean isRepeated, Function<PbufFieldValue, T> converter, PbufXource p0)
 	{
-		super(p0);
+		super(p0, isRepeated);
 		this.token = new Token<>(fieldId, converter);
+	}
+	
+	public PbufXtractorField(int fieldId, Function<PbufFieldValue, T> converter, PbufXource p0)
+	{
+		this(fieldId, false, converter, p0);
 	}
 	
 	@Override public Object getOperationToken()
@@ -32,6 +37,11 @@ public class PbufXtractorField<T> extends AbstractBiXtractorField<T> implements 
 	@Override protected T evaluate(Object value)
 	{
 		return token.converter.apply((PbufFieldValue) value);
+	}
+	
+	@Override protected String getDescription()
+	{
+		return "fieldId=" + token.fieldId + ", type=" + token.converter;
 	}
 	
 	private static class Token<T>
@@ -67,6 +77,11 @@ public class PbufXtractorField<T> extends AbstractBiXtractorField<T> implements 
 			} else if (!converter.equals(other.converter)) return false;
 			if (fieldId != other.fieldId) return false;
 			return true;
+		}
+
+		@Override public String toString()
+		{
+			return "[id=" + fieldId + ", fmt=" + converter + "]";
 		}
 	}
 }

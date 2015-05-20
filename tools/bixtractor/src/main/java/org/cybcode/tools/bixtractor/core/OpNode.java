@@ -5,10 +5,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.BiXourceContext;
-import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
+import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.XecutionContext;
+import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
+import org.cybcode.tools.bixtractor.ops.XtractorFormatter;
 
 abstract class OpNode implements ContextParameterMapper, Cloneable
 {
@@ -31,7 +32,6 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 	int nodeIndex;
 	final BiXtractor<?> op;
 	int distanceFromRoot;
-	OpNode domainOwner;
 	private boolean enablePush;
 	private OpLink[] pushReceivers; /* null or OpLink or List<OpLink> */
 	private List<OpLink> receivers;
@@ -53,7 +53,6 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 		}
 		result.pushReceivers = null;
 		result.receivers = null;
-		result.domainOwner = null;
 		
 		return result;
 	}
@@ -197,4 +196,19 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 	{
 		return pushReceivers != null;
 	}
+	
+	
+	protected abstract String getShortTypeString();
+	
+	@Override public String toString()
+	{
+		Object opToken = op.getOperationToken();
+		return toShortString() + "(" + XtractorFormatter.nameOf(op) + (opToken == null ? "" : ":" + opToken) + ", " + 
+			(pushReceivers == null ? receivers : Arrays.toString(pushReceivers));
+	}
+	
+	public String toShortString()
+	{
+		return String.format("%s%02d", getShortTypeString(), nodeIndex);
+	};
 }

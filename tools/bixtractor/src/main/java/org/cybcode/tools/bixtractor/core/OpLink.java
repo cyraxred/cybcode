@@ -9,7 +9,7 @@ class OpLink implements BiXourceLink
 {
 	final OpNode sourceNode;
 	final OpNode receiverNode;
-	final Parameter<?>	param;
+	final Parameter<?> param;
 
 	public static OpLink newInstance(OpNode source, OpNode receiver, Parameter<?> param)
 	{
@@ -64,6 +64,11 @@ class OpLink implements BiXourceLink
 	@Override public BiXtractor<?> getReceiver()
 	{
 		return receiverNode.op;
+	}
+	
+	@Override public String toString()
+	{
+		return sourceNode.toShortString() + "=>" + param.toNameString() + "@" + receiverNode.toShortString();
 	}
 }
 

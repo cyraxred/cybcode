@@ -4,14 +4,16 @@ import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.XecutionContext;
 import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
 
-public enum VerbatimXtractor implements BiXtractor<Object>
+public class RootXtractor implements BiXtractor<Object>
 {
-	INSTANCE;
+	private static final RootXtractor INSTANCE = new RootXtractor();
 	
 	@SuppressWarnings("unchecked") public static <T> BiXtractor<T> getInstance()
 	{
 		return (BiXtractor<T>) INSTANCE;
 	}
+	
+	private RootXtractor() {}
 
 	@Override public Object getOperationToken()
 	{
@@ -20,7 +22,7 @@ public enum VerbatimXtractor implements BiXtractor<Object>
 
 	@Override public int getOperationComplexity()
 	{
-		return COMPLEXITY_VERBATIM;
+		return COMPLEXITY_ROOT;
 	}
 
 	@Override public Object evaluate(XecutionContext context)
@@ -29,4 +31,14 @@ public enum VerbatimXtractor implements BiXtractor<Object>
 	}
 
 	@Override public void visit(XpressionRegistrator visitor) {}
+
+	@Override public boolean isRepeatable()
+	{
+		return false;
+	}
+	
+	@Override public String toString()
+	{
+		return "ROOT()";
+	}
 }

@@ -7,10 +7,12 @@ public abstract class Parameter<P>
 {
 	private int paramIndex = -1;
 	protected final BiXtractor<? extends P> extractor;
+	private final boolean isRepeatable;
 	
 	public Parameter(BiXtractor<? extends P> extractor)
 	{
 		this.extractor = extractor;
+		this.isRepeatable = extractor.isRepeatable();
 	}
 	
 	public BiXtractor<? extends P> getExtractor()
@@ -23,10 +25,36 @@ public abstract class Parameter<P>
 		return context.getParamValue(paramIndex);
 	}
 	
+	public boolean has(XecutionContext context)
+	{
+		return context.hasParamValue(paramIndex);
+	}
+	
+	public boolean isRepeatable()
+	{
+		return isRepeatable;
+	}
+	
 	void setParamIndex(int paramIndex)
 	{
 		if (this.paramIndex == paramIndex) return;
 		if (this.paramIndex >= 0) throw new IllegalArgumentException();
 		this.paramIndex = paramIndex;
 	}
+	
+	@Override public String toString()
+	{
+		return toString(toNameString());
+	}
+
+	String toNameString()
+	{
+		return "p" + (paramIndex < 0 ? "?" : "" + paramIndex);
+	}
+
+	public String toString(String paramName)
+	{
+		return paramName + (isRepeatable ? "*" : "") + (this instanceof PushParameter ? "<<=" : "=") + extractor;
+	}
+
 }

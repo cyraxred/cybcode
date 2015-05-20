@@ -13,18 +13,18 @@ import org.cybcode.tools.bixtractor.core.AbstractBiXource;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.WireFormat;
 
-public class PbufXtractorSource extends AbstractBiXource<PbufContext> implements PbufXtractorFieldInfo
+public class PbufXource extends AbstractBiXource<PbufContext> implements PbufXtractorFieldInfo
 {
 	private final Integer fieldId;
 
-	public PbufXtractorSource(BiXtractor<Binary> source, boolean lazy)
+	public PbufXource(BiXtractor<Binary> source, boolean lazy)
 	{
 		super(source, lazy);
 		if (((BiXtractor<?>) source) instanceof BiXource) throw new IllegalArgumentException();
 		this.fieldId = 0;
 	}
 
-	public PbufXtractorSource(PbufXtractorSource source, int fieldId)
+	public PbufXource(PbufXource source, int fieldId)
 	{
 		super(source, false);
 		this.fieldId = fieldId; //TODO Arg.positive

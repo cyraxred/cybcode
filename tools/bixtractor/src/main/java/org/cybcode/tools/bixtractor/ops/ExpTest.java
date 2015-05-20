@@ -15,7 +15,7 @@ import org.cybcode.tools.bixtractor.core.BiXpressionRunStats;
 import org.cybcode.tools.bixtractor.pbuf.Binary;
 import org.cybcode.tools.bixtractor.pbuf.PbufFieldConverter;
 import org.cybcode.tools.bixtractor.pbuf.PbufXtractorField;
-import org.cybcode.tools.bixtractor.pbuf.PbufXtractorSource;
+import org.cybcode.tools.bixtractor.pbuf.PbufXource;
 import org.junit.Test;
 
 import com.google.protobuf.CodedOutputStream;
@@ -77,7 +77,7 @@ public class ExpTest
 
 	@Test public void test_verbatim()
 	{
-		assertEquals(1.1f, E(1.1f, VerbatimXtractor.INSTANCE)); 
+		assertEquals(1.1f, E(1.1f, RootXtractor.getInstance())); 
 	}
 	
 	@Test public void test_source() throws Exception
@@ -85,7 +85,7 @@ public class ExpTest
 		assertEquals(true, E(buildPbuf(),
 			new CmpXtractor(CmpXtractor.CmpType.EQ, C("TEST"), 
 				new PbufXtractorField<>(20, PbufFieldConverter.STRING,
-					new PbufXtractorSource(VerbatimXtractor.<Binary>getInstance(), false)))));
+					new PbufXource(RootXtractor.<Binary>getInstance(), false)))));
 		assertEquals(2, lastStats.getEvaluatedNodeCount()); //resolved by evaluation of Const, Verbatim 
 	}
 	
@@ -94,7 +94,7 @@ public class ExpTest
 		assertEquals(true, E(buildPbuf(),
 			new CmpXtractor(CmpXtractor.CmpType.EQ, C("TEST"), 
 				new PbufXtractorField<>(20, PbufFieldConverter.STRING,
-					new PbufXtractorSource(VerbatimXtractor.<Binary>getInstance(), true)))));
+					new PbufXource(RootXtractor.<Binary>getInstance(), true)))));
 		assertEquals(3, lastStats.getEvaluatedNodeCount()); //resolved by evaluation of Const, Verbatim, Source
 	}
 	
@@ -103,7 +103,7 @@ public class ExpTest
 		assertEquals(true, ENP(buildPbuf(),
 			new CmpXtractor(CmpXtractor.CmpType.EQ, C("TEST"), 
 				new PbufXtractorField<>(20, PbufFieldConverter.STRING,
-					new PbufXtractorSource(VerbatimXtractor.<Binary>getInstance(), false)))));
+					new PbufXource(RootXtractor.<Binary>getInstance(), false)))));
 		assertEquals(lastStats.getTotalNodeCount(), lastStats.getEvaluatedNodeCount());
 	}
 
@@ -112,7 +112,7 @@ public class ExpTest
 		assertEquals(true, ENP(buildPbuf(),
 			new CmpXtractor(CmpXtractor.CmpType.EQ, C("TEST"), 
 				new PbufXtractorField<>(20, PbufFieldConverter.STRING,
-					new PbufXtractorSource(VerbatimXtractor.<Binary>getInstance(), true)))));
+					new PbufXource(RootXtractor.<Binary>getInstance(), true)))));
 		assertEquals(lastStats.getTotalNodeCount(), lastStats.getEvaluatedNodeCount());
 	}
 	

@@ -31,4 +31,24 @@ public class ConstXtractor<T> implements BiXtractor<T>
 	@Override public void visit(XpressionRegistrator visitor)
 	{
 	}
+
+	@Override public boolean isRepeatable()
+	{
+		return false;
+	}
+
+	@Override public String toString()
+	{
+		if (value == null) return "NULL";
+		if (value instanceof String) {
+			return "" + '"' + value + '"';
+		}
+		if (value instanceof Float || value instanceof Double) {
+			return "" + value + 'f';
+		}
+		if (value instanceof Number) {
+			return "" + value;
+		}
+		return "(" + value.getClass().getSimpleName() + ")" + value;
+	}
 }

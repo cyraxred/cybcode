@@ -96,4 +96,9 @@ class OpSourceNode extends OpNode
 	{
 		return false; //push behavior is controlled by source operation
 	}
+	
+	@Override protected String getShortTypeString()
+	{
+		return "S";
+	}
 }

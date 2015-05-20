@@ -32,9 +32,19 @@ class InternalXecutionContext implements XecutionContext
 		return nullValue(context[1 + (node.mapParamIndex(paramIndex) << 1)]);
 	}
 
+	@Override public boolean hasParamValue(int paramIndex)
+	{
+		return context[1 + (node.mapParamIndex(paramIndex) << 1)] != null;
+	}
+
 	@Override public Object getLocalValue()
 	{
 		return context[node.nodeIndex << 1];
+	}
+
+	@Override public boolean hasLocalValue()
+	{
+		return context[node.nodeIndex << 1] != null;
 	}
 
 	@Override public void setLocalValue(Object value)

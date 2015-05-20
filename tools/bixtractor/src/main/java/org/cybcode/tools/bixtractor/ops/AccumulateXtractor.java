@@ -45,17 +45,20 @@ abstract class AccumulateXtractor<P, A, R> implements BiXtractor<R>
 	
 	@Override public R evaluate(XecutionContext context)
 	{
-		A accumulator = p0.get(0).getAccumulator(context);
+		A accumulator = AggregateParameter.evaluate(context, p0);
 		if (accumulator == null) return null;
-
-		if (!isFinalValue(accumulator)) {
-			for (AggregateParameter<P, A> param : p0) {
-				if (param.get(context) == null) return null;
-			}
-		}
-		
 		return evaluate(accumulator);
+	}
+	
+	@Override public boolean isRepeatable()
+	{
+		return false;
 	}
 
 	protected abstract R evaluate(A arg);
+
+	@Override public String toString()
+	{
+		return XtractorFormatter.toString(this, p0);
+	}
 }

@@ -2,8 +2,8 @@ package org.cybcode.tools.bixtractor.core;
 
 import java.util.List;
 
-import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.BiXourceContext;
+import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.XpressionConfiguration;
 
 class OpValueNode extends OpNode
@@ -95,5 +95,10 @@ class OpValueNode extends OpNode
 	{
 		int paramLen = parameters.length;
 		return paramLen > 0 && paramLen <= 2 && paramLen <= config.getMaxEarlyCompletionArguments();
+	}
+
+	@Override protected String getShortTypeString()
+	{
+		return "V";
 	}
 }

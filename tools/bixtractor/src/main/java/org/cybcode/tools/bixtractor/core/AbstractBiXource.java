@@ -7,6 +7,7 @@ import org.cybcode.tools.bixtractor.api.BiXourceContext;
 import org.cybcode.tools.bixtractor.api.XecutionContext;
 import org.cybcode.tools.bixtractor.api.BiXourceLink;
 import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
+import org.cybcode.tools.bixtractor.ops.XtractorFormatter;
 
 public abstract class AbstractBiXource<Context extends BiXourceContext> implements BiXource
 {
@@ -32,6 +33,11 @@ public abstract class AbstractBiXource<Context extends BiXourceContext> implemen
 	{
 		if (value == null) return false;
 		return processValue(context, (Context) context.getSourceContext(), value);
+	}
+	
+	@Override public boolean isRepeatable()
+	{
+		return source.isRepeatable();
 	}
 
 	/**
@@ -62,5 +68,10 @@ public abstract class AbstractBiXource<Context extends BiXourceContext> implemen
 		{
 			return null;
 		}
+	}
+	
+	@Override public String toString()
+	{
+		return XtractorFormatter.toString(this, source);
 	}
 }

@@ -36,10 +36,7 @@ class BiXpressionDeduplicator
 		for (int i = terminalNodeIndex; i >= 0; i--) {
 			OpNode node = nodes.get(i);
 			if (node.hasReceivers()) {
-				if (node.hasParameters()) {
-					node.domainOwner = null;
-					continue;
-				}
+				if (node.hasParameters()) continue;
 				
 //				if (node.domainOwner.nodeIndex == terminalNodeIndex /* | constant nodes */) {
 //					node.domainOwner = null;

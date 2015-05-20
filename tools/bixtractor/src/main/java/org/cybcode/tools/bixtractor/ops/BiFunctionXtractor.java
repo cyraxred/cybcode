@@ -5,7 +5,7 @@ import org.cybcode.tools.bixtractor.api.MonoParameter;
 import org.cybcode.tools.bixtractor.api.XecutionContext;
 import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
 
-abstract class BiFunctionXtractor<P0, P1, R> implements BiXtractor<R>
+public abstract class BiFunctionXtractor<P0, P1, R> implements BiXtractor<R>
 {
 	private final MonoParameter<? extends P0> p0;
 	private final MonoParameter<? extends P1> p1;
@@ -27,5 +27,15 @@ abstract class BiFunctionXtractor<P0, P1, R> implements BiXtractor<R>
 		return evaluate(p0.get(context), p1.get(context));
 	}
 	
+	@Override public boolean isRepeatable()
+	{
+		return false;
+	}
+	
 	protected abstract R evaluate(P0 p0, P1 p1);
+
+	@Override public String toString()
+	{
+		return XtractorFormatter.toString(this, p0, p1);
+	}
 }

@@ -102,4 +102,10 @@ public class BiXpression<T> extends AbstractList<BiXtractor<?>> implements Rando
 		this.configuration = configuration;
 		return this;
 	}
+	
+	@Override public String toString()
+	{
+		if (isEmpty()) return "[]";
+		return "[" + get(size() - 1) + "]";
+	}
 }

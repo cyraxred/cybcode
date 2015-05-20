@@ -1,5 +1,6 @@
 package org.cybcode.tools.bixtractor.ops;
 
+import org.cybcode.tools.bixtractor.api.AbstractMonoParameter;
 import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.MonoParameter;
 import org.cybcode.tools.bixtractor.api.MonoPushParameter;
@@ -8,7 +9,7 @@ import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
 
 public abstract class UniFunctionXtractor<P0, R> implements BiXtractor<R>
 {
-	private final MonoParameter<P0> p0;
+	private final AbstractMonoParameter<P0> p0;
 
 	protected UniFunctionXtractor(BiXtractor<? extends P0> p0, boolean usePush)
 	{
@@ -24,6 +25,16 @@ public abstract class UniFunctionXtractor<P0, R> implements BiXtractor<R>
 	{
 		return evaluate(p0.get(context));
 	}
+
+	@Override public boolean isRepeatable()
+	{
+		return p0.isRepeatable();
+	}
 	
 	protected abstract R evaluate(P0 p0);
+	
+	@Override public String toString()
+	{
+		return XtractorFormatter.toString(this, p0);
+	}
 }

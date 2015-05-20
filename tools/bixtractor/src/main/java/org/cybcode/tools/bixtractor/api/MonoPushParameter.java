@@ -2,7 +2,7 @@ package org.cybcode.tools.bixtractor.api;
 
 import org.cybcode.tools.bixtractor.core.PushParameter;
 
-public class MonoPushParameter<P> extends MonoParameter<P> implements PushParameter
+public class MonoPushParameter<P> extends AbstractMonoParameter<P> implements PushParameter
 {
 	public MonoPushParameter(BiXtractor<? extends P> extractor)
 	{
