@@ -27,11 +27,6 @@ public abstract class BiFunctionXtractor<P0, P1, R> implements BiXtractor<R>
 		return evaluate(p0.get(context), p1.get(context));
 	}
 	
-	@Override public boolean isRepeatable()
-	{
-		return false;
-	}
-	
 	protected abstract R evaluate(P0 p0, P1 p1);
 
 	@Override public String toString()

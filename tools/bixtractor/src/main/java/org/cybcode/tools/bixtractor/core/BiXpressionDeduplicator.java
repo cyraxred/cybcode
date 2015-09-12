@@ -35,7 +35,7 @@ class BiXpressionDeduplicator
 		List<OpNode> leafNodes = new ArrayList<>();
 		for (int i = terminalNodeIndex; i >= 0; i--) {
 			OpNode node = nodes.get(i);
-			if (node.hasReceivers()) {
+			if (node.hasOutlets()) {
 				if (node.hasParameters()) continue;
 				
 //				if (node.domainOwner.nodeIndex == terminalNodeIndex /* | constant nodes */) {

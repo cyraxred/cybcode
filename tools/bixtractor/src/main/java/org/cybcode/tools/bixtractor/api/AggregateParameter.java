@@ -42,6 +42,11 @@ public abstract class AggregateParameter<P, A> extends MonoParameter<P> implemen
 	{
 		return isFinalValue(getAccumulator(context));
 	}
+
+	@Override public boolean isMultiValue(XecutionContext context)
+	{
+		return super.isMultiValue(context);
+	}
 	
 	public static boolean hasAllValuesOrFinalValue(XecutionContext context, Collection<? extends AggregateParameter<?, ?>> params)
 	{
@@ -52,7 +57,7 @@ public abstract class AggregateParameter<P, A> extends MonoParameter<P> implemen
 		if (param.hasFinalAccumulatorValue(context)) return true;
 		
 		while (true) {
-			if (param.isRepeatable() || !param.has(context)) return false;
+			if (param.isMultiValue(context) || !param.has(context)) return false;
 			if (!iter.hasNext()) return true;
 			param = iter.next();
 		}

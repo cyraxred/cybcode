@@ -32,11 +32,6 @@ public class ConstXtractor<T> implements BiXtractor<T>
 	{
 	}
 
-	@Override public boolean isRepeatable()
-	{
-		return false;
-	}
-
 	@Override public String toString()
 	{
 		if (value == null) return "NULL";

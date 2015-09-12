@@ -22,7 +22,7 @@ public class RootXtractor implements BiXtractor<Object>
 
 	@Override public int getOperationComplexity()
 	{
-		return COMPLEXITY_ROOT;
+		return COMPLEXITY_VAR;
 	}
 
 	@Override public Object evaluate(XecutionContext context)
@@ -32,13 +32,8 @@ public class RootXtractor implements BiXtractor<Object>
 
 	@Override public void visit(XpressionRegistrator visitor) {}
 
-	@Override public boolean isRepeatable()
-	{
-		return false;
-	}
-	
 	@Override public String toString()
 	{
-		return "ROOT()";
+		return "VAR()";
 	}
 }

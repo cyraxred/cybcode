@@ -1,4 +1,4 @@
-package org.cybcode.tools.bixtractor.core;
+package org.cybcode.tools.lists;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +32,7 @@ public class SmallListCollector<T>
 	
 	public int size()
 	{
+//		if (count < 0 || count > 2) return ((List<?>) value1).size(); 
 		return count;
 	}
 	

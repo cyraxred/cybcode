@@ -7,9 +7,4 @@ public class MonoParameter<P> extends AbstractMonoParameter<P>
 	{
 		super(extractor);
 	}
-	
-	@Override public boolean isRepeatable()
-	{
-		return false;
-	}
 }

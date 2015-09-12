@@ -35,11 +35,6 @@ public abstract class AbstractBiXource<Context extends BiXourceContext> implemen
 		return processValue(context, (Context) context.getSourceContext(), value);
 	}
 	
-	@Override public boolean isRepeatable()
-	{
-		return source.isRepeatable();
-	}
-
 	/**
 	 * NB! This method reposition context! Do not use context after it. 
 	 */
@@ -67,6 +62,11 @@ public abstract class AbstractBiXource<Context extends BiXourceContext> implemen
 		@Override protected Object get(XecutionContext context)
 		{
 			return null;
+		}
+
+		@Override public boolean isMultiValue(XecutionContext context)
+		{
+			return super.isMultiValue(context);
 		}
 	}
 	

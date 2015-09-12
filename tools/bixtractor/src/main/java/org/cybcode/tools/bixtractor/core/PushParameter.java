@@ -4,5 +4,6 @@ import org.cybcode.tools.bixtractor.api.XecutionContext;
 
 public interface PushParameter
 {
-	public boolean pushValue(XecutionContext context, Object value);
+	boolean pushValue(XecutionContext context, Object value);
+	boolean isMultiValue(XecutionContext context);
 }

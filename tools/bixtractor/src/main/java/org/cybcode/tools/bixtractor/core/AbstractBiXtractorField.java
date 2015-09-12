@@ -7,7 +7,7 @@ import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
 import org.cybcode.tools.bixtractor.ops.XtractorFormatter;
 import org.cybcode.tools.bixtractor.pbuf.PbufXource;
 
-public abstract class AbstractBiXtractorField<T> implements BiXtractor<T>
+public abstract class AbstractBiXtractorField<T> implements BiXtractor<T>, BiXtractor.Repeatable
 {
 	private final FieldParameter<?> p0;
 	private final boolean isRepeated;
@@ -42,7 +42,7 @@ public abstract class AbstractBiXtractorField<T> implements BiXtractor<T>
 		}
 	}
 	
-	@Override public boolean isRepeatable()
+	@Override public boolean isRepeated()
 	{
 		return isRepeated;
 	}

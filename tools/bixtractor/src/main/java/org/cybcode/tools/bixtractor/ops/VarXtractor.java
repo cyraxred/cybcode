@@ -4,16 +4,16 @@ import org.cybcode.tools.bixtractor.api.BiXtractor;
 import org.cybcode.tools.bixtractor.api.XecutionContext;
 import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
 
-public final class JointXtractor implements BiXtractor<Object>
+public final class VarXtractor implements BiXtractor<Object>
 {
-	private static final JointXtractor INSTANCE = new JointXtractor();
+	private static final VarXtractor INSTANCE = new VarXtractor();
 	
 	@SuppressWarnings("unchecked") public static <T> BiXtractor<T> getInstance()
 	{
 		return (BiXtractor<T>) INSTANCE;
 	}
 	
-	private JointXtractor() {}
+	private VarXtractor() {}
 	
 	@Override public Object getOperationToken()
 	{
@@ -22,7 +22,7 @@ public final class JointXtractor implements BiXtractor<Object>
 
 	@Override public int getOperationComplexity()
 	{
-		return COMPLEXITY_JUNCTION;
+		return COMPLEXITY_VAR;
 	}
 
 	@Override public Object evaluate(XecutionContext context)
@@ -32,11 +32,6 @@ public final class JointXtractor implements BiXtractor<Object>
 
 	@Override public void visit(XpressionRegistrator visitor) {}
 
-	@Override public boolean isRepeatable()
-	{
-		return true;
-	}
-	
 	@Override public String toString()
 	{
 		return "VAR()";

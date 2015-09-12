@@ -6,12 +6,12 @@ import org.cybcode.tools.bixtractor.api.XecutionContext;
 import org.cybcode.tools.bixtractor.api.XpressionRegistrator;
 import org.cybcode.tools.bixtractor.core.Parameter;
 
-public final class JunctionXtractor<T> implements BiXtractor<T>
+public final class SubroutineXtractor<T> implements BiXtractor<T>, BiXtractor.Repeatable
 {
 	private final MonoParameter<T> p0;
 	private final Parameter<?> p1;
 
-	public JunctionXtractor(BiXtractor<?> jointSource, BiXtractor<T> jointResult)
+	public SubroutineXtractor(BiXtractor<?> jointSource, BiXtractor<T> jointResult)
 	{
 		p0 = new MonoParameter<>(jointResult);
 		p1 = new NullParameter<>(jointSource); //this parameter is only to pass the source extractor 
@@ -51,13 +51,13 @@ public final class JunctionXtractor<T> implements BiXtractor<T>
 		}
 	}
 
-	@Override public boolean isRepeatable()
-	{
-		return p1.isRepeatable();
-	}
-	
 	@Override public String toString()
 	{
 		return "SUB(" + p0.toString("VAR") + ", " + p1.toString("result") + ")";
+	}
+
+	@Override public boolean isRepeated()
+	{
+		return true;
 	}
 }

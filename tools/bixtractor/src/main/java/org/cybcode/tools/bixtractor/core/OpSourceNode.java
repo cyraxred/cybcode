@@ -62,15 +62,15 @@ class OpSourceNode extends OpNode
 		return sourceContext;
 	}
 	
-	@Override protected OpLink[] validateReceivers(List<OpLink> receivers, OpLink[] pushReceivers)
+	@Override protected OpLink[] validateOutlets(List<OpLink> receivers, OpLink[] pushReceivers)
 	{
 		if (receivers != null && receivers.size() != pushReceivers.length) {
 			throw new IllegalArgumentException("All source receivers must be push-able: receivers=" + receivers);
 		}
-		return super.validateReceivers(receivers, pushReceivers);
+		return super.validateOutlets(receivers, pushReceivers);
 	}
 	
-	@Override protected boolean pushToReceivers(InternalXecutionContext context, Object value)
+	@Override protected boolean pushToOutlets(InternalXecutionContext context, Object value)
 	{
 		return BiXource.Result.STOP.equals(value);
 	}
@@ -84,7 +84,7 @@ class OpSourceNode extends OpNode
 	{
 		super.compile(config);
 		if (sourceContext != null) throw new IllegalStateException();
-		sourceContext = ((BiXource) op).buildContext(getPushReceivers().clone());
+		sourceContext = ((BiXource) op).buildContext(getPushOutlets().clone());
 	}
 
 	@Override protected boolean pushValueByNode(InternalXecutionContext context, Parameter<?> param, Object value)

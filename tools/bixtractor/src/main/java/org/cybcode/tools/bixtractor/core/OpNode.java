@@ -33,8 +33,8 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 	final BiXtractor<?> op;
 	int distanceFromRoot;
 	private boolean enablePush;
-	private OpLink[] pushReceivers; /* null or OpLink or List<OpLink> */
-	private List<OpLink> receivers;
+	private OpLink[] pushOutlets; /* null or OpLink or List<OpLink> */
+	private List<OpLink> outlets;
 
 	OpNode(BiXtractor<?> op)
 	{
@@ -51,8 +51,8 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 		} catch (CloneNotSupportedException e) {
 			throw new RuntimeException(e);
 		}
-		result.pushReceivers = null;
-		result.receivers = null;
+		result.pushOutlets = null;
+		result.outlets = null;
 		
 		return result;
 	}
@@ -62,26 +62,26 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 		if (!config.isEnableEarlyCompletion()) {
 			enablePush = false;
 		}
-		if (pushReceivers != null) throw new IllegalStateException();
-		pushReceivers = filterPushReceivers(receivers, config);
-		pushReceivers = validateReceivers(receivers, pushReceivers);
-		receivers = null;
-		Arrays.sort(pushReceivers, LINK_DISTANCE_ASC);
+		if (pushOutlets != null) throw new IllegalStateException();
+		pushOutlets = filterPushOutlets(outlets, config);
+		pushOutlets = validateOutlets(outlets, pushOutlets);
+		outlets = null;
+		Arrays.sort(pushOutlets, LINK_DISTANCE_ASC);
 	}
 	
-	protected OpLink[] validateReceivers(List<OpLink> receivers, OpLink[] pushReceivers)
+	protected OpLink[] validateOutlets(List<OpLink> outlets, OpLink[] pushOutlets)
 	{
-		return pushReceivers;
+		return pushOutlets;
 	}
 
 	private static final OpLink[] EMPTY_LINKS = new OpLink[0];
 	
-	private static OpLink[] filterPushReceivers(List<OpLink> receivers, XpressionConfiguration config)
+	private static OpLink[] filterPushOutlets(List<OpLink> outlets, XpressionConfiguration config)
 	{
-		if (receivers == null || receivers.isEmpty()) return EMPTY_LINKS;
+		if (outlets == null || outlets.isEmpty()) return EMPTY_LINKS;
 		
-		List<OpLink> filtered = new ArrayList<>(receivers.size());
-		for (OpLink link : receivers) {
+		List<OpLink> filtered = new ArrayList<>(outlets.size());
+		for (OpLink link : outlets) {
 			if (!link.isPushLink(config)) continue;
 			filtered.add(link);
 		}
@@ -90,19 +90,19 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 		return filtered.toArray(new OpLink[filtered.size()]);
 	}
 
-	protected OpLink[] getPushReceivers()
+	protected OpLink[] getPushOutlets()
 	{
-		if (pushReceivers == null) throw new IllegalStateException();
-		return pushReceivers;
+		if (pushOutlets == null) throw new IllegalStateException();
+		return pushOutlets;
 	}
 	
-	public OpLink addValueReceiver(OpNode receiverNode, Parameter<?> param)
+	public OpLink addOutlet(OpNode outletsNode, Parameter<?> param)
 	{
-		OpLink result = OpLink.newInstance(this, receiverNode, param);
-		if (receivers == null) {
-			receivers = new ArrayList<>(2);
+		OpLink result = OpLink.newInstance(this, outletsNode, param);
+		if (outlets == null) {
+			outlets = new ArrayList<>(2);
 		}
-		receivers.add(result);
+		outlets.add(result);
 		return result;
 	}
 	
@@ -125,12 +125,12 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 		Object result = op.evaluate(context);
 		context.setNodeResultValue(this, result);
 
-		return pushToReceivers(context, result);
+		return pushToOutlets(context, result);
 	}
 	
-	protected boolean pushToReceivers(InternalXecutionContext context, Object value)
+	protected boolean pushToOutlets(InternalXecutionContext context, Object value)
 	{
-		for (OpLink link : pushReceivers) {
+		for (OpLink link : pushOutlets) {
 			if (link.pushAndEvaluate(context, value)) return true;
 		}
 		return false;
@@ -172,7 +172,7 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 			throw new IllegalArgumentException("Circular reference: node1=" + link.receiverNode + ", node2=" + link.sourceNode);
 		}
 		
-		return mappedSource.addValueReceiver(this, link.param);
+		return mappedSource.addOutlet(this, link.param);
 	}
 	
 	abstract void setParameter(OpLink opLink);
@@ -187,28 +187,31 @@ abstract class OpNode implements ContextParameterMapper, Cloneable
 	
 	abstract BiXourceContext getSourceContext();
 
-	boolean hasReceivers()
+	boolean hasOutlets()
 	{
-		return receivers != null && !receivers.isEmpty();
+		return outlets != null && !outlets.isEmpty();
 	}
 	
 	boolean isCompiled()
 	{
-		return pushReceivers != null;
+		return pushOutlets != null;
 	}
-	
 	
 	protected abstract String getShortTypeString();
 	
 	@Override public String toString()
 	{
-		Object opToken = op.getOperationToken();
-		return toShortString() + "(" + XtractorFormatter.nameOf(op) + (opToken == null ? "" : ":" + opToken) + ", " + 
-			(pushReceivers == null ? receivers : Arrays.toString(pushReceivers));
+		return toShortString() + "(" + XtractorFormatter.nameAndTokenOf(op) + ", " + 
+			(pushOutlets == null ? outlets : Arrays.toString(pushOutlets));
 	}
 	
 	public String toShortString()
 	{
 		return String.format("%s%02d", getShortTypeString(), nodeIndex);
+	}
+
+	public boolean isRepeated(boolean isRepeatableDownstream)
+	{
+		return isRepeatableDownstream;
 	};
 }

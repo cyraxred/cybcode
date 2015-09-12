@@ -50,11 +50,6 @@ abstract class AccumulateXtractor<P, A, R> implements BiXtractor<R>
 		return evaluate(accumulator);
 	}
 	
-	@Override public boolean isRepeatable()
-	{
-		return false;
-	}
-
 	protected abstract R evaluate(A arg);
 
 	@Override public String toString()

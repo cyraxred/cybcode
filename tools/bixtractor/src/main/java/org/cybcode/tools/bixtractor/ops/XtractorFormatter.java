@@ -45,6 +45,17 @@ public class XtractorFormatter
 		return nameOf(op, new StringBuilder()).toString();
 	}
 
+	public static StringBuilder nameAndTokenOf(BiXtractor<?> op)
+	{
+		Object opToken = op.getOperationToken();
+		StringBuilder result = nameOf(op, new StringBuilder());
+		if (opToken != null) {
+			result.append(':');
+			result.append(opToken);
+		}
+		return result;
+	}
+
 	public static StringBuilder appendName(BiXtractor<?> op, StringBuilder out)
 	{
 		return nameOf(op, out).append('(');

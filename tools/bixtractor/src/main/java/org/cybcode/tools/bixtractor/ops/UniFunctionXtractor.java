@@ -26,11 +26,6 @@ public abstract class UniFunctionXtractor<P0, R> implements BiXtractor<R>
 		return evaluate(p0.get(context));
 	}
 
-	@Override public boolean isRepeatable()
-	{
-		return p0.isRepeatable();
-	}
-	
 	protected abstract R evaluate(P0 p0);
 	
 	@Override public String toString()

@@ -13,4 +13,9 @@ public class MonoPushParameter<P> extends AbstractMonoParameter<P> implements Pu
 	{
 		return true;
 	}
+	
+	@Override public boolean isMultiValue(XecutionContext context)
+	{
+		return super.isMultiValue(context);
+	}
 }
