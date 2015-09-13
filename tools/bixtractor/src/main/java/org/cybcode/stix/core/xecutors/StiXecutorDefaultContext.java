@@ -4,16 +4,22 @@ import java.util.Arrays;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXpressionContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.ops.StiX_Root;
 
 public class StiXecutorDefaultContext implements StiXecutorContext
 {
 	private final StiXpressionNode[] nodes;
-	private StiXpressionSequencer sequencer;
+
+	//Late initialization
+	private StiXecutor[] initialState;
 	private StiXecutor[] currentState;
 	private Object[] results;
-	private int currentIndex;
+	
+	private StiXpressionSequencer sequencer;
 	private StiXpressionNode currentNode;
+	private int currentIndex;
 	private Frame currentFrame;
 	
 	private static class Frame
@@ -70,10 +76,10 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		}
 	}
 	
-	public StiXecutorDefaultContext(StiXpressionNode[] initialState)
+	public StiXecutorDefaultContext(StiXpressionNode[] nodes)
 	{
-		if (initialState[0].getXecutor() != DefaultXecutors.FINAL) throw new IllegalArgumentException("Root must be present as index 0");
-		this.nodes = initialState;
+		if (!(nodes[0].getXtractor() instanceof StiX_Root)) throw new IllegalArgumentException("Root must be present as index 0");
+		this.nodes = nodes;
 		this.currentFrame = new Frame(0, initialState.length - 1, null);
 	}
 	
@@ -85,9 +91,11 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		sequencer.resetSequencer();
 		this.sequencer = sequencer;
 		
-		if (this.currentState == null) {
-			this.currentState = new StiXecutor[nodes.length];
-			this.results = new Object[nodes.length];
+		if (currentState == null) {
+			initialState = new StiXecutor[nodes.length];
+			currentState = new StiXecutor[nodes.length];
+			results = new Object[nodes.length];
+			createInitialState();
 		} else {
 			while (currentFrame.outerFrame != null) {
 				currentFrame = currentFrame.outerFrame;
@@ -95,6 +103,16 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		}
 		currentFrame.resetFrameContext(this, rootValue);
 		currentIndex = 1;
+	}
+	
+	private void createInitialState()
+	{
+		StiXpressionContext context = new StiXpressionDefaultContext();
+		for (int i = nodes.length - 1; i >= 0; i--) {
+			StiXecutor xecutor = nodes[i].createXecutor(context);
+			if (xecutor == null) throw new NullPointerException();
+			initialState[i] = xecutor; 
+		}
 	}
 	
 	private boolean hasPublicValue(int xtractorIndex)
@@ -155,7 +173,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		int index = currentIndex();
 		if (hasPublicValue(index)) throw new IllegalStateException();
 		if (currentState[index] == null) {
-			currentState[index] = currentNode.getXecutor();
+			currentState[index] = initialState[index];
 		}
 		setValue(index, value);
 	}
@@ -189,7 +207,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		StiXecutor result = currentState[index];
 		if (result != null) return result;
 		
-		result = currentNode.getXecutor();
+		result = initialState[index];
 		currentState[index] = result;
 		return result;
 	}

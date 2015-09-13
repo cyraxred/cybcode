@@ -3,6 +3,7 @@ package org.cybcode.stix.core.xecutors;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
+import org.cybcode.stix.api.StiXpressionContext;
 import org.cybcode.stix.api.StiXtractor;
 
 public interface StiXpressionNode
@@ -15,7 +16,7 @@ public interface StiXpressionNode
 		int getValueIndex();
 	}
 	
-	StiXecutor getXecutor();
+	StiXecutor createXecutor(StiXpressionContext context);
 	StiXtractor<?> getXtractor();
 	int getIndex();
 	int mapParamIndex(int paramIndex);
