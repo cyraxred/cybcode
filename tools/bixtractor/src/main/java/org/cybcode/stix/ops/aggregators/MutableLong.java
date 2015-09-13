@@ -29,7 +29,7 @@ public class MutableLong extends MutableNumber
 		return (long) value;
 	}
 
-	@Override public MutableNumber add(long p)
+	@Override public MutableLong add(long p)
 	{
 		value += p;
 		return this;
@@ -40,7 +40,7 @@ public class MutableLong extends MutableNumber
 		return new MutableDouble(value).add(p);
 	}
 
-	@Override public MutableNumber mul(long p)
+	@Override public MutableLong mul(long p)
 	{
 		value *= p;
 		return this;

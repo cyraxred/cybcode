@@ -6,6 +6,7 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXpressionContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.api.StiXtractor.Parameter;
 import org.cybcode.stix.ops.StiX_Root;
 
 public class StiXecutorDefaultContext implements StiXecutorContext
@@ -17,77 +18,25 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	private StiXecutor[] currentState;
 	private Object[] results;
 	
+	private StiXecutorStatsCollector stats;
 	private StiXpressionSequencer sequencer;
 	private StiXpressionNode currentNode;
 	private int currentIndex;
-	private Frame currentFrame;
-	
-	private static class Frame
-	{
-		private final int rootIndex;
-		private final int resultIndex;
-		private final Frame outerFrame;
-		private Frame innerFrame;
-		private boolean hasResult;
-		
-		Frame(int rootIndex, int resultIndex, Frame outerFrame)
-		{
-			this.rootIndex = rootIndex;
-			this.resultIndex = resultIndex;
-			this.outerFrame = outerFrame;
-		}
-		
-		public Frame createInner(int rootIndex, int resultIndex)
-		{
-			if (innerFrame != null) throw new IllegalStateException();
-			if (rootIndex <= this.rootIndex || resultIndex >= this.resultIndex || rootIndex > resultIndex) throw new IllegalArgumentException();
-			Frame result = new Frame(rootIndex, resultIndex, this);
-			this.innerFrame = result;
-			return result;
-		}
-		
-		public Frame close()
-		{
-			Frame outer = this.outerFrame;
-			if (outer == null || outer.innerFrame != this) throw new IllegalStateException();
-			outer.innerFrame = null;
-			return outer;
-		}
-
-		public void setFinalIfResult(int xtractorIndex)
-		{
-			if (xtractorIndex != resultIndex) return;
-			hasResult = true;			
-		}
-		
-		public void resetFrameContext(StiXecutorDefaultContext context, Object rootValue)
-		{
-			if (context.currentState[rootIndex] != null) {
-				Arrays.fill(context.currentState, rootIndex, resultIndex + 1, null);
-				Arrays.fill(context.results, rootIndex, resultIndex + 1, null);
-			}
-			StiXpressionNode currentNode = context.nodes[rootIndex];
-			context.currentNode = currentNode;
-			context.setValue(rootIndex, rootValue);
-			context.currentState[rootIndex] = DefaultXecutors.FINAL;
-
-			context.sequencer.addPushTargets(currentNode.getPushTargets());
-			context.sequencer.addNotifyTargets(currentNode.getNotifyTargets());
-		}
-	}
+	private ContextFrame currentFrame;
 	
 	public StiXecutorDefaultContext(StiXpressionNode[] nodes)
 	{
 		if (!(nodes[0].getXtractor() instanceof StiX_Root)) throw new IllegalArgumentException("Root must be present as index 0");
 		this.nodes = nodes;
-		this.currentFrame = new Frame(0, nodes.length - 1, null);
+		this.currentFrame = new ContextFrame(0, nodes.length - 1, null);
 	}
 	
 	private void resetContext(Object rootValue, StiXpressionSequencer sequencer)
 	{
 		if (rootValue == null) throw new NullPointerException();
 		if (sequencer == null) throw new NullPointerException();
-		
+
+		stats.resetStats(nodes.length);
 		sequencer.resetSequencer();
 		this.sequencer = sequencer;
 		
@@ -97,16 +46,31 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			results = new Object[nodes.length];
 			createInitialState();
 		} else {
-			while (currentFrame.outerFrame != null) {
-				currentFrame = currentFrame.outerFrame;
-			}
+			currentFrame = currentFrame.closeAllFrames();
 		}
-		currentFrame.resetFrameContext(this, rootValue);
+		resetFrameContext(rootValue);
 		if (nodes.length == 1) {
 			currentFrame.setFinalIfResult(0);
 		} else {
 			setCurrentIndex(1);
 		}
+	}
+
+	private void resetFrameContext(Object rootValue)
+	{
+		int rootIndex = currentFrame.getRootIndex();
+		int resultIndex = currentFrame.getResultIndex();
+		if (rootIndex < 0) throw new IllegalStateException();
+		if (currentState[rootIndex] != null) {
+			Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
+			Arrays.fill(results, rootIndex, resultIndex + 1, null);
+		}
+		currentNode = nodes[rootIndex];
+		setValue(rootIndex, rootValue);
+		currentState[rootIndex] = DefaultXecutors.FINAL;
+
+		sequencer.addPushTargets(currentNode.getPushTargets());
+		sequencer.addNotifyTargets(currentNode.getNotifyTargets());
 	}
 	
 	private void createInitialState()
@@ -137,11 +101,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		return state != null && state != DefaultXecutors.FINAL;
 	}
 
-//	private boolean hasFinalValue(int xtractorIndex)
-//	{
-//		return currentState[xtractorIndex] == DefaultXecutors.FINAL;
-//	}
-	
 	private void setValue(int xtractorIndex, Object value)
 	{
 		results[xtractorIndex] = value;
@@ -172,7 +131,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 
 	@Override public boolean hasResultValue()
 	{
-		return currentFrame.hasResult;
+		return currentFrame.hasResult();
 	}
 	
 	@Override public void setInterimValue(Object value)
@@ -220,6 +179,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			return false;
 		} 
 
+		stats.onEvaluate();
 		StiXtractor<?> xtractor = getCurrentXtractor();
 		Object result = xtractor.evaluate(this);
 		setFinalValue(index, result);
@@ -239,47 +199,46 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		}
 	}
 
-	
-
 	private boolean evaluatePush(StiXpressionNode.PushTarget target)
 	{
+		int index = target.getXtractorIndex();
+		if (hasPublicValue(index)) return false;
 		Object pushedValue = getValue(target.getValueIndex());
-		return evaluatePush(target, pushedValue);
+		evaluatePush(index, target.getXtractorParam(), pushedValue);
+		return true;
 	}
 	
-	private boolean evaluatePush(StiXpressionNode.PushTarget target, Object pushedValue)
+	private void evaluatePush(int targetIndex, Parameter<?> targetParam, Object pushedValue)
 	{
-		int index = target.getXtractorIndex();
-		
-		if (hasPublicValue(index)) return false;
-		StiXecutor xecutor = getXecutor(index);
+		setCurrentIndex(targetIndex);
+		StiXecutor xecutor = getXecutor(targetIndex);
 
-		setCurrentIndex(index);
-		xecutor = xecutor.push(this, target.getXtractorParam(), pushedValue);
+		stats.onPushAttempt();
+		xecutor = xecutor.push(this, targetParam, pushedValue);
 		if (xecutor == null) throw new NullPointerException();
 
 		if (xecutor == DefaultXecutors.FINAL) {
-			currentState[index] = DefaultXecutors.PUSH_FINAL; 
+			currentState[targetIndex] = DefaultXecutors.PUSH_FINAL; 
 		} else {
-			currentState[index] = xecutor;
-			if (!xecutor.isPushOrFinal()) return true;
+			currentState[targetIndex] = xecutor;
+			if (!xecutor.isPushOrFinal()) return;
 		}
 		
+		stats.onPushEvaluate();
 		StiXtractor<?> xtractor = getCurrentXtractor();
 		Object result = xtractor.evaluate(this);
 		
 		if (xecutor == DefaultXecutors.FINAL) { //replace PUSH_FINAL
-			setFinalValue(index, result);
+			setFinalValue(targetIndex, result);
 		} else {
-			setValue(index, result);
+			setValue(targetIndex, result);
 		}
-		if (result == null) return true;
+		if (result == null) return;
 		
 		sequencer.addPushTargets(currentNode.getPushTargets());
 		if (xecutor == DefaultXecutors.FINAL) {
 			sequencer.addNotifyTargets(currentNode.getNotifyTargets());
 		}
-		return true;
 	}
 	
 	private int currentIndex()
@@ -339,7 +298,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 				setCurrentNode(nextNode);
 				evaluateCurrent();
 				if (!hasResultValue()) continue;
-				setCurrentIndex(currentFrame.resultIndex);				
+				setCurrentIndex(currentFrame.getResultIndex());				
 			} while (nextNode());
 		}
 		
@@ -348,12 +307,18 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 
 	private boolean nextNode()
 	{
-		if (currentFrame.outerFrame != null && currentIndex == currentFrame.resultIndex) {
-			currentFrame = currentFrame.close();
+		if (currentFrame.isEndOfFrame(currentIndex) && currentFrame.isInnerFrame()) {
+			currentFrame = currentFrame.closeFrame();
 		}
 		int nextIndex = currentIndex + 1;
 		if (nextIndex >= nodes.length) return false;
 		setCurrentIndex(nextIndex);
 		return true;
 	}
+
+	public void setStatsCollector(StiXecutorStatsCollector stats)
+	{
+		this.stats = stats == null ? StiXecutorStatsCollector.getInstance() : stats;
+	}
 }
+

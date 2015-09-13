@@ -20,3 +20,4 @@ public class StiX_Add extends StiXtractorMathDuo
 		return p0 + p1;
 	}
 }
+
