@@ -1,14 +1,9 @@
 package org.cybcode.stix;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContext;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContextBuilder;
-import org.cybcode.stix.core.xecutors.StiXpressionNode;
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 import org.cybcode.stix.core.xecutors.StiXpressionSequencer;
 import org.cybcode.stix.ops.StiX_Ops;
 
@@ -19,6 +14,8 @@ import org.junit.Test;
 
 public class StiXExpressionsTest
 {
+	private StatsCollector stats = new StatsCollector();
+	
 	@Test public void test_const()
 	{
 		assertEquals((Long) 1L, E(2L, constOf(1)));
@@ -41,7 +38,69 @@ public class StiXExpressionsTest
 		assertEquals((Long) 5L, E(2L, addA(mux(StiX_Ops.<Long>root(), constOf(1), StiX_Ops.<Long>root()))));
 	}
 
-	
+	@Test public void test_and_full()
+	{
+		assertEquals(Boolean.FALSE, E(2L, and(constOf(true), constOf(false))));
+		assertEquals(4, stats.nodeCount);
+		assertEquals(4, stats.evaluateCount);
+		assertEquals(0, stats.pushAttemptCount);
+		assertEquals(0, stats.pushEvaluateCount);
+		
+		assertEquals(Boolean.FALSE, EP(2L, and(constOf(true), constOf(false))));
+		assertEquals(4, stats.nodeCount);
+		assertEquals(3, stats.evaluateCount);
+		assertEquals(2, stats.pushAttemptCount);
+		assertEquals(1, stats.pushEvaluateCount);
+
+		assertEquals(Boolean.FALSE, EP(2L, and(constOf(false), constOf(true))));
+		assertEquals(4, stats.nodeCount);
+		assertEquals(3, stats.evaluateCount);
+		assertEquals(2, stats.pushAttemptCount);
+		assertEquals(1, stats.pushEvaluateCount);
+	}
+
+	@Test public void test_and_early()
+	{
+		assertEquals(Boolean.FALSE, E(2L, andIfNull(constOf(false), constOf(true), true)));
+		assertEquals(4, stats.nodeCount);
+		assertEquals(4, stats.evaluateCount);
+		assertEquals(0, stats.pushAttemptCount);
+		assertEquals(0, stats.pushEvaluateCount);
+		
+		assertEquals(Boolean.FALSE, EP(2L, andIfNull(constOf(false), constOf(true), true)));
+		assertEquals(4, stats.nodeCount);
+		assertEquals(2, stats.evaluateCount);
+		assertEquals(1, stats.pushAttemptCount);
+		assertEquals(1, stats.pushEvaluateCount);
+
+		assertEquals(Boolean.FALSE, EP(2L, andIfNull(constOf(true), constOf(false), true)));
+		assertEquals(4, stats.nodeCount);
+		assertEquals(3, stats.evaluateCount);
+		assertEquals(2, stats.pushAttemptCount);
+		assertEquals(1, stats.pushEvaluateCount);
+	}
+
+	@Test public void test_and_aggregate()
+	{
+		assertEquals(Boolean.FALSE, E(2L, andA(mux(constOf(false), constOf(true)))));
+		assertEquals(5, stats.nodeCount);
+		assertEquals(2, stats.evaluateCount);
+		assertEquals(2, stats.pushAttemptCount);
+		assertEquals(2, stats.pushEvaluateCount);
+		
+		assertEquals(Boolean.FALSE, EP(2L, andA(mux(constOf(false), constOf(true)))));
+		assertEquals(5, stats.nodeCount);
+		assertEquals(2, stats.evaluateCount);
+		assertEquals(2, stats.pushAttemptCount);
+		assertEquals(2, stats.pushEvaluateCount);
+
+		assertEquals(Boolean.FALSE, EP(2L, andA(mux(constOf(true), constOf(false)))));
+		assertEquals(5, stats.nodeCount);
+		assertEquals(3, stats.evaluateCount);
+		assertEquals(4, stats.pushAttemptCount);
+		assertEquals(3, stats.pushEvaluateCount);
+	}
+
 	private static <T> StiXecutorDefaultContext B(StiXtractor<T> expression)
 	{
 		StiXpressionRecursiveParser parser = new StiXpressionRecursiveParser();
@@ -54,37 +113,22 @@ public class StiXExpressionsTest
 		return builder.build();
 	}
 
-	private static <T> T E(Object rootValue, StiXtractor<T> expression)
+	private <T> T E(boolean enableNotify, Object rootValue, StiXtractor<T> expression)
 	{
 		StiXecutorDefaultContext context = B(expression);
-		StiXpressionSequencer sequencer = new SimpleXpressionSequencer();
+		context.setStatsCollector(stats);
+		StiXpressionSequencer sequencer = new SimpleXpressionSequencer(enableNotify);
 		@SuppressWarnings("unchecked") T result = (T) context.evaluateExpression(sequencer, rootValue);
 		return result;
 	}
-}
 
-class SimpleXpressionSequencer implements StiXpressionSequencer
-{
-	private final LinkedList<PushTarget> queue = new LinkedList<>();
-
-	@Override public void addPushTargets(List<PushTarget> targets)
+	private <T> T E(Object rootValue, StiXtractor<T> expression)
 	{
-		queue.addAll(targets);
+		return E(false, rootValue, expression);
 	}
 
-	@Override public void addNotifyTargets(List<PushTarget> targets)
+	private <T> T EP(Object rootValue, StiXtractor<T> expression)
 	{
-		//ignore
-	}
-
-	@Override public PushTarget nextTargetBefore(StiXpressionNode node)
-	{
-		if (queue.isEmpty()) return null;
-		return queue.removeLast();
-	}
-
-	@Override public void resetSequencer()
-	{
-		queue.clear();
+		return E(true, rootValue, expression);
 	}
 }

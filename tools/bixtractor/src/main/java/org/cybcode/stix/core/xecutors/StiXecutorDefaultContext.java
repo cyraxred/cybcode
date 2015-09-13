@@ -26,6 +26,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	
 	public StiXecutorDefaultContext(StiXpressionNode[] nodes)
 	{
+		setStatsCollector(null);
 		if (!(nodes[0].getXtractor() instanceof StiX_Root)) throw new IllegalArgumentException("Root must be present as index 0");
 		this.nodes = nodes;
 		this.currentFrame = new ContextFrame(0, nodes.length - 1, null);
@@ -54,6 +55,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		} else {
 			setCurrentIndex(1);
 		}
+		stats.onEvaluate();
 	}
 
 	private void resetFrameContext(Object rootValue)
@@ -279,6 +281,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		boolean stateWasChanged = false;
 		while ((pushTarget = sequencer.nextTargetBefore(nextNode)) != null) {
 			if (evaluatePush(pushTarget)) stateWasChanged = true;
+			if (hasResultValue()) break;
 		}
 		return stateWasChanged;
 	}
@@ -295,10 +298,12 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 				
 				//boolean stateWasChanged = 
 				executeBefore(nextNode);
-				setCurrentNode(nextNode);
-				evaluateCurrent();
-				if (!hasResultValue()) continue;
-				setCurrentIndex(currentFrame.getResultIndex());				
+				if (!hasResultValue()) {
+					setCurrentNode(nextNode);
+					evaluateCurrent();
+					if (!hasResultValue()) continue;
+				}
+				setCurrentIndex(currentFrame.getResultIndex());
 			} while (nextNode());
 		}
 		
