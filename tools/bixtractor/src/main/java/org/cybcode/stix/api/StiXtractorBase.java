@@ -4,4 +4,5 @@ public interface StiXtractorBase
 {
 	Object getOperationToken();
 	int getOperationComplexity();
+	Class<?> resultType();
 }

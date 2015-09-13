@@ -29,6 +29,11 @@ public final class StiX_Root<T> implements StiXtractor<T>
 	{
 		return false;
 	}
+	
+	@Override public Class<? extends T> resultType()
+	{
+		return null; //TODO depends on context, think about it - will impact multiplex operation
+	}
 
 	@Override public StiXecutor createXecutor(StiXpressionContext context)
 	{

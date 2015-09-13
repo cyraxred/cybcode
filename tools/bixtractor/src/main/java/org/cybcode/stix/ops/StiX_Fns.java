@@ -1,10 +1,29 @@
 package org.cybcode.stix.ops;
 
-import org.cybcode.stix.core.FunctionWithComplexity;
+import org.cybcode.stix.api.StiXFunction;
+
+import com.google.common.base.Function;
 
 public class StiX_Fns
 {
 	private StiX_Fns() {}
+	
+	public static <P, T> StiXFunction<P, T> of(final Function<P, T> fn, final int complexity, final Class<T> resultType, final Object token)
+	{
+		if (fn == null) throw new NullPointerException();
+		if (token == null) throw new NullPointerException();
+		if (resultType == null) throw new NullPointerException();
+		if (complexity <= 0) throw new IllegalArgumentException();
+		
+		return new StiXFunction<P, T>() 
+		{
+			@Override public T apply(P input) { return fn.apply(input); }
+			@Override public Object getOperationToken() { return token; }
+			@Override public int getOperationComplexity() { return complexity; }
+			@Override public Class<? extends T> resultType() { return resultType; }
+			@Override public String toString() { return token.toString(); }
+		};
+	}
 	
 	private enum FnType {
 		NOT(2), NEG(5), AS_INT(50), AS_FLOAT(50), AS_BOOL(50), AS_STRING(50);
@@ -14,7 +33,7 @@ public class StiX_Fns
 		public int getOperationComplexity() { return complexity; }
 	}
 	
-	public static FunctionWithComplexity<Boolean, Boolean> NOT = new Fn<Boolean, Boolean>()
+	public static StiXFunction<Boolean, Boolean> NOT = new Fn<Boolean, Boolean>()
 	{
 		@Override public Boolean apply(Boolean p0)
 		{
@@ -22,13 +41,11 @@ public class StiX_Fns
 			return !p0.booleanValue();
 		}
 
-		@Override protected FnType typeToken()
-		{
-			return FnType.NOT;
-		}
+		@Override protected FnType typeToken() { return FnType.NOT; }
+		@Override public Class<Boolean> resultType() { return Boolean.class; };
 	};
 
-	public static FunctionWithComplexity<Number, Number> NEG = new Fn<Number, Number>()
+	public static StiXFunction<Number, Number> NEG = new Fn<Number, Number>()
 	{
 		@Override public Number apply(Number p0)
 		{
@@ -44,13 +61,11 @@ public class StiX_Fns
 			}
 		}
 
-		@Override protected FnType typeToken()
-		{
-			return FnType.NEG;
-		}
+		@Override protected FnType typeToken() { return FnType.NEG; }
+		@Override public Class<Number> resultType() { return Number.class; };
 	};
 
-	public static FunctionWithComplexity<Object, Long> AS_INT = new Fn<Object, Long>()
+	public static StiXFunction<Object, Long> AS_INT = new Fn<Object, Long>()
 	{
 		@Override public Long apply(Object p0)
 		{
@@ -65,13 +80,11 @@ public class StiX_Fns
 			}
 		}
 
-		@Override protected FnType typeToken()
-		{
-			return FnType.AS_INT;
-		}
+		@Override protected FnType typeToken() { return FnType.AS_INT; }
+		@Override public Class<Long> resultType() { return Long.class; };
 	};
 
-	public static FunctionWithComplexity<Object, Double> AS_FLOAT = new Fn<Object, Double>()
+	public static StiXFunction<Object, Double> AS_FLOAT = new Fn<Object, Double>()
 	{
 		@Override public Double apply(Object p0)
 		{
@@ -86,13 +99,11 @@ public class StiX_Fns
 			}
 		}
 
-		@Override protected FnType typeToken()
-		{
-			return FnType.AS_FLOAT;
-		}
+		@Override protected FnType typeToken() { return FnType.AS_FLOAT; }
+		@Override public Class<Double> resultType() { return Double.class; };
 	};
 
-	public static FunctionWithComplexity<Object, Boolean> AS_BOOL = new Fn<Object, Boolean>()
+	public static StiXFunction<Object, Boolean> AS_BOOL = new Fn<Object, Boolean>()
 	{
 		@Override public Boolean apply(Object p0)
 		{
@@ -105,13 +116,11 @@ public class StiX_Fns
 			}
 		}
 
-		@Override protected FnType typeToken()
-		{
-			return FnType.AS_BOOL;
-		}
+		@Override protected FnType typeToken() { return FnType.AS_BOOL; }
+		@Override public Class<Boolean> resultType() { return Boolean.class; };
 	};
 
-	public static FunctionWithComplexity<Object, String> AS_STRING = new Fn<Object, String>()
+	public static StiXFunction<Object, String> AS_STRING = new Fn<Object, String>()
 	{
 		@Override public String apply(Object p0)
 		{
@@ -124,13 +133,11 @@ public class StiX_Fns
 			}
 		}
 
-		@Override protected FnType typeToken()
-		{
-			return FnType.AS_STRING;
-		}
+		@Override protected FnType typeToken() { return FnType.AS_STRING; }
+		@Override public Class<String> resultType() { return String.class; }
 	};
 
-	private abstract static class Fn<P0, T> implements FunctionWithComplexity<P0, T>
+	private abstract static class Fn<P0, T> implements StiXFunction<P0, T>
 	{
 		@Override public int getOperationComplexity()
 		{
@@ -138,6 +145,11 @@ public class StiX_Fns
 		}
 		
 		protected abstract FnType typeToken();
+
+		@Override public Object getOperationToken()
+		{
+			return typeToken();
+		};
 		
 		@Override public String toString()
 		{

@@ -21,6 +21,11 @@ public abstract class StiXtractorMathAgg extends StiXtractorAggregate<Number, Mu
 	{
 		return 10;
 	}
+	
+	@Override public Class<Number> resultType()
+	{
+		return Number.class;
+	}
 
 	protected abstract boolean isFinalStateValue(long accumulator);
 	protected abstract boolean isFinalStateValue(double accumulator);

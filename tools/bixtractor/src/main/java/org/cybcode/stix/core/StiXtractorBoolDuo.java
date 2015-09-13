@@ -21,6 +21,11 @@ public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean
 	{
 		return 2;
 	}
+
+	@Override public Class<Boolean> resultType()
+	{
+		return Boolean.class;
+	}
 	
 	@Override protected boolean isPushToFinal(int parameterIndex, Object value)
 	{

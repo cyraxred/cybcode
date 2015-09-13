@@ -95,5 +95,10 @@ public class PbufXource extends StiXNumberedFieldXource<Binary, PbufFieldValue>
 			throw new RuntimeException(e);
 		}
 	}
+
+	@Override public Class<PbufFieldValue> resultType()
+	{
+		return PbufFieldValue.class;
+	}
 }
 

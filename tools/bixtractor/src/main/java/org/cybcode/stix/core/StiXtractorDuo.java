@@ -119,6 +119,7 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 
 		@Override public Object getOperationToken() { return token; }
 		@Override public int getOperationComplexity() { return token.outer.getOperationComplexity(); }
+		@SuppressWarnings("unchecked") @Override public Class<? extends T> resultType() { return (Class<? extends T>) token.outer.resultType(); }
 	}
 	
 	private static class CurriedP0<P0, P1, T> extends CurriedDuo<P0, P1, StiXtractorDuo<P0, P1, T>, T>

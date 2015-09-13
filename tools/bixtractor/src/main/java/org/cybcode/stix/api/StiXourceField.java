@@ -3,30 +3,32 @@ package org.cybcode.stix.api;
 import org.cybcode.stix.core.xecutors.XecutorMono;
 import org.cybcode.stix.core.xecutors.XecutorMonoPush;
 
-import com.google.common.base.Function;
-
 public abstract class StiXourceField<P0, T> implements StiXtractor<T>
 {
+	public enum ValueMode { SINGLE, FIRST, LAST, MULTIPLE }
+	
 	private final Parameter<P0> p0;
+	private final ValueMode mode;
 
-	public static <P0, T> StiXourceField<P0, T> newInstance(StiXource<?, ?, ?, P0> p0, boolean repeatable, final Function<P0, T> transform, final int complexity)
+	public static <P0, T> StiXourceField<P0, T> newInstance(StiXource<?, ?, ?, P0> p0, ValueMode mode, StiXFunction<P0, T> transform)
 	{
-		return new StiXourceTransformingField<P0, T>(p0, repeatable, transform, complexity);
+		return new StiXourceFnField<P0, T>(p0, mode, transform);
 	}
 	
-	public static <P0, T> StiXourceField<P0, T> newInstance(StiXource<?, ?, ?, P0> p0, boolean repeatable, final Function<P0, T> transform)
+	public static <P0, T> StiXourceField<P0, T> newRepeatedValue(StiXource<?, ?, ?, P0> p0, StiXFunction<P0, T> transform)
 	{
-		return newInstance(p0, repeatable, transform, COMPLEXITY_SOURCE_FIELD_CONVERSION);
+		return newInstance(p0, ValueMode.MULTIPLE, transform);
 	}
 	
-	public static <P0, T> StiXourceField<P0, T> newInstance(StiXource<?, ?, ?, P0> p0, final Function<P0, T> transform)
+	public static <P0, T> StiXourceField<P0, T> newSingleValue(StiXource<?, ?, ?, P0> p0, StiXFunction<P0, T> transform)
 	{
-		return newInstance(p0, false, transform);
+		return newInstance(p0, ValueMode.SINGLE, transform);
 	}
 	
-	public StiXourceField(StiXource<?, ?, ?, P0> p0, boolean allowRepeatedParamValue)
+	public StiXourceField(StiXource<?, ?, ?, P0> p0, ValueMode mode)
 	{
-		this.p0 = allowRepeatedParamValue ? new PushParameter<P0>(p0) : new Parameter<P0>(p0);
+		this.p0 = mode.equals(ValueMode.FIRST) ? new Parameter<P0>(p0) : new PushParameter<P0>(p0);
+		this.mode = mode;
 	}
 
 	@Override public void visit(StiXtractor.Visitor visitor)
@@ -34,14 +36,26 @@ public abstract class StiXourceField<P0, T> implements StiXtractor<T>
 		visitor.visitParameter(p0);
 	}
 	
+	@Override public Object getOperationToken()
+	{
+		return mode;
+	}
+	
 	@Override public boolean isRepeatable()
 	{
-		return p0.isRepeatable();
+		return mode.equals(ValueMode.MULTIPLE);
 	}
 
 	@Override public StiXecutor createXecutor(StiXpressionContext context)
 	{
-		return isRepeatable() ? XecutorMonoPush.getInstance() : XecutorMono.getInstance();
+		switch (mode) {
+			case MULTIPLE: return XecutorMonoPush.getInstance();
+			case FIRST: return XecutorMono.getInstance();
+			case LAST: //TODO
+			case SINGLE: //TODO
+			default: 
+				throw new UnsupportedOperationException(); 
+		}
 	}
 
 	@Override public T evaluate(StiXecutorContext context)

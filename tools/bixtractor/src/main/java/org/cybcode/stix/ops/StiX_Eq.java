@@ -25,4 +25,9 @@ public class StiX_Eq extends StiXtractorDuo<Object, Object, Boolean>
 		if (p0 == null || p1 == null) return null;
 		return p0.equals(p1);
 	}
+
+	@Override public Class<Boolean> resultType()
+	{
+		return Boolean.class;
+	}
 }

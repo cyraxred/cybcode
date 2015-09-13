@@ -45,4 +45,9 @@ public class StiX_Cmp<T extends Comparable<?>> extends StiXtractorDuo<T, T, Bool
 		}
 		return mode.toBoolean(result);
 	}
+
+	@Override public Class<Boolean> resultType()
+	{
+		return Boolean.class;
+	}
 }

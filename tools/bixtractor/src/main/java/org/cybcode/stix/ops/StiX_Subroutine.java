@@ -36,6 +36,11 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 	{
 		return 1;
 	}
+	
+	@Override public Class<? extends T> resultType()
+	{
+		return p1.getSourceXtractor().resultType();
+	}
 
 	@Override public StiXecutor createXecutor(StiXpressionContext context)
 	{
@@ -77,6 +82,11 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 			super(p0);
 		}
 
+		@Override public Class<? extends S> resultType()
+		{
+			return p0.getSourceXtractor().resultType();
+		}
+		
 		@Override public Object getOperationToken()
 		{
 			return StiX_Subroutine.this.getOperationToken();

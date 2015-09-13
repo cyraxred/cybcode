@@ -61,4 +61,9 @@ public final class StiX_Const<T> implements StiXtractor<T>
 	{
 		return value;
 	}
+
+	@SuppressWarnings("unchecked") @Override public Class<? extends T> resultType()
+	{
+		return (Class<? extends T>) value.getClass();
+	}
 }

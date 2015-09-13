@@ -128,6 +128,7 @@ public abstract class StiXtractorTrio<P0, P1, P2, T> implements StiXtractor<T>
 
 		@Override public Object getOperationToken() { return token; }
 		@Override public int getOperationComplexity() { return token.outer.getOperationComplexity(); }
+		@SuppressWarnings("unchecked") @Override public Class<T> resultType() { return (Class<T>) token.outer.resultType(); }
 	}
 	
 	

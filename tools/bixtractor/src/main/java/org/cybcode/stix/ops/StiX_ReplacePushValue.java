@@ -27,4 +27,9 @@ public class StiX_ReplacePushValue<T> extends StiXtractorMonoPush<Object, T>
 	{
 		return value;
 	}
+	
+	@SuppressWarnings("unchecked") @Override public Class<? extends T> resultType()
+	{
+		return (Class<? extends T>) value.getClass();
+	}
 }

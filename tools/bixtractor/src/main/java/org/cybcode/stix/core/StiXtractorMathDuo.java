@@ -19,6 +19,11 @@ public abstract class StiXtractorMathDuo extends StiXtractorDuo<Number, Number, 
 		return 10;
 	}
 
+	@Override public Class<Number> resultType()
+	{
+		return Number.class;
+	}
+	
 	protected abstract long calculate(long p0, long p1) throws ArithmeticException;
 	protected abstract double calculate(double p0, double p1) throws ArithmeticException;
 	

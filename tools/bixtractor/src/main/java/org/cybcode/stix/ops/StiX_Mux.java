@@ -45,6 +45,24 @@ public final class StiX_Mux<T> implements StiXtractor<T>
 		return result;
 	}
 	
+	@SuppressWarnings("unchecked") @Override public Class<? extends T> resultType()
+	{
+		Class<?> result = params[0].getSourceXtractor().resultType();
+		switch (params.length) {
+			case 1: break;
+			case 2: result = ClassUtil.findNearestSupertype(result, params[0].getSourceXtractor().resultType()); break;
+			default: {
+				Class<?>[] types = new Class<?>[params.length - 1];
+				for (int i = params.length - 1; i > 0; i--) {
+					types[i - 1] = params[i].getSourceXtractor().resultType();
+				}
+				result = ClassUtil.findNearestSupertype(result, types);
+			}
+		}
+		
+		return (Class<? extends T>) result;
+	}
+	
 	@Override public Object getOperationToken()
 	{
 		return null;

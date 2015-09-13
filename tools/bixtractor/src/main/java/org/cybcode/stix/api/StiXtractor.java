@@ -13,6 +13,7 @@ public interface StiXtractor<T> extends StiXtractorBase
 	void visit(Visitor visitor);
 	int paramCount();
 	boolean isRepeatable();
+	Class<? extends T> resultType();
 	
 	/**
 	 * 

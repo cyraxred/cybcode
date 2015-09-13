@@ -28,4 +28,9 @@ public abstract class StiXtractorBoolAgg extends StiXtractorAggregate<Boolean, B
 	{
 		return accumulator;
 	}
+
+	@Override public Class<Boolean> resultType()
+	{
+		return Boolean.class;
+	}
 }
