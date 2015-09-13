@@ -6,15 +6,15 @@ import org.cybcode.stix.api.StiXtractor.Parameter;
 
 enum DefaultXecutors implements StiXecutor 
 {
-	FINAL {
-		@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
-		{
-			throw new IllegalStateException();
-		}
-		
-		@Override public boolean canBeEvaluated()
-		{
-			return true;
-		}
-	};
+	FINAL, PUSH_FINAL;
+
+	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
+	{
+		throw new IllegalStateException();
+	}
+	
+	@Override public boolean isPushOrFinal()
+	{
+		return true;
+	}
 }

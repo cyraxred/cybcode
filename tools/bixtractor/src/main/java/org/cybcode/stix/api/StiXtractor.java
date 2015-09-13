@@ -83,6 +83,11 @@ public interface StiXtractor<T> extends StiXtractorBase
 			return false;
 		}
 		
+		public boolean isPushParameter()
+		{
+			return false;
+		}
+		
 		@Override public String toString()
 		{
 			return toString(toNameString());
@@ -117,6 +122,11 @@ public interface StiXtractor<T> extends StiXtractorBase
 		@Override public boolean isRepeatable()
 		{
 			return isRepeatable;
+		}
+
+		public boolean isPushParameter()
+		{
+			return true;
 		}
 	}
 }

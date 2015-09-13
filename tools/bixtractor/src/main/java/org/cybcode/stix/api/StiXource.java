@@ -8,7 +8,7 @@ public abstract class StiXource<S, C, D, InnerFieldType> implements StiXtractor<
 {
 	private abstract class Xecutor implements StiXourceXecutor<D> 
 	{
-		@Override public boolean canBeEvaluated()
+		@Override public boolean isPushOrFinal()
 		{
 			return true;
 		}

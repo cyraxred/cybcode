@@ -96,7 +96,7 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 			return this;
 		}
 		
-		@Override public boolean canBeEvaluated()
+		@Override public boolean isPushOrFinal()
 		{
 			return false;
 		}

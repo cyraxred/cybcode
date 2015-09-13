@@ -29,7 +29,7 @@ public class XecutorMono implements StiXecutor
 		return XecutorFinal.getInstance();
 	}
 
-	@Override public boolean canBeEvaluated()
+	@Override public boolean isPushOrFinal()
 	{
 		return false;
 	}

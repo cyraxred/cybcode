@@ -80,7 +80,7 @@ public final class StiX_Mux<T> implements StiXtractor<T>
 
 	@SuppressWarnings("unchecked") @Override public T evaluate(StiXecutorContext context)
 	{
-		return (T) context.getAndResetInterimValue();
+		return (T) context.getInterimValue();
 	}
 
 	@Override public void visit(Visitor visitor)
@@ -121,7 +121,7 @@ public final class StiX_Mux<T> implements StiXtractor<T>
 			return xtractor.isRepeatable() ? this : XecutorFinal.getInstance();
 		}
 
-		@Override public boolean canBeEvaluated()
+		@Override public boolean isPushOrFinal()
 		{
 			return true;
 		}

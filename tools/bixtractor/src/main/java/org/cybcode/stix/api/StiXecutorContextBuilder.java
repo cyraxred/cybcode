@@ -17,6 +17,7 @@ public interface StiXecutorContextBuilder
 	
 	void setCapacities(int nodesCount, int paramsCount, int linksCount);
 	void addNode(NodeDetails node);
+	void getNodeTargets();
 	
 	StiXecutorContext build();
 }

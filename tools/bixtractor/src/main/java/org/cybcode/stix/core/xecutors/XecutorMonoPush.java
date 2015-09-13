@@ -24,7 +24,7 @@ public class XecutorMonoPush extends XecutorMono
 		return this;
 	}
 
-	@Override public boolean canBeEvaluated()
+	@Override public boolean isPushOrFinal()
 	{
 		return true;
 	}

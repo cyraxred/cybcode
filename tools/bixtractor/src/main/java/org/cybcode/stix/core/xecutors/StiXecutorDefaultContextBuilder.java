@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
 import org.cybcode.stix.api.StiXpressionContext;
 import org.cybcode.stix.api.StiXtractor;
@@ -15,18 +14,21 @@ import com.google.common.collect.ImmutableList;
 
 public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 {
-	private final ArrayList<StiXpressionNode> nodes;
+	private final ArrayList<NodeDetails> nodeDetails;
+	private final ArrayList<Node> contextNodes;
 	private final static int[] EMPTY_ARGS = new int[0];
 
 	public StiXecutorDefaultContextBuilder()
 	{
-		nodes = new ArrayList<StiXpressionNode>();
+		nodeDetails = new ArrayList<>();
+		contextNodes = new ArrayList<>();
 	}
 
 	@Override public void setCapacities(int nodesCount, int paramsCount, int linksCount)
 	{
 		if (nodesCount > 0) {
-			nodes.ensureCapacity(nodesCount);
+			nodeDetails.ensureCapacity(nodesCount);
+			contextNodes.ensureCapacity(nodesCount);
 		}
 	}
 	
@@ -60,10 +62,17 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 	@Override public void addNode(NodeDetails node)
 	{
 		int index = node.getXtractorIndex();
-		if (index != nodes.size()) throw new IllegalArgumentException();
+		if (index != contextNodes.size()) throw new IllegalArgumentException();
 		
 		int[] params = getParamIndexes(node);
 
+		Node contextNode = new Node(node.getXtractorIndex(), node.getXtractor(), params);
+		contextNodes.add(contextNode);
+		nodeDetails.add(node);
+	}
+
+	private static void getNodeTargets(NodeDetails node, Node contextNode)
+	{
 		List<PushTarget> pushTargets;
 		List<PushTarget> notifyTargets;
 		
@@ -126,13 +135,19 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 				}
 			}
 		}
-		Node contextNode = new Node(node.getXtractorIndex(), node.getXtractor(), params, pushTargets, notifyTargets);
-		nodes.add(contextNode);
+		contextNode.setTargets(pushTargets, notifyTargets);
+	}
+	
+	@Override public void getNodeTargets()
+	{
+		for (int i = contextNodes.size() - 1; i >= 0; i--) {
+			getNodeTargets(nodeDetails.get(i), contextNodes.get(i));
+		}
 	}
 
-	@Override public StiXecutorContext build()
+	@Override public StiXecutorDefaultContext build()
 	{
-		StiXpressionNode[] initialState = nodes.toArray(new StiXpressionNode[nodes.size()]);
+		StiXpressionNode[] initialState = contextNodes.toArray(new StiXpressionNode[contextNodes.size()]);
 		return new StiXecutorDefaultContext(initialState);
 	}
 	
@@ -144,7 +159,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 
 		public NodePushTarget(Parameter<?> param, int targetIndex, int nodeIndex)
 		{
-			if (param != null) throw new NullPointerException();
+			if (param == null) throw new NullPointerException();
 			if (targetIndex <= 0 || nodeIndex < 0) throw new IllegalArgumentException();
 			this.param = param;
 			this.targetIndex = targetIndex;
@@ -172,14 +187,20 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		private final int	xtractorIndex;
 		private final StiXtractor<?>	xtractor;
 		private final int[] params;
-		private final List<PushTarget> pushTargets;
-		private final List<PushTarget> notifyTargets;
+		private List<PushTarget> pushTargets;
+		private List<PushTarget> notifyTargets;
 
-		Node(int xtractorIndex, StiXtractor<?> xtractor, int[] params, List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
+		Node(int xtractorIndex, StiXtractor<?> xtractor, int[] params)
 		{
 			this.xtractorIndex = xtractorIndex;
 			this.xtractor = xtractor;
 			this.params = params;
+		}
+
+		private void setTargets(List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
+		{
+			if (pushTargets == null || notifyTargets == null) throw new NullPointerException();
+			if (this.pushTargets != null) throw new IllegalStateException();
 			this.pushTargets = pushTargets;
 			this.notifyTargets = notifyTargets;
 		}

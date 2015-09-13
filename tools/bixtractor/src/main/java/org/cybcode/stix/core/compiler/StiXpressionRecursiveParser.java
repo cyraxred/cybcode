@@ -5,7 +5,8 @@ import org.cybcode.stix.api.StiXtractor;
 
 public class StiXpressionRecursiveParser 
 {
-	private final boolean deduplicate;	
+	private final boolean deduplicate;
+	private StiXpressionParserSlot rootSlot;
 	private StiXpressionParserSlot resultSlot;
 //	private int nodesCount;
 	private boolean	linked;
@@ -24,6 +25,7 @@ public class StiXpressionRecursiveParser
 	{
 		if (resultSlot != null) throw new IllegalStateException();
 
+		rootSlot = context.getRoot();
 		resultSlot = StiXpressionParserSlot.parse(context, resultNode);
 //		nodesCount = context.getNodeCount();
 	}
@@ -57,15 +59,15 @@ public class StiXpressionRecursiveParser
 	public void step5_flattenTree(StiXpressionFlattenContext context)
 	{
 		if (resultSlot == null || !linked) throw new IllegalStateException();
+		if (context.addNode(rootSlot) != 0) throw new IllegalStateException(); //TODO have special method
 		resultSlot.flatten(context);
+		context.finished();
 	}
 
 	public void step5_flattenTree(StiXecutorContextBuilder builder)
 	{
-		if (resultSlot == null || !linked) throw new IllegalStateException();
 		StiXpressionFlattenToXecutorContextBuilder flattener = new StiXpressionFlattenToXecutorContextBuilder(builder);
-		resultSlot.flatten(flattener);
-		flattener.finish();
+		step5_flattenTree(flattener);
 	}
 }
 
@@ -98,10 +100,12 @@ class StiXpressionFlattenToXecutorContextBuilder implements StiXpressionFlattenC
 		return nodeCount++;
 	}
 	
-	public void finish()
+	@Override public void finished()
 	{
-		if (prev == null) return;
-		builder.addNode(prev);
-		prev = null;
+		if (prev != null) {
+			builder.addNode(prev);
+			prev = null;
+		}
+		builder.getNodeTargets();
 	}
 }

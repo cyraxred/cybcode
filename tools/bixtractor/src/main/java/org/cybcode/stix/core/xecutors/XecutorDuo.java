@@ -36,7 +36,7 @@ public class XecutorDuo implements StiXecutor
 		return false;
 	}
 
-	@Override public boolean canBeEvaluated()
+	@Override public boolean isPushOrFinal()
 	{
 		return false;
 	}

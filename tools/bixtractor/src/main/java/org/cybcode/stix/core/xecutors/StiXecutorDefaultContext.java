@@ -72,7 +72,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			context.currentState[rootIndex] = DefaultXecutors.FINAL;
 
 			context.sequencer.addPushTargets(currentNode.getPushTargets());
-			context.sequencer.addPushTargets(currentNode.getNotifyTargets());
+			context.sequencer.addNotifyTargets(currentNode.getNotifyTargets());
 		}
 	}
 	
@@ -80,7 +80,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	{
 		if (!(nodes[0].getXtractor() instanceof StiX_Root)) throw new IllegalArgumentException("Root must be present as index 0");
 		this.nodes = nodes;
-		this.currentFrame = new Frame(0, initialState.length - 1, null);
+		this.currentFrame = new Frame(0, nodes.length - 1, null);
 	}
 	
 	private void resetContext(Object rootValue, StiXpressionSequencer sequencer)
@@ -102,7 +102,11 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			}
 		}
 		currentFrame.resetFrameContext(this, rootValue);
-		currentIndex = 1;
+		if (nodes.length == 1) {
+			currentFrame.setFinalIfResult(0);
+		} else {
+			setCurrentIndex(1);
+		}
 	}
 	
 	private void createInitialState()
@@ -120,7 +124,13 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		StiXecutor state = currentState[xtractorIndex];
 		return state == DefaultXecutors.FINAL;
 	}
-
+	
+	private boolean isPushOrFinal(int xtractorIndex)
+	{
+		StiXecutor xecutor = currentState[xtractorIndex];
+		return xecutor != null && xecutor.isPushOrFinal();
+	}
+	
 	private boolean hasPrivateValue(int xtractorIndex)
 	{
 		StiXecutor state = currentState[xtractorIndex];
@@ -135,9 +145,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	private void setValue(int xtractorIndex, Object value)
 	{
 		results[xtractorIndex] = value;
-		if (value != null) {
-			currentFrame.setFinalIfResult(xtractorIndex);
-		}
 	}
 
 	private boolean hasValue(int xtractorIndex)
@@ -185,17 +192,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		return getValue(index);
 	}
 	
-	@Override public Object getAndResetInterimValue()
-	{
-		int index = currentIndex();
-		if (hasPublicValue(index)) throw new IllegalStateException();
-		Object result = getValue(index);
-		if (result == null) return null;
-
-		setValue(index, null);
-		return result;
-	}
-	
 	@Override public boolean hasInterimValue()
 	{
 		int index = currentIndex();
@@ -216,18 +212,34 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	{
 		int index = currentIndex();
 		StiXpressionNode node = currentNode;
-		if (node == null || hasPublicValue(index)) return false;
-		
+		if (node == null) return false;
+
+		if (isPushOrFinal(index)) {
+			if (hasPublicValue(index)) return false;
+			setFinalValue(index, null);
+			return false;
+		} 
+
 		StiXtractor<?> xtractor = getCurrentXtractor();
 		Object result = xtractor.evaluate(this);
-		setValue(index, result);
-		currentState[index] = DefaultXecutors.FINAL;
+		setFinalValue(index, result);
 		if (result == null) return false;
 		
 		sequencer.addPushTargets(node.getPushTargets());
-		sequencer.addNotificationTargets(node.getNotifyTargets());
+		sequencer.addNotifyTargets(node.getNotifyTargets());
 		return true;
 	}
+	
+	private void setFinalValue(int xtractorIndex, Object value)
+	{
+		setValue(xtractorIndex, value);
+		currentState[xtractorIndex] = DefaultXecutors.FINAL;
+		if (value != null) {
+			currentFrame.setFinalIfResult(xtractorIndex);
+		}
+	}
+
+	
 
 	private boolean evaluatePush(StiXpressionNode.PushTarget target)
 	{
@@ -238,26 +250,34 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	private boolean evaluatePush(StiXpressionNode.PushTarget target, Object pushedValue)
 	{
 		int index = target.getXtractorIndex();
-		StiXpressionNode node = currentNode;
 		
-		if (node == null || hasPublicValue(index)) return false;
+		if (hasPublicValue(index)) return false;
 		StiXecutor xecutor = getXecutor(index);
 
 		setCurrentIndex(index);
 		xecutor = xecutor.push(this, target.getXtractorParam(), pushedValue);
 		if (xecutor == null) throw new NullPointerException();
-		currentState[index] = xecutor;
 
-		if (!xecutor.canBeEvaluated()) return true;
+		if (xecutor == DefaultXecutors.FINAL) {
+			currentState[index] = DefaultXecutors.PUSH_FINAL; 
+		} else {
+			currentState[index] = xecutor;
+			if (!xecutor.isPushOrFinal()) return true;
+		}
 		
 		StiXtractor<?> xtractor = getCurrentXtractor();
 		Object result = xtractor.evaluate(this);
-		setValue(index, result);
-		if (result == null) return false;
 		
-		sequencer.addPushTargets(node.getPushTargets());
+		if (xecutor == DefaultXecutors.FINAL) { //replace PUSH_FINAL
+			setFinalValue(index, result);
+		} else {
+			setValue(index, result);
+		}
+		if (result == null) return true;
+		
+		sequencer.addPushTargets(currentNode.getPushTargets());
 		if (xecutor == DefaultXecutors.FINAL) {
-			sequencer.addNotificationTargets(node.getNotifyTargets());
+			sequencer.addNotifyTargets(currentNode.getNotifyTargets());
 		}
 		return true;
 	}
@@ -270,14 +290,16 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	private void setCurrentIndex(int index)
 	{
 		if (index < 0 || index >= nodes.length) throw new IllegalArgumentException();
+		if (currentIndex == index) return;
 		currentIndex = index;
 		currentNode = nodes[index];
 	}
 
 	private void setCurrentNode(StiXpressionNode node)
 	{
+		if (currentNode == node) return;
 		int index = node.getIndex();
-		if (nodes[index] != null) throw new IllegalArgumentException();
+		if (nodes[index] != node) throw new IllegalArgumentException();
 		currentNode = node;
 		currentIndex = index;
 	}
@@ -318,17 +340,20 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 				evaluateCurrent();
 				if (!hasResultValue()) continue;
 				setCurrentIndex(currentFrame.resultIndex);				
-			} while (nextNode() < nodes.length);
+			} while (nextNode());
 		}
 		
 		return getValue(nodes.length - 1);
 	}
 
-	private int nextNode()
+	private boolean nextNode()
 	{
-		if (currentIndex == currentFrame.resultIndex && currentFrame.outerFrame != null) {
+		if (currentFrame.outerFrame != null && currentIndex == currentFrame.resultIndex) {
 			currentFrame = currentFrame.close();
 		}
-		return ++currentIndex;
+		int nextIndex = currentIndex + 1;
+		if (nextIndex >= nodes.length) return false;
+		setCurrentIndex(nextIndex);
+		return true;
 	}
 }
