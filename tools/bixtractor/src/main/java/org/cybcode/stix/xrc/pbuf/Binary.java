@@ -1,4 +1,4 @@
-package org.cybcode.stix.pbuf;
+package org.cybcode.stix.xrc.pbuf;
 
 public class Binary
 {
