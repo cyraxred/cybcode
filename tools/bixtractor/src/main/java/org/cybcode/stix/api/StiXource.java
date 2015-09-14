@@ -91,11 +91,6 @@ public abstract class StiXource<S, C, D, InnerFieldType> implements StiXtractor<
 		visitor.visitParameter(p0);
 	}
 
-	@Override public int getOperationComplexity()
-	{
-		return COMPLEXITY_SOURCE;
-	}
-	
 	@Override public Object getOperationToken()
 	{
 		return getFieldDetails();
@@ -109,5 +104,10 @@ public abstract class StiXource<S, C, D, InnerFieldType> implements StiXtractor<
 	@Override public StiXtractor<InnerFieldType> curry(int parameterIndex, Object value)
 	{
 		return null;
+	}
+	
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
+	{
+		return helper.getComplexityOf(this, 1000);
 	}
 }

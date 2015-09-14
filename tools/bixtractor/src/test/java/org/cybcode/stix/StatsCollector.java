@@ -2,7 +2,7 @@ package org.cybcode.stix;
 
 import org.cybcode.stix.core.xecutors.StiXecutorStatsCollector;
 
-class StatsCollector extends StiXecutorStatsCollector
+class StatsCollector implements StiXecutorStatsCollector
 {
 	public int evaluateCount;
 	public int pushAttemptCount;

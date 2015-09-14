@@ -30,6 +30,12 @@ public class StiXExpressionsTest
 		assertEquals((Long) 4L, E(2L, add(StiX_Ops.<Long>root(), StiX_Ops.<Long>root())));
 	}
 
+	@Test public void test_commutative()
+	{
+		assertEquals(6, B(add(div(constOf(1), constOf(2)), div(constOf(2), constOf(1)))).getNodeCount());
+		assertEquals(5, B(add(mul(constOf(1), constOf(2)), mul(constOf(2), constOf(1)))).getNodeCount());
+	}
+
 	@Test public void test_aggregate()
 	{
 		assertEquals((Long) 2L, E(2L, addA(StiX_Ops.<Long>root())));
@@ -38,7 +44,7 @@ public class StiXExpressionsTest
 		assertEquals((Long) 5L, E(2L, addA(mux(StiX_Ops.<Long>root(), constOf(1), StiX_Ops.<Long>root()))));
 	}
 
-	@Test public void test_and_full()
+	@Test public void test_full_AND()
 	{
 		assertEquals(Boolean.FALSE, E(2L, and(constOf(true), constOf(false))));
 		assertEquals(4, stats.nodeCount);
@@ -53,7 +59,7 @@ public class StiXExpressionsTest
 		assertEquals(0, stats.pushEvaluateCount);
 	}
 
-	@Test public void test_and_early()
+	@Test public void test_early_AND()
 	{
 		assertEquals(Boolean.FALSE, E(2L, andIfNull(constOf(false), constOf(true), true)));
 		assertEquals(4, stats.nodeCount);
@@ -74,7 +80,7 @@ public class StiXExpressionsTest
 		assertEquals(1, stats.pushEvaluateCount);
 	}
 
-	@Test public void test_and_aggregate()
+	@Test public void test_aggregating_AND()
 	{
 		assertEquals(Boolean.FALSE, E(2L, andA(mux(constOf(false), constOf(true)))));
 		assertEquals(5, stats.nodeCount);

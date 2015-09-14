@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean, Boolean>
@@ -23,9 +24,9 @@ public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean
 		return defaultValue;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 2;
+		return helper.getComplexityOf(this, 10);
 	}
 
 	@Override public Class<Boolean> resultType()

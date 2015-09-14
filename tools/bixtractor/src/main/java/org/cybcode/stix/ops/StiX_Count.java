@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorAggregate;
 import org.cybcode.stix.ops.aggregators.MutableLong;
@@ -21,9 +22,9 @@ public class StiX_Count extends StiXtractorAggregate<Object, MutableLong, Long>
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 100;
+		return helper.getComplexityOf(this, 100);
 	}
 
 	@Override protected boolean isFinalStateValue(MutableLong accumulator)

@@ -1,5 +1,6 @@
 package org.cybcode.stix.core.compiler;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
 import org.cybcode.stix.api.StiXtractor;
 
@@ -10,6 +11,7 @@ public class StiXpressionRecursiveParser
 	private StiXpressionParserSlot resultSlot;
 //	private int nodesCount;
 	private boolean	linked;
+	private StiXComplexityHelper complexityHelper;
 	
 	public StiXpressionRecursiveParser() 
 	{
@@ -19,6 +21,7 @@ public class StiXpressionRecursiveParser
 	public StiXpressionRecursiveParser(boolean deduplicate) 
 	{
 		this.deduplicate = deduplicate;
+		setComplexityHelper(null);
 	}
 	
 	public void step1_buildTree(StiXpressionParserSlot.ParserContext context, StiXtractor<?> resultNode)
@@ -32,7 +35,7 @@ public class StiXpressionRecursiveParser
 	
 	public void step1_buildTree(StiXtractor<?> resultNode)
 	{
-		step1_buildTree(StiXpressionParserSlot.createDefaultContext(256, deduplicate), resultNode);
+		step1_buildTree(StiXpressionParserSlot.createDefaultContext(256, deduplicate, complexityHelper), resultNode);
 	}
 	
 	public void step2_optimizeTree()
@@ -68,6 +71,11 @@ public class StiXpressionRecursiveParser
 	{
 		StiXpressionFlattenToXecutorContextBuilder flattener = new StiXpressionFlattenToXecutorContextBuilder(builder);
 		step5_flattenTree(flattener);
+	}
+
+	public void setComplexityHelper(StiXComplexityHelper complexityHelper)
+	{
+		this.complexityHelper = complexityHelper == null ? StiXComplexityHelper.DEFAULT : complexityHelper;
 	}
 }
 

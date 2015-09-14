@@ -67,7 +67,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 	private static NodePushTarget createPushTarget(NodeDetails node, int targetIndex)
 	{
 		Parameter<?> targetParam = node.getTargetParameter(targetIndex);
-		int targetXtractorIndex = node.getTargetXtractorIndex(targetIndex);
+		int targetXtractorIndex = node.getTargetXtractor(targetIndex).getXtractorIndex();
 		return new NodePushTarget(targetParam, targetXtractorIndex, node.getXtractorIndex());
 	}
 

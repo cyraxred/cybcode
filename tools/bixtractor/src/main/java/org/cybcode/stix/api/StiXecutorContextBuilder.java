@@ -10,7 +10,7 @@ public interface StiXecutorContextBuilder
 		int getParamXtractorIndex(int index);
 		
 		int getTargetCount();
-		int getTargetXtractorIndex(int index);
+		NodeDetails getTargetXtractor(int index);
 		StiXtractor.Parameter<?> getTargetParameter(int index);
 		boolean isNotifyOnRegularTarget(int index);
 	}

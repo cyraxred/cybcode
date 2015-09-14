@@ -12,7 +12,6 @@ public interface StiXpressionNode
 	{
 		StiXtractor.Parameter<?> getXtractorParam();
 		int getXtractorIndex();
-		//StiXpressionNode getTargetNode();
 		int getValueIndex();
 	}
 	

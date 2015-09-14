@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXpressionContext;
@@ -20,7 +21,7 @@ public final class StiX_Root<T> implements StiXtractor<T>
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
 		return 1;
 	}

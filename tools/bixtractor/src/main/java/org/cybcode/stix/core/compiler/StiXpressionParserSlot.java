@@ -1,10 +1,13 @@
 package org.cybcode.stix.core.compiler;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
+import org.cybcode.stix.api.StiXecutorContextBuilder.NodeDetails;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 import org.cybcode.stix.ops.StiX_Root;
@@ -17,9 +20,12 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 		private StiXpressionParserSlot rootSlot; 
 		private final IdentityHashMap<StiXtractor<?>, StiXpressionParserSlot> nodesMap;
 		private final Map<XpressionToken, StiXpressionParserSlot> dedupMap;
+		private final StiXComplexityHelper complexityHelper;
 		
-		public ParserContext(int initialCapacity, boolean deduplicate)
+		public ParserContext(int initialCapacity, boolean deduplicate, StiXComplexityHelper complexityHelper)
 		{
+			if (complexityHelper == null) throw new NullPointerException();
+			this.complexityHelper = complexityHelper;
 			this.nodesMap = new IdentityHashMap<>(initialCapacity);
 			if (deduplicate) {
 				this.dedupMap = new HashMap<>(initialCapacity);
@@ -30,12 +36,12 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 
 		public StiXpressionParserSlot createParamSlot(StiXpressionParserSlot operation, StiXtractor<?> parameter)
 		{
-			return new StiXpressionParserSlot(parameter, operation);
+			return new StiXpressionParserSlot(parameter, operation, this);
 		}
 
 		public StiXpressionParserSlot createRootSlot(StiXtractor<?> parameter)
 		{
-			return new StiXpressionParserSlot(parameter);
+			return new StiXpressionParserSlot(parameter, this);
 		}
 
 		public int getNodeCount()
@@ -50,11 +56,16 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 			}
 			return rootSlot;
 		}
+
+		public StiXComplexityHelper getComplexityHelper()
+		{
+			return complexityHelper;
+		}
 	}
 	
-	public static ParserContext createDefaultContext(int initialCapacity, boolean deduplicate)
+	public static ParserContext createDefaultContext(int initialCapacity, boolean deduplicate, StiXComplexityHelper complexityHelper)
 	{
-		return new ParserContext(initialCapacity, deduplicate);
+		return new ParserContext(initialCapacity, deduplicate, complexityHelper);
 	}
 
 	public static class SlotLink
@@ -78,38 +89,34 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 	private int parsedIndex;
 	private int flattenIndex;
 
-	public StiXpressionParserSlot(StiXtractor<?> node, StiXpressionParserSlot nextToResult)
+	public StiXpressionParserSlot(StiXtractor<?> node, StiXpressionParserSlot nextToResult, ParserContext parserContext)
 	{
 		this.node = node;
+		this.parserContext = parserContext;
 		stepsToResult = nextToResult.stepsToResult + 1;
-		opComplexity = Math.max(1, node.getOperationComplexity());
+		opComplexity = Math.max(1, node.getOperationComplexity(parserContext.getComplexityHelper()));
 		parsedIndex = -1;
 		flattenIndex = -1;
 	}
 	
-	protected StiXpressionParserSlot(StiXtractor<?> node)
+	protected StiXpressionParserSlot(StiXtractor<?> node, ParserContext parserContext)
 	{
 		this.node = node;
+		this.parserContext = parserContext;
 		stepsToResult = Integer.MAX_VALUE;
-		opComplexity = Math.max(1, node.getOperationComplexity());
+		opComplexity = Math.max(1, node.getOperationComplexity(parserContext.getComplexityHelper()));
 		parsedIndex = 0;
 		flattenIndex = 0;
 	}
 	
-	private StiXpressionParserSlot()
+	private StiXpressionParserSlot(ParserContext context)
 	{
 		this.node = null;
+		this.parserContext = context;
 		stepsToResult = 0;
 		opComplexity = 0;
 		parsedIndex = -1;
 		flattenIndex = -1;
-	}
-	
-	protected void beforeParse(ParserContext parserContext)
-	{
-		if (parserContext == null) throw new NullPointerException();
-		if (this.parserContext != null || parsedIndex >= 0) throw new IllegalStateException();
-		this.parserContext = parserContext;
 	}
 	
 	protected void afterParse()
@@ -135,7 +142,6 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 				if (paramSlot.parsedIndex < 0) throw new IllegalStateException("Circular reference");
 			} else if (paramSlot == null) {
 				paramSlot = parserContext.createParamSlot(this, paramSource);
-				paramSlot.beforeParse(parserContext);
 				parserContext.nodesMap.put(paramSource, paramSlot);
 				paramSlot.node.visit(paramSlot);
 				paramSlot.afterParse();
@@ -201,7 +207,10 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 		}
 		int[] args = new int[paramCount];
 		for (int i = 0; i < paramCount; i++) {
-			args[i] = get(1).target.parsedIndex;
+			args[i] = get(i).target.parsedIndex;
+		}
+		if (node instanceof StiXtractor.Commutative) {
+			Arrays.sort(args);
 		}
 		return new XpressionToken(node, args);
 	}
@@ -232,11 +241,11 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 		return consumers.size();
 	}
 
-	@Override public int getTargetXtractorIndex(int index)
+	@Override public NodeDetails getTargetXtractor(int index)
 	{
-		return consumers.get(index).target.getXtractorIndex();
+		return consumers.get(index).target;
 	}
-
+	
 	@Override public Parameter<?> getTargetParameter(int index)
 	{
 		return consumers.get(index).parameter;
@@ -249,8 +258,7 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 
 	public static StiXpressionParserSlot parse(ParserContext context, StiXtractor<?> resultNode)
 	{
-		StiXpressionParserSlot stubSlot = new StiXpressionParserSlot();
-		stubSlot.beforeParse(context);
+		StiXpressionParserSlot stubSlot = new StiXpressionParserSlot(context);
 		stubSlot.visitParameter(new StiXtractor.Parameter<>(resultNode));
 		stubSlot.afterParse();
 		return stubSlot.getFirstValueOrNull().target;

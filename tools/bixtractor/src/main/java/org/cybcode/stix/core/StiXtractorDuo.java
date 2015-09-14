@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXpressionContext;
@@ -14,6 +15,11 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 		@Override protected boolean isPushToFinal(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue) 
 		{
 			return ((StiXtractorDuo<?, ?, ?>) context.getCurrentXtractor()).isPushToFinal(context, pushedParameter, pushedValue);
+		}
+
+		@Override public boolean isPushOrFinal()
+		{
+			return false;
 		};
 	};
 	
@@ -118,7 +124,7 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 		}
 
 		@Override public Object getOperationToken() { return token; }
-		@Override public int getOperationComplexity() { return token.outer.getOperationComplexity(); }
+		@Override public int getOperationComplexity(StiXComplexityHelper helper) { return token.outer.getOperationComplexity(helper); }
 		@SuppressWarnings("unchecked") @Override public Class<? extends T> resultType() { return (Class<? extends T>) token.outer.resultType(); }
 	}
 	

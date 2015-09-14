@@ -17,11 +17,11 @@ public class StiXourceFnField<P0, T> extends StiXourceField<P0, T>
 		return TokenPair.of(super.getOperationToken(), fn.getOperationToken());
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return fn.getOperationComplexity();
+		return helper.getComplexityOf(fn, 100);
 	}
-
+	
 	@Override protected T transform(P0 pv0)
 	{
 		return fn.apply(pv0);

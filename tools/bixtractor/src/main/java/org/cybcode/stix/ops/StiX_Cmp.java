@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorDuo;
 
@@ -29,9 +30,9 @@ public class StiX_Cmp<T extends Comparable<?>> extends StiXtractorDuo<T, T, Bool
 		return mode;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 20;
+		return helper.getComplexityOf(this, 20);
 	}
 
 	@Override protected Boolean calculate(T p0, T p1)

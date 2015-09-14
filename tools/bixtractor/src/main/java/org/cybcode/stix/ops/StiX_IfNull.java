@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorDuo;
 
@@ -22,9 +23,9 @@ public class StiX_IfNull<T> extends StiXtractorDuo<T, T, T>
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 10;
+		return helper.getComplexityOf(this, 10);
 	}
 	
 	@Override protected boolean isPushToFinal(int parameterIndex, Object value)

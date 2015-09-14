@@ -2,10 +2,9 @@ package org.cybcode.stix.api;
 
 import org.cybcode.stix.ops.StiX_Const;
 
-public interface StiXtractor<T> extends StiXtractorBase
+public interface StiXtractor<T>
 {
-	public static final int COMPLEXITY_SOURCE = 1000;
-	public static final int COMPLEXITY_SOURCE_FIELD_CONVERSION = 10;
+	public interface Commutative {}
 	
 	StiXecutor createXecutor(StiXpressionContext context);
 	
@@ -14,6 +13,10 @@ public interface StiXtractor<T> extends StiXtractorBase
 	int paramCount();
 	boolean isRepeatable();
 	Class<? extends T> resultType();
+	
+	
+	Object getOperationToken();
+	int getOperationComplexity(StiXComplexityHelper helper);
 	
 	/**
 	 * 

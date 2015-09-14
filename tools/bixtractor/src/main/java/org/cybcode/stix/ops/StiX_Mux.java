@@ -2,13 +2,15 @@ package org.cybcode.stix.ops;
 
 import java.util.Collection;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXpressionContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.xecutors.AbstractXecutor;
 import org.cybcode.stix.core.xecutors.XecutorFinal;
 
-public final class StiX_Mux<T> implements StiXtractor<T>
+public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutative
 {
 	private final PushParameter<?>[] params; //TODO ensure mandatory push
 	private final boolean repeatable;
@@ -68,9 +70,9 @@ public final class StiX_Mux<T> implements StiXtractor<T>
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 1;
+		return helper.getComplexityOf(this, 5);
 	}
 
 	@Override public StiXecutor createXecutor(StiXpressionContext context)
@@ -107,16 +109,14 @@ public final class StiX_Mux<T> implements StiXtractor<T>
 		return StiX_Const.of((T) value);
 	}
 	
-	private enum Xecutor implements StiXecutor
+	private static class Xecutor extends AbstractXecutor
 	{
-		INSTANCE;
-
+		public static final Xecutor INSTANCE = new Xecutor(); 
+		
 		@Override public StiXecutor push(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue)
 		{
 			StiX_Mux<?> xtractor = (StiX_Mux<?>) context.getCurrentXtractor();
-			if (pushedParameter.getParamIndex() >= xtractor.paramCount()) {
-				throw new IllegalArgumentException("Parameter of unexpected index");
-			}
+			verifyParameterIndex(context, pushedParameter);
 			context.setInterimValue(pushedValue);
 			return xtractor.isRepeatable() ? this : XecutorFinal.getInstance();
 		}

@@ -4,6 +4,7 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXpressionContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.xecutors.AbstractXecutor;
 import org.cybcode.stix.core.xecutors.XecutorFinal;
 
 public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
@@ -41,7 +42,7 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 
 	@Override public StiXecutor createXecutor(StiXpressionContext context)
 	{
-		return XecutorAggregate.getInstance();
+		return XecutorAggregate.INSTANCE;
 	}
 	
 	@Override public StiXtractor<T> curry(int parameterIndex, Object value)
@@ -73,26 +74,18 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 		return !p0.isRepeatable() || isFinalStateValue(accumOut);
 	}
 
-	private enum XecutorAggregate implements StiXecutor
+	private static class XecutorAggregate extends AbstractXecutor
 	{
-		INSTANCE;
-
-		public static StiXecutor getInstance()
-		{
-			return INSTANCE;
-		}
+		public static final XecutorAggregate INSTANCE = new XecutorAggregate(); 
 
 		@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
 		{
-			if (pushedParameter.getParamIndex() != 0) {
-				throw new IllegalArgumentException("Parameter of unexpected index");
-			}
+			verifyParameterIndex(context, pushedParameter);
 			
 			StiXtractorAggregate<?, ?, ?> aggregator = (StiXtractorAggregate<?, ?, ?>) context.getCurrentXtractor();
 			if (pushedValue == null) return this; //sanity check
 			
 			if (aggregator.aggregateNextAndIsFinal(context, pushedValue)) return XecutorFinal.getInstance(); 
-			
 			return this;
 		}
 		

@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXpressionContext;
@@ -32,7 +33,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		return this; //subroutines can't be deduplicated
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
 		return 1;
 	}
@@ -92,7 +93,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 			return StiX_Subroutine.this.getOperationToken();
 		}
 
-		@Override public int getOperationComplexity()
+		@Override public int getOperationComplexity(StiXComplexityHelper helper)
 		{
 			return 1;
 		}

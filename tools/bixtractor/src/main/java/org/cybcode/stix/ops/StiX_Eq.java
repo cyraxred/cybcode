@@ -1,9 +1,10 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorDuo;
 
-public class StiX_Eq extends StiXtractorDuo<Object, Object, Boolean>
+public class StiX_Eq extends StiXtractorDuo<Object, Object, Boolean> implements StiXtractor.Commutative
 {
 	public StiX_Eq(StiXtractor<?> p0, StiXtractor<?> p1)
 	{
@@ -15,9 +16,9 @@ public class StiX_Eq extends StiXtractorDuo<Object, Object, Boolean>
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 10;
+		return helper.getComplexityOf(this, 10);
 	}
 
 	@Override protected Boolean calculate(Object p0, Object p1)

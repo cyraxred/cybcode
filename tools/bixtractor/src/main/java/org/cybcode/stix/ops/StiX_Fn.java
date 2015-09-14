@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMono;
@@ -20,11 +21,11 @@ public class StiX_Fn<P0, T> extends StiXtractorMono<P0, T>
 		return fn.getOperationToken();
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return fn.getOperationComplexity();
+		return helper.getComplexityOf(fn, fn.getOperationComplexity());
 	}
-
+	
 	@Override protected T calculate(P0 p0)
 	{
 		return fn.apply(p0);

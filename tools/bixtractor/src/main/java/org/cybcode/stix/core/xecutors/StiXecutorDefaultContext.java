@@ -323,7 +323,12 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 
 	public void setStatsCollector(StiXecutorStatsCollector stats)
 	{
-		this.stats = stats == null ? StiXecutorStatsCollector.getInstance() : stats;
+		this.stats = stats == null ? StiXecutorStatsCollector.NULL : stats;
+	}
+	
+	public int getNodeCount()
+	{
+		return nodes.length;
 	}
 }
 

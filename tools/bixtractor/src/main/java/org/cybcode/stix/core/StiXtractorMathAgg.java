@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.ops.aggregators.MutableDouble;
 import org.cybcode.stix.ops.aggregators.MutableLong;
@@ -17,9 +18,9 @@ public abstract class StiXtractorMathAgg extends StiXtractorAggregate<Number, Mu
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 10;
+		return helper.getComplexityOf(this, 20);
 	}
 	
 	@Override public Class<Number> resultType()

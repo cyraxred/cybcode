@@ -3,7 +3,7 @@ package org.cybcode.stix.ops;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorBoolDuo;
 
-public class StiX_Xor extends StiXtractorBoolDuo
+public class StiX_Xor extends StiXtractorBoolDuo implements StiXtractor.Commutative
 {
 	public StiX_Xor(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1)
 	{

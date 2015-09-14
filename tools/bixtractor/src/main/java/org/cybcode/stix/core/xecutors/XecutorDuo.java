@@ -4,7 +4,7 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
-public class XecutorDuo implements StiXecutor
+public abstract class XecutorDuo extends AbstractXecutor
 {
 	private final XecutorMono leftXecutor;
 	private final XecutorMono rightXecutor;
@@ -17,7 +17,7 @@ public class XecutorDuo implements StiXecutor
 
 	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		int pushedParamIndex = pushedParameter.getParamIndex();
+		int pushedParamIndex = verifyParameterIndex(context, pushedParameter);
 		
 		StiXecutor result;
 		if (leftXecutor.paramIndex == pushedParamIndex) {
@@ -25,19 +25,11 @@ public class XecutorDuo implements StiXecutor
 		} else if (rightXecutor.paramIndex == pushedParamIndex) {
 			result = leftXecutor;
 		} else {
-			throw new IllegalArgumentException("Parameter of unexpected index");
+			return this;
 		}
 		if (isPushToFinal(context, pushedParameter, pushedValue)) return XecutorFinal.getInstance();
 		return result;
 	}
 
-	protected boolean isPushToFinal(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
-	{
-		return false;
-	}
-
-	@Override public boolean isPushOrFinal()
-	{
-		return false;
-	}
+	protected abstract boolean isPushToFinal(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue);
 }

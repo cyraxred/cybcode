@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMonoPush;
 
@@ -18,9 +19,9 @@ public class StiX_ReplacePushValue<T> extends StiXtractorMonoPush<Object, T>
 		return value;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 1;
+		return helper.getComplexityOf(this, 1);
 	}
 
 	@Override protected T calculate(Object p0)

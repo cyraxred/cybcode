@@ -4,7 +4,7 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
-public class XecutorMono implements StiXecutor
+public class XecutorMono extends AbstractXecutor
 {
 	private static final XecutorMono	INSTANCE	= new XecutorMono(0);
 
@@ -23,10 +23,8 @@ public class XecutorMono implements StiXecutor
 
 	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		if (pushedParameter.getParamIndex() != this.paramIndex) {
-			throw new IllegalArgumentException("Parameter of unexpected index");
-		}
-		return XecutorFinal.getInstance();
+		if (verifyParameterIndex(context, pushedParameter) == this.paramIndex) return XecutorFinal.getInstance();
+		return this;
 	}
 
 	@Override public boolean isPushOrFinal()

@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXtractorBoolAgg extends StiXtractorAggregate<Boolean, Boolean, Boolean>
@@ -14,9 +15,9 @@ public abstract class StiXtractorBoolAgg extends StiXtractorAggregate<Boolean, B
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 5;
+		return helper.getComplexityOf(this, 20);
 	}
 
 	@Override protected Boolean aggregateFirstValue(Boolean p0)

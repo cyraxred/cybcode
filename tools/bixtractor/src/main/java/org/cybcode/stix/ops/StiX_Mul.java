@@ -3,7 +3,7 @@ package org.cybcode.stix.ops;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMathDuo;
 
-public class StiX_Mul extends StiXtractorMathDuo
+public class StiX_Mul extends StiXtractorMathDuo implements StiXtractor.Commutative
 {
 	public StiX_Mul(StiXtractor<? extends Number> p0, StiXtractor<? extends Number> p1)
 	{

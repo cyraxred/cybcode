@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXtractorMathDuo extends StiXtractorDuo<Number, Number, Number>
@@ -19,9 +20,9 @@ public abstract class StiXtractorMathDuo extends StiXtractorDuo<Number, Number, 
 		return null;
 	}
 
-	@Override public int getOperationComplexity()
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return 10;
+		return helper.getComplexityOf(this, 10);
 	}
 
 	@Override public Class<Number> resultType()
