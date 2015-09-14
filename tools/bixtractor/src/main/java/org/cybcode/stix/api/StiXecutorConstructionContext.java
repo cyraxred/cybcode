@@ -2,7 +2,8 @@ package org.cybcode.stix.api;
 
 import java.util.List;
 
-public interface StiXpressionContext
+public interface StiXecutorConstructionContext
 {
 	List<StiXourceNestedXecutor<?>> getNestedXources();
+	StiXecutor createFrameXecutor();
 }

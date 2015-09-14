@@ -101,6 +101,8 @@ public class StiXExpressionsTest
 		assertEquals(3, stats.pushEvaluateCount);
 	}
 
+	//behavior on no-push
+	
 	private static <T> StiXecutorDefaultContext B(StiXtractor<T> expression)
 	{
 		StiXpressionRecursiveParser parser = new StiXpressionRecursiveParser();

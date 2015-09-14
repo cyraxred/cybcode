@@ -3,7 +3,7 @@ package org.cybcode.stix.core;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xecutors.XecutorTrio;
 import org.cybcode.stix.ops.StiX_Const;
@@ -69,7 +69,7 @@ public abstract class StiXtractorTrio<P0, P1, P2, T> implements StiXtractor<T>
 		}
 	}
 	
-	@Override public StiXecutor createXecutor(StiXpressionContext context)
+	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		return XECUTOR;
 	}

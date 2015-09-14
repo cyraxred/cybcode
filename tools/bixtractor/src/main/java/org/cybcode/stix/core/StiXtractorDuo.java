@@ -3,7 +3,7 @@ package org.cybcode.stix.core;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xecutors.XecutorDuo;
 import org.cybcode.stix.ops.StiX_Const;
@@ -16,11 +16,6 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 		{
 			return ((StiXtractorDuo<?, ?, ?>) context.getCurrentXtractor()).isPushToFinal(context, pushedParameter, pushedValue);
 		}
-
-		@Override public boolean isPushOrFinal()
-		{
-			return false;
-		};
 	};
 	
 	protected final Parameter<P0> p0;
@@ -70,7 +65,7 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 		}
 	}
 	
-	@Override public StiXecutor createXecutor(StiXpressionContext context)
+	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		return XECUTOR;
 	}

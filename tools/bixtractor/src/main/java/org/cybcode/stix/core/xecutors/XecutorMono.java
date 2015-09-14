@@ -26,9 +26,4 @@ public class XecutorMono extends AbstractXecutor
 		if (verifyParameterIndex(context, pushedParameter) == this.paramIndex) return XecutorFinal.getInstance();
 		return this;
 	}
-
-	@Override public boolean isPushOrFinal()
-	{
-		return false;
-	}
 }

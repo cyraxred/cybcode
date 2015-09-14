@@ -24,7 +24,7 @@ class ArrayFieldHandler implements StiXNumberedFieldXource.FieldContainer
 		}
 	}
 
-	@Override public FieldHandler prepare(int pFieldId)
+	@Override public FieldHandler findFieldHandler(int pFieldId)
 	{
 		int fieldId = pFieldId - baseId;
 		if (fieldId < 0 || fieldId > receivers.length) return null;

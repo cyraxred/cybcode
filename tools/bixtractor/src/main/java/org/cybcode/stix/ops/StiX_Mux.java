@@ -5,7 +5,7 @@ import java.util.Collection;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xecutors.AbstractXecutor;
 import org.cybcode.stix.core.xecutors.XecutorFinal;
@@ -75,7 +75,7 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 		return helper.getComplexityOf(this, 5);
 	}
 
-	@Override public StiXecutor createXecutor(StiXpressionContext context)
+	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		return Xecutor.INSTANCE;
 	}

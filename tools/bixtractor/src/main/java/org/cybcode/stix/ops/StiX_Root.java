@@ -3,7 +3,7 @@ package org.cybcode.stix.ops;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xecutors.XecutorFinal;
 
@@ -36,7 +36,7 @@ public final class StiX_Root<T> implements StiXtractor<T>
 		return null; //TODO depends on context, think about it - will impact multiplex operation
 	}
 
-	@Override public StiXecutor createXecutor(StiXpressionContext context)
+	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		return XecutorFinal.getInstance();
 	}

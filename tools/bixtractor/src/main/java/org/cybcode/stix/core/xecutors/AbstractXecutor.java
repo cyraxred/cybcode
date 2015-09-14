@@ -15,4 +15,9 @@ public abstract class AbstractXecutor implements StiXecutor
 		
 		throw new IllegalArgumentException("Parameter index=" + paramIndex + ", xtractor=" + xtractor);
 	}
+	
+	@Override public boolean isPushOrFinal()
+	{
+		return false;
+	}
 }

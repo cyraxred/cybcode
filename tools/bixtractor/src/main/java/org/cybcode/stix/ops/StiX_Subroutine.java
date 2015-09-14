@@ -3,7 +3,7 @@ package org.cybcode.stix.ops;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMonoPush;
 import org.cybcode.stix.core.xecutors.XecutorMono;
@@ -43,7 +43,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		return p1.getSourceXtractor().resultType();
 	}
 
-	@Override public StiXecutor createXecutor(StiXpressionContext context)
+	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		return isRepeatable() ? XECUTOR_PUSH : XECUTOR;
 	}
@@ -76,11 +76,16 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		}
 	}
 	
-	private class EntryPoint extends StiXtractorMonoPush<S, S>
+	class EntryPoint extends StiXtractorMonoPush<S, S>
 	{
 		private EntryPoint(StiXtractor<? extends S> p0)
 		{
 			super(p0);
+		}
+		
+		@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
+		{
+			return context.createFrameXecutor();
 		}
 
 		@Override public Class<? extends S> resultType()
@@ -101,6 +106,11 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		@Override protected S calculate(S p0)
 		{
 			return p0;
+		}
+
+		public StiXtractor<T> getSubroutine()
+		{
+			return StiX_Subroutine.this;
 		}
 	}
 }

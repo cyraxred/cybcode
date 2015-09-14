@@ -20,7 +20,7 @@ class MappedFieldHandler implements StiXNumberedFieldXource.FieldContainer
 		return maxFieldId;
 	}
 	
-	@Override public FieldHandler prepare(int fieldId)
+	@Override public FieldHandler findFieldHandler(int fieldId)
 	{
 		return receivers.get(fieldId);
 	}

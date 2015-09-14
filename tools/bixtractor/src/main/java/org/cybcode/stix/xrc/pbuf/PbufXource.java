@@ -55,7 +55,7 @@ public class PbufXource extends StiXNumberedFieldXource<Binary, PbufFieldValue>
 			while ((tag = in.readTag()) != 0) {
 				int fieldId = tag >> 3;
 				if (fieldId > maxField) break;
-				FieldHandler receiver = container.prepare(fieldId);
+				FieldHandler receiver = container.findFieldHandler(fieldId);
 				if (receiver == null) {
 					in.skipField(tag);
 					continue;

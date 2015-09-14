@@ -17,7 +17,7 @@ class SingletonFieldHandler extends SimpleFieldValueHandler implements StiXNumbe
 		return receiver.getFieldDetails();
 	}
 
-	@Override public FieldHandler prepare(int fieldId)
+	@Override public FieldHandler findFieldHandler(int fieldId)
 	{
 		if (fieldId != receiver.getFieldDetails().intValue()) return null;
 		return this;

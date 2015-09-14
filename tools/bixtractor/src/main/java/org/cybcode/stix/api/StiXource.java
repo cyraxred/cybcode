@@ -50,7 +50,7 @@ public abstract class StiXource<S, C, D, InnerFieldType> implements StiXtractor<
 
 	protected abstract InnerFieldType prepareValue(S value);
 
-	@Override public StiXourceXecutor<D> createXecutor(StiXpressionContext context)
+	@Override public StiXourceXecutor<D> createXecutor(StiXecutorConstructionContext context)
 	{
 		List<? extends StiXourceNestedXecutor<?>> fields0 = context.getNestedXources();
 		@SuppressWarnings("unchecked") List<StiXourceNestedXecutor<D>> fields = (List<StiXourceNestedXecutor<D>>) fields0;

@@ -2,7 +2,7 @@ package org.cybcode.stix.core;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xecutors.AbstractXecutor;
 import org.cybcode.stix.core.xecutors.XecutorFinal;
@@ -40,7 +40,7 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 	protected abstract A aggregateNextValue(A accumulator, P0 p0);
 	protected abstract T calculate(A accumulator);
 
-	@Override public StiXecutor createXecutor(StiXpressionContext context)
+	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		return XecutorAggregate.INSTANCE;
 	}
@@ -87,11 +87,6 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 			
 			if (aggregator.aggregateNextAndIsFinal(context, pushedValue)) return XecutorFinal.getInstance(); 
 			return this;
-		}
-		
-		@Override public boolean isPushOrFinal()
-		{
-			return false;
 		}
 	}
 }

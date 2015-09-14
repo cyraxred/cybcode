@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
@@ -190,7 +190,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 			this.notifyTargets = notifyTargets;
 		}
 
-		@Override public StiXecutor createXecutor(StiXpressionContext context)
+		@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 		{
 			return xtractor.createXecutor(context);
 		}
@@ -218,6 +218,11 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		@Override public List<PushTarget> getNotifyTargets()
 		{
 			return notifyTargets;
+		}
+
+		@Override public int getFrameResultIndex()
+		{
+			throw new IllegalStateException();
 		}
 	}
 }

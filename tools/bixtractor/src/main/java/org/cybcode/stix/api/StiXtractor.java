@@ -6,7 +6,7 @@ public interface StiXtractor<T>
 {
 	public interface Commutative {}
 	
-	StiXecutor createXecutor(StiXpressionContext context);
+	StiXecutor createXecutor(StiXecutorConstructionContext context);
 	
 	T evaluate(StiXecutorContext context);
 	void visit(Visitor visitor);

@@ -22,7 +22,7 @@ public class StiXourceFnField<P0, T> extends StiXourceField<P0, T>
 		return helper.getComplexityOf(fn, 100);
 	}
 	
-	@Override protected T transform(P0 pv0)
+	@Override protected T calculate(P0 pv0)
 	{
 		return fn.apply(pv0);
 	}

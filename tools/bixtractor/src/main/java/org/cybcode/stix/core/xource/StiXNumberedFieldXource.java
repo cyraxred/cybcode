@@ -19,7 +19,7 @@ public abstract class StiXNumberedFieldXource<S, V extends StiXNumberedFieldXour
 
 	public interface FieldContainer
 	{
-		FieldHandler prepare(int fieldId);
+		FieldHandler findFieldHandler(int fieldId);
 		int getMaxFieldId();
 	}
 	

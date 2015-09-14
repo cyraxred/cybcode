@@ -86,16 +86,12 @@ public class XecutorPartial extends AbstractXecutor
 		if (this.state == nextState) return this;
 		
 		if (callback.isPushToFinal(context, pushedParameter, pushedValue)) return XecutorFinal.getInstance();
-		if (pushedParameter.isRepeatable()) return this;
+		
+		if (!pushedParameter.hasValue(context)) return this; //the parameter is not available in the context, means it is direct-push parameter
 
 		int allParamMask = getAllParametersMask(paramCount);
 		if (allParamMask == (nextState & allParamMask)) return XecutorFinal.getInstance();
 		
 		return valueOf(nextState);
-	}
-
-	@Override public boolean isPushOrFinal()
-	{
-		return false;
 	}
 }

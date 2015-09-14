@@ -1,13 +1,18 @@
 package org.cybcode.stix.core.xecutors;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXpressionContext;
+import org.cybcode.stix.api.StiXourceNestedXecutor;
+import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
+import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 import org.cybcode.stix.ops.StiX_Root;
+
+import com.google.common.collect.ImmutableList;
 
 public class StiXecutorDefaultContext implements StiXecutorContext
 {
@@ -49,38 +54,71 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		} else {
 			currentFrame = currentFrame.closeAllFrames();
 		}
-		resetFrameContext(rootValue);
-		if (nodes.length == 1) {
-			currentFrame.setFinalIfResult(0);
-		} else {
+		resetFrameContent();
+		
+		currentIndex = 0;
+		currentNode = nodes[0];
+		setFinalValue(0, rootValue);
+		sequencer.addPushTargets(currentNode.getPushTargets());
+		sequencer.addNotifyTargets(currentNode.getNotifyTargets());
+		
+		if (nodes.length > 1) {
 			setCurrentIndex(1);
 		}
 		stats.onEvaluate();
 	}
 
-	private void resetFrameContext(Object rootValue)
+	private void resetFrameContent()
 	{
 		int rootIndex = currentFrame.getRootIndex();
 		int resultIndex = currentFrame.getResultIndex();
-		if (rootIndex < 0) throw new IllegalStateException();
 		if (currentState[rootIndex] != null) {
 			Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
 			Arrays.fill(results, rootIndex, resultIndex + 1, null);
 		}
-		currentNode = nodes[rootIndex];
-		setValue(rootIndex, rootValue);
-		currentState[rootIndex] = DefaultXecutors.FINAL;
+	}
 
-		sequencer.addPushTargets(currentNode.getPushTargets());
-		sequencer.addNotifyTargets(currentNode.getNotifyTargets());
+	private static class FrameStartXecutor implements StiXecutor
+	{
+		private static final StiXecutor INSTANCE = new FrameStartXecutor();
+		
+		@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
+		{
+			((StiXecutorDefaultContext) context).enterFrame();
+			return DefaultXecutors.FINAL;
+		}
+
+		@Override public boolean isPushOrFinal() { return false; }
+	}
+	
+	private class XecutorConstructionContext implements StiXecutorConstructionContext
+	{
+		private StiXpressionNode node;
+		
+		@Override public List<StiXourceNestedXecutor<?>> getNestedXources()
+		{
+			List<PushTarget> pushTargets = node.getPushTargets();
+			if (pushTargets.isEmpty()) return ImmutableList.of();
+			
+			throw new UnsupportedOperationException();
+		}
+
+		@Override public StiXecutor createFrameXecutor()
+		{
+			int index = node.getFrameResultIndex(); //checks validity of the claim to use frame
+			if (index < 0 || index >= nodes.length) throw new IllegalStateException("Node #" + node.getIndex() + "has returned a wrong frameResultIndex=" + index);
+			return FrameStartXecutor.INSTANCE;
+		}
 	}
 	
 	private void createInitialState()
 	{
-		StiXpressionContext context = new StiXpressionDefaultContext();
+		XecutorConstructionContext context = new XecutorConstructionContext();
 		for (int i = nodes.length - 1; i >= 0; i--) {
-			StiXecutor xecutor = nodes[i].createXecutor(context);
-			if (xecutor == null) throw new NullPointerException();
+			StiXpressionNode node = nodes[i];
+			context.node = node;
+			StiXecutor xecutor = node.createXecutor(context);
+			if (xecutor == null) throw new NullPointerException("Xecutor can't be null, xtractor=" + node.getXtractor());
 			initialState[i] = xecutor; 
 		}
 	}
@@ -89,12 +127,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	{
 		StiXecutor state = currentState[xtractorIndex];
 		return state == DefaultXecutors.FINAL;
-	}
-	
-	private boolean isPushOrFinal(int xtractorIndex)
-	{
-		StiXecutor xecutor = currentState[xtractorIndex];
-		return xecutor != null && xecutor.isPushOrFinal();
 	}
 	
 	private boolean hasPrivateValue(int xtractorIndex)
@@ -169,14 +201,29 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		return result;
 	}
 	
+	private void enterFrame()
+	{
+		currentFrame = currentFrame.createInner(currentIndex, currentNode.getFrameResultIndex());
+		resetFrameContent();
+	}
+	
+	private void exitFrame()
+	{
+		if (!currentFrame.isInnerFrame()) return; //don't need for the outermost frame
+		int startIndex = currentFrame.getRootIndex();
+		currentFrame = currentFrame.closeFrame();
+		currentState[startIndex] = initialState[startIndex]; //clears FINAL to enable frame re-enter and not null to enable frame cleanup
+	}
+	
 	private boolean evaluateCurrent()
 	{
 		int index = currentIndex();
 		StiXpressionNode node = currentNode;
 		if (node == null) return false;
 
-		if (isPushOrFinal(index)) {
-			if (hasPublicValue(index)) return false;
+		StiXecutor xecutor = currentState[index];
+		if (xecutor != null && xecutor.isPushOrFinal()) {
+			if (xecutor == DefaultXecutors.FINAL) return false;
 			setFinalValue(index, null);
 			return false;
 		} 
@@ -312,8 +359,8 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 
 	private boolean nextNode()
 	{
-		if (currentFrame.isEndOfFrame(currentIndex) && currentFrame.isInnerFrame()) {
-			currentFrame = currentFrame.closeFrame();
+		if (currentFrame.isEndOfFrame(currentIndex)) {
+			exitFrame();
 		}
 		int nextIndex = currentIndex + 1;
 		if (nextIndex >= nodes.length) return false;
