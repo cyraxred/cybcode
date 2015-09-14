@@ -26,7 +26,7 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 		this.p1 = new Parameter<P1>(p1);
 	}
 	
-	StiXtractorDuo(Parameter<P0> p0, Parameter<P1> p1)
+	protected StiXtractorDuo(Parameter<P0> p0, Parameter<P1> p1)
 	{
 		this.p0 = p0;
 		this.p1 = p1;

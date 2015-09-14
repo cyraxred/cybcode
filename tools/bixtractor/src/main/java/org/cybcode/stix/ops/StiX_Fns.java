@@ -26,7 +26,7 @@ public class StiX_Fns
 	}
 	
 	private enum FnType {
-		NOT(2), NEG(5), AS_INT(50), AS_FLOAT(50), AS_BOOL(50), AS_STRING(50);
+		NOT(2), NEG(5), AS_INT(50), AS_FLOAT(50), AS_BOOL(50), AS_STRING(50), IS_NULL(10);
 
 		private final int complexity;
 		private FnType(int complexity) { this.complexity = complexity; }
@@ -135,6 +135,17 @@ public class StiX_Fns
 
 		@Override protected FnType typeToken() { return FnType.AS_STRING; }
 		@Override public Class<String> resultType() { return String.class; }
+	};
+
+	public static StiXFunction<Object, Boolean> IS_NULL = new Fn<Object, Boolean>()
+	{
+		@Override public Boolean apply(Object p0)
+		{
+			return p0 == null;
+		}
+
+		@Override protected FnType typeToken() { return FnType.AS_STRING; }
+		@Override public Class<Boolean> resultType() { return Boolean.class; }
 	};
 
 	private abstract static class Fn<P0, T> implements StiXFunction<P0, T>

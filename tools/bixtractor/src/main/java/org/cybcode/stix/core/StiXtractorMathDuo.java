@@ -4,11 +4,16 @@ import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXtractorMathDuo extends StiXtractorDuo<Number, Number, Number>
 {
-	public StiXtractorMathDuo(StiXtractor<? extends Number> p0, StiXtractor<? extends Number> p1)
+	protected StiXtractorMathDuo(StiXtractor<? extends Number> p0, StiXtractor<? extends Number> p1)
 	{
 		super(p0, p1);
 	}
 
+	protected StiXtractorMathDuo(Parameter<Number> p0, Parameter<Number> p1)
+	{
+		super(p0, p1);
+	}
+	
 	@Override public Object getOperationToken()
 	{
 		return null;

@@ -14,7 +14,7 @@ public abstract class StiXtractorMono<P0, T> implements StiXtractor<T>
 
 	public StiXtractorMono(StiXtractor<? extends P0> p0)
 	{
-		this.p0 = new Parameter<P0>(p0);
+		this.p0 = new NotifyParameter<P0>(p0);
 	}
 
 	StiXtractorMono(Parameter<P0> p0)

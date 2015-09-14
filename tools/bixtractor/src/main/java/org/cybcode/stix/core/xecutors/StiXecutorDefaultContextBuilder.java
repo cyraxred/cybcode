@@ -47,11 +47,24 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 	{
 		for (int i = node.getTargetCount() - 1; i >= 0; i--) {
 			PushTarget pushTarget = createPushTarget(node, i);
-			(node.isPushTarget(i) ? pushTargets : notifyTargets).add(pushTarget);
+			switch (pushTarget.getXtractorParam().getPushMode()) {
+				case NEVER: 
+					break;
+				case PUSH_ALL: 
+					pushTargets.add(pushTarget); 
+					break;
+				case REGULAR: 
+					if (!node.isNotifyOnRegularTarget(i)) break;
+				case NOTIFY_ON_FINAL: 
+					notifyTargets.add(pushTarget); 
+					break;
+				default:
+					throw new UnsupportedOperationException();
+			}
 		}
 	}
 
-	private static PushTarget createPushTarget(NodeDetails node, int targetIndex)
+	private static NodePushTarget createPushTarget(NodeDetails node, int targetIndex)
 	{
 		Parameter<?> targetParam = node.getTargetParameter(targetIndex);
 		int targetXtractorIndex = node.getTargetXtractorIndex(targetIndex);
@@ -82,34 +95,6 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 				pushTargets = ImmutableList.of();
 				notifyTargets = ImmutableList.of();
 				break;
-			case 1: {
-				PushTarget pt0 = createPushTarget(node, 0);
-				if (node.isPushTarget(0)) {
-					pushTargets = ImmutableList.of(pt0);
-					notifyTargets = ImmutableList.of();
-				} else {
-					pushTargets = ImmutableList.of();
-					notifyTargets = ImmutableList.of(pt0);
-				}
-				break;
-			}
-			case 2: {
-				PushTarget pt0 = createPushTarget(node, 0);
-				PushTarget pt1 = createPushTarget(node, 1);
-				boolean isFirstPush = node.isPushTarget(0);
-				if (isFirstPush == node.isPushTarget(1)) {
-					pushTargets = ImmutableList.of(pt0, pt1);
-					notifyTargets = ImmutableList.of();
-				} else {
-					pushTargets = ImmutableList.of(pt0);
-					notifyTargets = ImmutableList.of(pt1);
-				}
-				if (!isFirstPush) {
-					List<PushTarget> list = pushTargets;
-					pushTargets = notifyTargets;
-					notifyTargets = list;
-				}
-			}
 			default: {
 				pushTargets = new ArrayList<>(targetCount);
 				notifyTargets = new ArrayList<>(targetCount);

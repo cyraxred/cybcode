@@ -12,7 +12,7 @@ public interface StiXecutorContextBuilder
 		int getTargetCount();
 		int getTargetXtractorIndex(int index);
 		StiXtractor.Parameter<?> getTargetParameter(int index);
-		boolean isPushTarget(int index);
+		boolean isNotifyOnRegularTarget(int index);
 	}
 	
 	void setCapacities(int nodesCount, int paramsCount, int linksCount);

@@ -39,10 +39,10 @@ public class StiX_Ops
 	public static StiXtractor<Number> rem(StiXtractor<? extends Number> p0, StiXtractor<? extends Number> p1) { return new StiX_Rem(p0, p1); }
 
 	public static StiXtractor<Boolean> not(StiXtractor<? extends Boolean> p0) { return new StiX_Fn<>(p0, StiX_Fns.NOT); } 
-	public static StiXtractor<Boolean> and(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1) { return new StiX_And(p0, p1, null); } 
+	public static StiXtractor<Boolean> and(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1) { return new StiX_And(p0, p1); } 
 	public static StiXtractor<Boolean> andA(StiXtractor<? extends Boolean> p0) { return new StiX_AndA(p0); } 
 	public static StiXtractor<Boolean> andIfNull(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, boolean nullValue) { return new StiX_And(p0, p1, nullValue); } 
-	public static StiXtractor<Boolean> or(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1) { return new StiX_Or(p0, p1, null); }
+	public static StiXtractor<Boolean> or(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1) { return new StiX_Or(p0, p1); }
 	public static StiXtractor<Boolean> orA(StiXtractor<? extends Boolean> p0) { return new StiX_OrA(p0); }
 	public static StiXtractor<Boolean> orIfNull(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, boolean nullValue) { return new StiX_Or(p0, p1, nullValue); } 
 	public static StiXtractor<Boolean> xor(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1) { return new StiX_Xor(p0, p1); }
@@ -62,8 +62,8 @@ public class StiX_Ops
 	public static <T> StiXtractor<T> nullIf(StiXtractor<? extends T> pValue, StiXtractor<? extends T> pValueForNull) { return new StiX_NullIf<T>(pValue, pValueForNull); } 
 	public static <T> StiXtractor<T> ifNull(StiXtractor<? extends T> pValue, StiXtractor<? extends T> pValueForNull) { return new StiX_IfNull<T>(pValue, pValueForNull); } 
 
-	public static StiXtractor<Boolean> isNull(StiXtractor<?> p0) { return new StiX_IsNull(p0); } 
-	public static StiXtractor<Boolean> isNotNull(StiXtractor<?> p0) { return new StiX_IsNotNull(p0); } 
+	public static StiXtractor<Boolean> isNull(StiXtractor<?> p0) { return new StiX_Fn<>(p0, StiX_Fns.IS_NULL); }
+	public static StiXtractor<Boolean> isNotNull(StiXtractor<?> p0) { return not(isNull(p0)); } 
 
 	public static <P, T> StiXtractor<T> fn(StiXtractor<P> p0, StiXFunction<P, T> fn) { return new StiX_Fn<P, T>(p0, fn); } 
 	public static <P, T> StiXtractor<T> fn(StiXtractor<P> p0, Function<P, T> fn, int complexity, Class<T> resultType, Object token) { return new StiX_Fn<P, T>(p0, StiX_Fns.of(fn, complexity, resultType, token)); }

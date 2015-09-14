@@ -5,7 +5,12 @@ import org.cybcode.stix.core.StiXtractorBoolDuo;
 
 public class StiX_Or extends StiXtractorBoolDuo
 {
-	public StiX_Or(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, Boolean defaultParamValue)
+	public StiX_Or(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1)
+	{
+		super(p0, p1);
+	}
+
+	public StiX_Or(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, boolean defaultParamValue)
 	{
 		super(p0, p1, defaultParamValue);
 	}

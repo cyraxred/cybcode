@@ -241,10 +241,10 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 	{
 		return consumers.get(index).parameter;
 	}
-
-	@Override public boolean isPushTarget(int index)
+	
+	@Override public boolean isNotifyOnRegularTarget(int index)
 	{
-		return getTargetParameter(index).isPushParameter();
+		return false;
 	}
 
 	public static StiXpressionParserSlot parse(ParserContext context, StiXtractor<?> resultNode)

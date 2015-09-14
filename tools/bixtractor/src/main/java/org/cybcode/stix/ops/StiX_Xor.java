@@ -7,7 +7,7 @@ public class StiX_Xor extends StiXtractorBoolDuo
 {
 	public StiX_Xor(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1)
 	{
-		super(p0, p1, null);
+		super(p0, p1);
 	}
 
 	@Override protected boolean calculate(boolean p0, boolean p1)

@@ -28,6 +28,11 @@ public interface StiXtractor<T> extends StiXtractorBase
 		void visitParameter(Parameter<?> param);	
 	}
 
+	enum ParameterPushMode
+	{
+		REGULAR, PUSH_ALL, NOTIFY_ON_FINAL, NEVER
+	}
+	
 	class Parameter<P>
 	{
 		private int paramIndex = -1;
@@ -83,9 +88,9 @@ public interface StiXtractor<T> extends StiXtractorBase
 			return false;
 		}
 		
-		public boolean isPushParameter()
+		public ParameterPushMode getPushMode()
 		{
-			return false;
+			return ParameterPushMode.REGULAR;
 		}
 		
 		@Override public String toString()
@@ -114,7 +119,7 @@ public interface StiXtractor<T> extends StiXtractorBase
 			this.isRepeatable = source.isRepeatable();
 		}
 
-		public <T> StiXtractor<? extends T> tryCurryIfConst(StiXtractor<T> xtractor)
+		@Override public <T> StiXtractor<? extends T> tryCurryIfConst(StiXtractor<T> xtractor)
 		{
 			return isRepeatable ? xtractor : super.tryCurryIfConst(xtractor);
 		}
@@ -124,9 +129,22 @@ public interface StiXtractor<T> extends StiXtractorBase
 			return isRepeatable;
 		}
 
-		public boolean isPushParameter()
+		@Override public ParameterPushMode getPushMode()
 		{
-			return true;
+			return ParameterPushMode.PUSH_ALL;
+		}
+	}
+
+	class NotifyParameter<P> extends Parameter<P>
+	{
+		public NotifyParameter(StiXtractor<? extends P> source)
+		{
+			super(source);
+		}
+
+		@Override public ParameterPushMode getPushMode()
+		{
+			return ParameterPushMode.NOTIFY_ON_FINAL;
 		}
 	}
 }

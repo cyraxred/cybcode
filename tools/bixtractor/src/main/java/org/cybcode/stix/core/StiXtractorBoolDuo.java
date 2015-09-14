@@ -6,9 +6,15 @@ public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean
 {
 	protected final Boolean	defaultValue;
 
-	public StiXtractorBoolDuo(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, Boolean defaultParamValue)
+	protected StiXtractorBoolDuo(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1)
 	{
 		super(p0, p1);
+		this.defaultValue = null;
+	}
+
+	protected StiXtractorBoolDuo(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, boolean defaultParamValue)
+	{
+		super(new NotifyParameter<>(p0), new NotifyParameter<>(p1));
 		this.defaultValue = defaultParamValue;
 	}
 
