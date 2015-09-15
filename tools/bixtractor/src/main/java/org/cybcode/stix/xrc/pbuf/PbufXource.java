@@ -90,7 +90,7 @@ public class PbufXource extends StiXNumberedFieldXource<Binary, PbufFieldValue>
 				}
 				PbufFieldValue fieldValue = new PbufFieldValue(fieldId, wireType, rawValue);
 				receiver.process(context, fieldValue);
-			} while (context.hasResultValue());
+			} while (!context.hasResultValue());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

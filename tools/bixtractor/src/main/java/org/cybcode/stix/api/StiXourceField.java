@@ -2,7 +2,7 @@ package org.cybcode.stix.api;
 
 import org.cybcode.stix.core.StiXtractorMonoInterim;
 
-public abstract class StiXourceField<P0, T> extends StiXtractorMonoInterim<P0, T>
+public abstract class StiXourceField<P0, T> extends StiXtractorMonoInterim<P0, T> implements StiXource.FieldTransformer
 {
 	public enum ValueMode { SINGLE, FIRST, LAST, MULTIPLE }
 	

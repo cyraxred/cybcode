@@ -6,6 +6,8 @@ import org.cybcode.stix.core.xecutors.XecutorFinal;
 
 public abstract class StiXource<S, C, D, InnerFieldType> implements StiXtractor<InnerFieldType>
 {
+	public interface FieldTransformer {}
+	
 	private abstract class Xecutor implements StiXourceXecutor<D> 
 	{
 		@Override public boolean isPushOrFinal()

@@ -1,12 +1,15 @@
 package org.cybcode.stix.core.xecutors;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXourceNestedXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXourceXecutor;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
@@ -91,6 +94,24 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		@Override public boolean isPushOrFinal() { return false; }
 	}
 	
+	private static class NestedXecutor implements StiXourceNestedXecutor<Object>
+	{
+		private final PushTarget target;
+		private final Object fieldDetails;
+		
+		public NestedXecutor(PushTarget target, Object fieldDetails) 
+		{ 
+			this.target = target; 
+			this.fieldDetails = fieldDetails;
+		}
+		
+		@Override public Object getFieldDetails() { return fieldDetails; }
+		@Override public void push(StiXecutorContext context, Object nestedSource)
+		{
+			((StiXecutorDefaultContext) context).evaluateDirectPush(target, nestedSource);
+		}
+	}
+	
 	private class XecutorConstructionContext implements StiXecutorConstructionContext
 	{
 		private StiXpressionNode node;
@@ -100,7 +121,25 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			List<PushTarget> pushTargets = node.getPushTargets();
 			if (pushTargets.isEmpty()) return ImmutableList.of();
 			
-			throw new UnsupportedOperationException();
+			List<StiXourceNestedXecutor<?>> result = new ArrayList<>(pushTargets.size());
+			for (PushTarget pushTarget : pushTargets) {
+				int targetIndex = pushTarget.getXtractorIndex();
+
+				StiXecutor targetXecutor = initialState[targetIndex];
+				if (targetXecutor instanceof StiXourceXecutor) {
+					Object fieldDetails = ((StiXourceXecutor<?>) targetXecutor).getFieldDetails();
+					result.add(new NestedXecutor(pushTarget, fieldDetails));
+				} else {
+					StiXpressionNode targetNode = nodes[targetIndex];
+					StiXtractor<?> xtractor = targetNode.getXtractor();
+					if (!(xtractor instanceof StiXource.FieldTransformer)) {
+						throw new IllegalStateException("Regular Xtractor can't be bound to a Xource: " + xtractor.getClass());
+					}
+					//TODO - how to pass regular pushes? - need a separate callback
+				}
+			}
+			
+			return result;
 		}
 
 		@Override public StiXecutor createFrameXecutor()
@@ -114,7 +153,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	private void createInitialState()
 	{
 		XecutorConstructionContext context = new XecutorConstructionContext();
-		for (int i = nodes.length - 1; i >= 0; i--) {
+		for (int i = nodes.length - 1; i >= 0; i--) { //MUST BE in reversed order, otherwise StiXourceXecutor will fail to initialize due to missing dependencies 
 			StiXpressionNode node = nodes[i];
 			context.node = node;
 			StiXecutor xecutor = node.createXecutor(context);
@@ -253,6 +292,14 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		int index = target.getXtractorIndex();
 		if (hasPublicValue(index)) return false;
 		Object pushedValue = getValue(target.getValueIndex());
+		evaluatePush(index, target.getXtractorParam(), pushedValue);
+		return true;
+	}
+	
+	private boolean evaluateDirectPush(StiXpressionNode.PushTarget target, Object pushedValue)
+	{
+		int index = target.getXtractorIndex();
+		if (hasPublicValue(index)) return false;
 		evaluatePush(index, target.getXtractorParam(), pushedValue);
 		return true;
 	}
