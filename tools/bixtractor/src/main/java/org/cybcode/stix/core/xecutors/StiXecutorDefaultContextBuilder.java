@@ -43,15 +43,18 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		return params;
 	}
 
-	private static void getNodeTargets(NodeDetails node, List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
+	private static void getNodeTargets(NodeDetails node, List<PushTarget> callbackTargets, List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
 	{
 		for (int i = node.getTargetCount() - 1; i >= 0; i--) {
 			PushTarget pushTarget = createPushTarget(node, i);
-			switch (pushTarget.getXtractorParam().getPushMode()) {
+			switch (pushTarget.getXtractorParam().getMode()) {
 				case NEVER: 
 					break;
 				case PUSH_ALL: 
 					pushTargets.add(pushTarget); 
+					break;
+				case CALLBACK:
+					callbackTargets.add(pushTarget);
 					break;
 				case REGULAR: 
 					if (!node.isNotifyOnRegularTarget(i)) break;
@@ -86,6 +89,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 
 	private static void getNodeTargets(NodeDetails node, Node contextNode)
 	{
+		List<PushTarget> callbackTargets;
 		List<PushTarget> pushTargets;
 		List<PushTarget> notifyTargets;
 		
@@ -94,33 +98,21 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 			case 0:
 				pushTargets = ImmutableList.of();
 				notifyTargets = ImmutableList.of();
+				callbackTargets = ImmutableList.of();
 				break;
 			default: {
+				callbackTargets = new ArrayList<>(targetCount);
 				pushTargets = new ArrayList<>(targetCount);
 				notifyTargets = new ArrayList<>(targetCount);
-				getNodeTargets(node, pushTargets, notifyTargets);
-				if (notifyTargets.isEmpty()) {
-					notifyTargets = ImmutableList.of();
-					if (pushTargets.isEmpty()) {
-						pushTargets = ImmutableList.of();
-					} else {
-						pushTargets = ImmutableList.copyOf(pushTargets);
-					}
-				} else {
-					if (pushTargets.isEmpty()) {
-						pushTargets = ImmutableList.of();
-						notifyTargets = ImmutableList.copyOf(notifyTargets);
-					} else {
-						int pushTargetCount = pushTargets.size();
-						pushTargets.addAll(notifyTargets);
-						pushTargets = ImmutableList.copyOf(pushTargets);
-						notifyTargets = pushTargets.subList(pushTargetCount, pushTargets.size());
-						pushTargets = pushTargets.subList(0, pushTargetCount);
-					}
-				}
+				
+				getNodeTargets(node, callbackTargets, pushTargets, notifyTargets);
+
+				callbackTargets = ImmutableList.copyOf(callbackTargets);
+				pushTargets = ImmutableList.copyOf(pushTargets);
+				notifyTargets = ImmutableList.copyOf(notifyTargets);
 			}
 		}
-		contextNode.setTargets(pushTargets, notifyTargets);
+		contextNode.setTargets(callbackTargets, pushTargets, notifyTargets);
 	}
 	
 	@Override public void getNodeTargets()
@@ -174,6 +166,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		private final int[] params;
 		private List<PushTarget> pushTargets;
 		private List<PushTarget> notifyTargets;
+		private List<PushTarget> callbackTargets;
 
 		Node(int xtractorIndex, StiXtractor<?> xtractor, int[] params)
 		{
@@ -182,10 +175,11 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 			this.params = params;
 		}
 
-		private void setTargets(List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
+		private void setTargets(List<PushTarget> callbackTargets, List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
 		{
-			if (pushTargets == null || notifyTargets == null) throw new NullPointerException();
+			if (callbackTargets == null || pushTargets == null || notifyTargets == null) throw new NullPointerException();
 			if (this.pushTargets != null) throw new IllegalStateException();
+			this.callbackTargets = callbackTargets;
 			this.pushTargets = pushTargets;
 			this.notifyTargets = notifyTargets;
 		}
@@ -210,6 +204,10 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 			return params[paramIndex];
 		}
 
+		@Override public List<PushTarget> getCallbackTargets()
+		{
+			return callbackTargets;
+		}
 		@Override public List<PushTarget> getPushTargets()
 		{
 			return pushTargets;

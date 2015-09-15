@@ -1,11 +1,10 @@
 package org.cybcode.stix.api;
 
-
 public class StiXourceFnField<P0, T> extends StiXourceField<P0, T>
 {
 	private final StiXFunction<P0, T> fn;
 
-	public StiXourceFnField(StiXource<?, ?, ?, P0> p0, ValueMode mode, StiXFunction<P0, T> fn)
+	public StiXourceFnField(StiXource<?, ?, ?, P0> p0, ValueLimit mode, StiXFunction<P0, T> fn)
 	{
 		super(p0, mode);
 		if (fn == null) throw new NullPointerException();
@@ -19,7 +18,7 @@ public class StiXourceFnField<P0, T> extends StiXourceField<P0, T>
 
 	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return helper.getComplexityOf(fn, 100);
+		return helper.getComplexityOf(fn, fn.getOperationComplexity());
 	}
 	
 	@Override protected T calculate(P0 pv0)

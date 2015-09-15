@@ -1,12 +1,12 @@
 package org.cybcode.stix.core.xource;
 
-import org.cybcode.stix.api.StiXourceNestedXecutor;
+import org.cybcode.stix.api.StiXecutorCallback;
 
 abstract class SimpleFieldValueHandler implements StiXNumberedFieldXource.FieldHandler
 {
-	protected final StiXourceNestedXecutor<Integer> receiver;
+	protected final StiXecutorCallback<Integer> receiver;
 
-	public SimpleFieldValueHandler(StiXourceNestedXecutor<Integer> receiver)
+	public SimpleFieldValueHandler(StiXecutorCallback<Integer> receiver)
 	{
 		this.receiver = receiver;
 	}

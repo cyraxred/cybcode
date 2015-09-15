@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXource;
-import org.cybcode.stix.api.StiXourceNestedXecutor;
+import org.cybcode.stix.api.StiXecutorCallback;
 import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXNumberedFieldXource<S, V extends StiXNumberedFieldXource.FieldValue> extends StiXource<S, StiXNumberedFieldXource.FieldContainer, Integer, V>
@@ -42,13 +42,13 @@ public abstract class StiXNumberedFieldXource<S, V extends StiXNumberedFieldXour
 		this.fieldId = fieldId;
 	}
 
-	@Override protected FieldContainer createFieldContainer(List<StiXourceNestedXecutor<Integer>> receivers)
+	@Override protected FieldContainer createFieldContainer(List<StiXecutorCallback<Integer>> receivers)
 	{
 		switch (receivers.size()) {
 			case 0: 
 				throw new IllegalArgumentException("Must have receivers: source=" + this);
 			case 1: {
-				StiXourceNestedXecutor<Integer> receiver = receivers.get(0);
+				StiXecutorCallback<Integer> receiver = receivers.get(0);
 				return new SingletonFieldHandler(receiver);
 			}
 				
@@ -58,7 +58,7 @@ public abstract class StiXNumberedFieldXource<S, V extends StiXNumberedFieldXour
 		int maxFieldId = Integer.MIN_VALUE;
 		
 		Map<Integer, StackedFieldValueHandler> receiversMap = new HashMap<>(receivers.size(), 1f);
-		for (StiXourceNestedXecutor<Integer> receiver : receivers) {
+		for (StiXecutorCallback<Integer> receiver : receivers) {
 			int fieldId = validateReceiver(receiver);
 			minFieldId = Math.min(minFieldId, fieldId);
 			maxFieldId = Math.max(maxFieldId, fieldId);
@@ -76,7 +76,7 @@ public abstract class StiXNumberedFieldXource<S, V extends StiXNumberedFieldXour
 		return new ArrayFieldHandler(minFieldId, maxFieldId, receiversMap);
 	}
 	
-	private int validateReceiver(StiXourceNestedXecutor<Integer> receiver)
+	private int validateReceiver(StiXecutorCallback<Integer> receiver)
 	{
 		Integer fieldId = receiver.getFieldDetails();
 		if (fieldId == null || fieldId <= 0) throw new IllegalArgumentException("Invalid field id: id=" + fieldId + ", receiver=" + receiver); 

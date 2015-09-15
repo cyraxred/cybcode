@@ -31,9 +31,9 @@ public interface StiXtractor<T>
 		void visitParameter(Parameter<?> param);	
 	}
 
-	enum ParameterPushMode
+	enum ParameterMode
 	{
-		REGULAR, PUSH_ALL, NOTIFY_ON_FINAL, NEVER
+		REGULAR, PUSH_ALL, NOTIFY_ON_FINAL, NEVER, CALLBACK
 	}
 	
 	class Parameter<P>
@@ -90,10 +90,14 @@ public interface StiXtractor<T>
 		{
 			return false;
 		}
-		
-		public ParameterPushMode getPushMode()
+
+		/**
+		 * DO NOT EVER OVERRIDE THIS METHOD
+		 * @return
+		 */
+		public ParameterMode getMode()
 		{
-			return ParameterPushMode.REGULAR;
+			return ParameterMode.REGULAR;
 		}
 		
 		@Override public String toString()
@@ -132,9 +136,9 @@ public interface StiXtractor<T>
 			return isRepeatable;
 		}
 
-		@Override public ParameterPushMode getPushMode()
+		@Override public ParameterMode getMode()
 		{
-			return ParameterPushMode.PUSH_ALL;
+			return ParameterMode.PUSH_ALL;
 		}
 	}
 
@@ -145,9 +149,9 @@ public interface StiXtractor<T>
 			super(source);
 		}
 
-		@Override public ParameterPushMode getPushMode()
+		@Override public ParameterMode getMode()
 		{
-			return ParameterPushMode.NOTIFY_ON_FINAL;
+			return ParameterMode.NOTIFY_ON_FINAL;
 		}
 	}
 }

@@ -1,13 +1,13 @@
 package org.cybcode.stix.core.xource;
 
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXourceNestedXecutor;
+import org.cybcode.stix.api.StiXecutorCallback;
 import org.cybcode.stix.core.xource.StiXNumberedFieldXource.FieldHandler;
 import org.cybcode.stix.core.xource.StiXNumberedFieldXource.FieldValue;
 
 class SingletonFieldHandler extends SimpleFieldValueHandler implements StiXNumberedFieldXource.FieldContainer 
 {
-	public SingletonFieldHandler(StiXourceNestedXecutor<Integer> receiver)
+	public SingletonFieldHandler(StiXecutorCallback<Integer> receiver)
 	{
 		super(receiver);
 	}

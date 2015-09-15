@@ -1,7 +1,7 @@
 package org.cybcode.stix.api;
 
-public interface StiXourceNestedXecutor<T>
+public interface StiXecutorCallback
 {
-	T getFieldDetails();
+	StiXtractor.Parameter<?> getFieldParameter();
 	void push(StiXecutorContext context, Object nestedSource);
 }

@@ -1,115 +1,120 @@
 package org.cybcode.stix.api;
 
-import java.util.List;
+import org.cybcode.stix.core.StiXtractorLimiter;
 
-import org.cybcode.stix.core.xecutors.XecutorFinal;
-
-public abstract class StiXource<S, C, D, InnerFieldType> implements StiXtractor<InnerFieldType>
+/**
+ * 
+ * @author Kirill "Red Cyrax" Ivkushkin <kirill@ivkushkin.name>
+ *
+ * @param <S> initial type to be parsed 
+ * @param <C> internal context that carries configuration details (e.g. list of nested fields) after compilation
+ * @param <D> description of a field
+ * @param <T> internal field type
+ */
+public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, C, T>
 {
-	public interface FieldTransformer {}
-	
-	private abstract class Xecutor implements StiXourceXecutor<D> 
+	private static abstract class SpecialParameter<T> extends PushParameter<T>
 	{
-		@Override public boolean isPushOrFinal()
-		{
-			return true;
-		}
-
-		@Override public D getFieldDetails()
-		{
-			return StiXource.this.getFieldDetails();
-		}
-	};
-
-	private final Parameter<InnerFieldType> p0;
-	private final boolean allowRepeatedParamValue;
-	
-	public StiXource(StiXtractor<? extends S> p0, boolean repeatable)
-	{
-		@SuppressWarnings("unchecked") StiXtractor<? extends InnerFieldType> px0 = (StiXtractor<? extends InnerFieldType>) (StiXtractor<?>) p0;
-		this.p0 = new PushParameter<InnerFieldType>(px0) 
-		{
-			@Override public InnerFieldType getValue(StiXParamContext context)
-			{
-				@SuppressWarnings("unchecked") S value = (S) context.getParamValue(getParamIndex());
-				InnerFieldType result = prepareValue(value);
-				return result;
-			}
-		};
-		this.allowRepeatedParamValue = repeatable;
+		private SpecialParameter(StiXtractor<? extends T> source) { super(source); }
+		protected abstract Object getOperationToken();
 	}
 
-	public StiXource(StiXource<?, ?, D, InnerFieldType> p0, boolean allowRepeatedParamValue)
+	private static final class FieldParameter<D, T> extends SpecialParameter<T>
 	{
-		this.p0 = new PushParameter<InnerFieldType>(p0);
-		this.allowRepeatedParamValue = allowRepeatedParamValue;
+		private final D	fieldDetails;
+
+		FieldParameter(StiXtractor<? extends T> source, D fieldDetails)
+		{
+			super(source);
+			if (fieldDetails == null) throw new NullPointerException();
+			this.fieldDetails = fieldDetails;
+		}
+		@Override protected Object getOperationToken() { return fieldDetails; }
+		
+		@Override public ParameterMode getMode()
+		{
+			return ParameterMode.CALLBACK;
+		}
+	}
+
+	private static final class TransformParameter<P, T> extends SpecialParameter<T>
+	{
+		private final StiXFunction<P, T> fn;
+
+		@SuppressWarnings("unchecked") public TransformParameter(StiXtractor<? extends P> p0, StiXFunction<P, T> fn)
+		{
+			super((StiXtractor<? extends T>) (StiXtractor<?>) p0); //ugly hack
+			if (fn == null) throw new NullPointerException();
+			this.fn = fn;
+		}
+		
+		@SuppressWarnings("unchecked") public T getValue(StiXParamContext context)
+		{
+			P value = (P) context.getParamValue(getParamIndex());
+			return fn.apply(value);
+		}		
+
+		@Override protected Object getOperationToken() { return fn.getOperationToken(); }
 	}
 	
-	@Override public boolean isRepeatable()
+	public StiXource(StiXource<?, ?, D, T> p0, D fieldDetails, StiXtractorLimiter.ValueLimit limitMode)
+	{
+		super(new FieldParameter<>(p0, fieldDetails), limitMode);
+		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
+	}
+
+	public StiXource(StiXtractor<? extends S> p0, StiXFunction<? super S, T> fn, ValueLimit limitMode)
+	{
+		super(new TransformParameter<>(p0, fn), limitMode);
+		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
+	}
+	
+	@Override public final boolean isRepeatable()
 	{
 		return true; //source can ALWAYS produce repeated values
 	}
 
-	protected abstract InnerFieldType prepareValue(S value);
+	@Override public abstract Class<T> resultType();
 
-	@Override public StiXourceXecutor<D> createXecutor(StiXecutorConstructionContext context)
-	{
-		List<? extends StiXourceNestedXecutor<?>> fields0 = context.getNestedXources();
-		@SuppressWarnings("unchecked") List<StiXourceNestedXecutor<D>> fields = (List<StiXourceNestedXecutor<D>>) fields0;
-		
-		final C container = createFieldContainer(fields);
-		if (allowRepeatedParamValue) {
-			return new Xecutor() {
-				@Override public StiXecutor push(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue)
-				{
-					@SuppressWarnings("unchecked") InnerFieldType value = (InnerFieldType) pushedValue;
-					process(context, container, value);
-					return this;
-				}
-			};
-		} else {
-			return new Xecutor() {
-				@Override public StiXecutor push(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue)
-				{
-					@SuppressWarnings("unchecked") InnerFieldType value = (InnerFieldType) pushedValue;
-					process(context, container, value);
-					return XecutorFinal.getInstance();
-				}
-			};
-		}
-	}
-
-	protected abstract void process(StiXecutorContext context, C container, InnerFieldType value);
-	protected abstract C createFieldContainer(List<StiXourceNestedXecutor<D>> fields);
-	protected abstract D getFieldDetails();
-
-	@Override public final InnerFieldType evaluate(StiXecutorContext context)
-	{
-		return null;
-	}
-
-	@Override public final void visit(StiXtractor.Visitor visitor)
-	{
-		visitor.visitParameter(p0);
-	}
-
-	@Override public Object getOperationToken()
-	{
-		return getFieldDetails();
-	}
-
-	@Override public int paramCount()
-	{
-		return 1;
-	}
-
-	@Override public StiXtractor<InnerFieldType> curry(int parameterIndex, Object value)
-	{
-		return null;
-	}
-	
 	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return helper.getComplexityOf(this, 1000);
+		return helper.getComplexityOf(this, 10_000);
+	}
+	
+	@Override public Object getOperationToken()
+	{
+		return TokenPair.of(super.getOperationToken(), ((SpecialParameter<?>) p0).getOperationToken());
+	}
+
+	@Override protected final T calculate(T p0)
+	{
+		return p0;
+	}
+	
+	@SuppressWarnings("unchecked") @Override protected final StiXecutor processPush(StiXecutorContext context, C info, Parameter<?> pushedParameter, Object pushedValue)
+	{
+		if (pushedValue == null) return null;
+		T valueForPush = processNestedFields(info, (T) pushedValue);
+		context.setInterimValue(valueForPush);
+		return getXecutor();
+	}
+
+	protected abstract T processNestedFields(C info, T pushedValue);
+
+	@SuppressWarnings("unchecked") @Override public final T evaluate(StiXecutorContext context)
+	{
+		return (T) context.getInterimValue();
+	}
+	
+	@Override public StiXtractor<? extends T> curry(int parameterIndex, Object value)
+	{
+		if (parameterIndex != 0) throw new IllegalArgumentException();
+		return null;
+	}
+
+	public static Object getFieldDetails(Parameter<?> param)
+	{
+		if (!(param instanceof FieldParameter)) return null;
+		return ((FieldParameter<?, ?>) param).fieldDetails;
 	}
 }

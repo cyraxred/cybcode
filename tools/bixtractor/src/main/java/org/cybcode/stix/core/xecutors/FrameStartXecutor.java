@@ -4,18 +4,15 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
-//TODO this may not work as expected
-public class XecutorFail extends AbstractXecutor
+class FrameStartXecutor implements StiXecutor
 {
-	private static final XecutorFail INSTANCE = new XecutorFail();
-
-	public static StiXecutor getInstance()
-	{
-		return INSTANCE;
-	}
-
+	public static final StiXecutor INSTANCE = new FrameStartXecutor();
+	
 	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		throw new IllegalStateException();
+		((StiXecutorDefaultContext) context).enterFrame();
+		return DefaultXecutors.FINAL;
 	}
+
+	@Override public boolean isPushOrFinal() { return false; }
 }

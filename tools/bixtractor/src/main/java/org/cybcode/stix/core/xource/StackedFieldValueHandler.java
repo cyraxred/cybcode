@@ -1,13 +1,13 @@
 package org.cybcode.stix.core.xource;
 
 import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXourceNestedXecutor;
+import org.cybcode.stix.api.StiXecutorCallback;
 
 class StackedFieldValueHandler extends SimpleFieldValueHandler
 {
 	private StackedFieldValueHandler next;
 	
-	public StackedFieldValueHandler(StiXourceNestedXecutor<Integer> receiver)
+	public StackedFieldValueHandler(StiXecutorCallback<Integer> receiver)
 	{
 		super(receiver);
 	}

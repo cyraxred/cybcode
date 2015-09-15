@@ -21,6 +21,7 @@ public interface StiXpressionNode
 	int mapParamIndex(int paramIndex);
 	int getFrameResultIndex();
 	
+	List<StiXpressionNode.PushTarget> getCallbackTargets();
 	List<StiXpressionNode.PushTarget> getPushTargets();
 	List<StiXpressionNode.PushTarget> getNotifyTargets();
 }
