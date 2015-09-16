@@ -46,4 +46,14 @@ public final class TokenPair<P0, P1>
 	{
 		return "TokenPair[p0=" + p0 + ", p1=" + p1 + "]";
 	}
+
+	public P0 getP0()
+	{
+		return p0;
+	}
+
+	public P1 getP1()
+	{
+		return p1;
+	}
 }

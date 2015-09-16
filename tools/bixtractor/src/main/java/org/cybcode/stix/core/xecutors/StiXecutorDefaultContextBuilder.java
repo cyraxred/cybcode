@@ -16,6 +16,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 {
 	private final ArrayList<NodeDetails> nodeDetails;
 	private final ArrayList<Node> contextNodes;
+	private boolean regularAsNotify;
 	private final static int[] EMPTY_ARGS = new int[0];
 
 	public StiXecutorDefaultContextBuilder()
@@ -43,7 +44,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		return params;
 	}
 
-	private static void getNodeTargets(NodeDetails node, List<PushTarget> callbackTargets, List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
+	private void getNodeTargets(NodeDetails node, List<PushTarget> callbackTargets, List<PushTarget> pushTargets, List<PushTarget> notifyTargets)
 	{
 		for (int i = node.getTargetCount() - 1; i >= 0; i--) {
 			PushTarget pushTarget = createPushTarget(node, i);
@@ -57,7 +58,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 					callbackTargets.add(pushTarget);
 					break;
 				case REGULAR: 
-					if (!node.isNotifyOnRegularTarget(i)) break;
+					if (!regularAsNotify) break;
 				case NOTIFY_ON_FINAL: 
 					notifyTargets.add(pushTarget); 
 					break;
@@ -87,7 +88,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		nodeDetails.add(node);
 	}
 
-	private static void getNodeTargets(NodeDetails node, Node contextNode)
+	private void getNodeTargets(NodeDetails node, Node contextNode)
 	{
 		List<PushTarget> callbackTargets;
 		List<PushTarget> pushTargets;
@@ -106,7 +107,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 				notifyTargets = new ArrayList<>(targetCount);
 				
 				getNodeTargets(node, callbackTargets, pushTargets, notifyTargets);
-
+				
 				callbackTargets = ImmutableList.copyOf(callbackTargets);
 				pushTargets = ImmutableList.copyOf(pushTargets);
 				notifyTargets = ImmutableList.copyOf(notifyTargets);
@@ -222,5 +223,15 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		{
 			throw new IllegalStateException();
 		}
+	}
+
+	public boolean isRegularAsNotify()
+	{
+		return regularAsNotify;
+	}
+
+	public void setRegularAsNotify(boolean regularAsNotify)
+	{
+		this.regularAsNotify = regularAsNotify;
 	}
 }

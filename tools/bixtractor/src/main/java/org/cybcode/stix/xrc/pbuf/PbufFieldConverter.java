@@ -12,7 +12,7 @@ public enum PbufFieldConverter implements Function<PbufFieldValue, Object>
 		{
 			input.ensureWireType(WireFormat.WIRETYPE_LENGTH_DELIMITED);
 			try {
-				return new String(input.rawDelimBytes(), "UTF-8");
+				return new String(input.getBytes(), "UTF-8");
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

@@ -1,5 +1,7 @@
 package org.cybcode.stix.api;
 
+import java.util.List;
+
 import org.cybcode.stix.core.StiXtractorLimiter;
 
 /**
@@ -11,12 +13,13 @@ import org.cybcode.stix.core.StiXtractorLimiter;
  * @param <D> description of a field
  * @param <T> internal field type
  */
-public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, C, T>
+public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenPair<C, StiXource.Settings>, T>
 {
 	private static abstract class SpecialParameter<T> extends PushParameter<T>
 	{
 		private SpecialParameter(StiXtractor<? extends T> source) { super(source); }
 		protected abstract Object getOperationToken();
+		protected abstract FieldParameter<?, T> asField();
 	}
 
 	private static final class FieldParameter<D, T> extends SpecialParameter<T>
@@ -35,6 +38,7 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, C, T>
 		{
 			return ParameterMode.CALLBACK;
 		}
+		@Override protected FieldParameter<?, T> asField() { return this; };
 	}
 
 	private static final class TransformParameter<P, T> extends SpecialParameter<T>
@@ -55,6 +59,16 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, C, T>
 		}		
 
 		@Override protected Object getOperationToken() { return fn.getOperationToken(); }
+		@Override protected FieldParameter<?, T> asField() { return null; };
+	}
+	
+	protected static class Settings
+	{
+		private boolean hasPushTargets;
+		private boolean hasSortedFields;
+
+		public boolean hasPushTargets() { return hasPushTargets; }
+		public boolean hasSortedFields() { return hasSortedFields; }
 	}
 	
 	public StiXource(StiXource<?, ?, D, T> p0, D fieldDetails, StiXtractorLimiter.ValueLimit limitMode)
@@ -91,15 +105,28 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, C, T>
 		return p0;
 	}
 	
-	@SuppressWarnings("unchecked") @Override protected final StiXecutor processPush(StiXecutorContext context, C info, Parameter<?> pushedParameter, Object pushedValue)
+	@Override protected TokenPair<C, Settings> prepareContext(StiXecutorConstructionContext context)
 	{
-		if (pushedValue == null) return null;
-		T valueForPush = processNestedFields(info, (T) pushedValue);
-		context.setInterimValue(valueForPush);
+		Settings settings = new Settings();
+		settings.hasPushTargets = context.hasPushTargets();
+		settings.hasSortedFields = context.hasSortedFields();
+		
+		C fieldContainer = createFieldContainer(context.getXecutorCallbacks(), settings);
+		return TokenPair.of(fieldContainer, settings);
+	}
+	
+	protected abstract C createFieldContainer(List<StiXecutorCallback> callbacks, Settings settings);
+	
+	@SuppressWarnings("unchecked") @Override protected final StiXecutor processPush(StiXecutorContext context, TokenPair<C, Settings> container, 
+		Parameter<?> pushedParameter, Object pushedValue)
+	{
+		Settings settings = container.getP1();
+		T valueForPush = processNestedFields(context, container.getP0(), settings, (T) pushedValue);
+		context.setInterimValue(settings.hasPushTargets() ? valueForPush : null);
 		return getXecutor();
 	}
 
-	protected abstract T processNestedFields(C info, T pushedValue);
+	protected abstract T processNestedFields(StiXecutorContext context, C container, Settings settings, T pushedValue);
 
 	@SuppressWarnings("unchecked") @Override public final T evaluate(StiXecutorContext context)
 	{
@@ -110,6 +137,18 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, C, T>
 	{
 		if (parameterIndex != 0) throw new IllegalArgumentException();
 		return null;
+	}
+	
+	public boolean isNested()
+	{
+		return ((SpecialParameter<?>) p0).asField() != null;
+	}
+	
+	@SuppressWarnings("unchecked") public D getFieldDetails()
+	{
+		FieldParameter<?, ?> p = ((SpecialParameter<?>) p0).asField();
+		if (p == null) return null;
+		return (D) p.fieldDetails;
 	}
 
 	public static Object getFieldDetails(Parameter<?> param)

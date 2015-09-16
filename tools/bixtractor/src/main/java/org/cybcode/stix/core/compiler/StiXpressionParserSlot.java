@@ -251,11 +251,6 @@ public class StiXpressionParserSlot extends SmallListCollector<StiXpressionParse
 		return consumers.get(index).parameter;
 	}
 	
-	@Override public boolean isNotifyOnRegularTarget(int index)
-	{
-		return false;
-	}
-
 	public static StiXpressionParserSlot parse(ParserContext context, StiXtractor<?> resultNode)
 	{
 		StiXpressionParserSlot stubSlot = new StiXpressionParserSlot(context);

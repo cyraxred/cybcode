@@ -32,6 +32,11 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 		
 		return result;
 	}
+	
+	@Override public boolean hasPushTargets()
+	{
+		return !node.getPushTargets().isEmpty();
+	}
 
 	@Override public StiXecutor createFrameXecutor()
 	{
@@ -52,5 +57,10 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 		}
 		callbacksClaimed = false;
 		this.node = node;
+	}
+
+	@Override public boolean hasSortedFields()
+	{
+		return false; //TODO configurable
 	}
 }

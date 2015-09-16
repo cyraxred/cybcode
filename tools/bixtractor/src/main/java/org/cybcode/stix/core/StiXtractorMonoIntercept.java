@@ -15,6 +15,7 @@ public abstract class StiXtractorMonoIntercept<P0, V, T> extends AbstractXtracto
 		@SuppressWarnings("unchecked") @Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
 		{
 			AbstractXecutor.verifyParameterIndex(context, pushedParameter);
+			if (pushedValue == null) return this;
 			StiXecutor result = ((StiXtractorMonoIntercept<?, T, ?>) context.getCurrentXtractor()).processPush(context, info, pushedParameter, pushedValue);
 			if (result != null) return result;
 			return this;
