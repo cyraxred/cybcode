@@ -48,7 +48,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 	{
 		for (int i = node.getTargetCount() - 1; i >= 0; i--) {
 			PushTarget pushTarget = createPushTarget(node, i);
-			switch (pushTarget.getXtractorParam().getMode()) {
+			switch (pushTarget.getXtractorParam().getKind()) {
 				case NEVER: 
 					break;
 				case PUSH_ALL: 

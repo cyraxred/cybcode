@@ -4,21 +4,21 @@ import java.io.IOException;
 
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xource.StiXourceByIntTags;
 
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.WireFormat;
 
-public class PbufXource extends StiXourceByIntTags<Binary, PbufFieldValue>
+public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 {
-
-	public PbufXource(StiXourceByIntTags<Binary, PbufFieldValue> p0, int fieldId, ValueLimit limitMode)
+	public PbufXource(StiXource<?, ?, Integer, PbufFieldValue> p0, int fieldId, ValueLimit limitMode)
 	{
 		super(p0, fieldId, limitMode);
 	}
 
-	public PbufXource(StiXtractor<? extends Binary> p0, StiXFunction<? super Binary, PbufFieldValue> fn, ValueLimit limitMode)
+	public PbufXource(StiXtractor<? extends S> p0, StiXFunction<? super S, PbufFieldValue> fn, ValueLimit limitMode)
 	{
 		super(p0, fn, limitMode);
 	}
@@ -41,15 +41,19 @@ public class PbufXource extends StiXourceByIntTags<Binary, PbufFieldValue>
 		CodedInputStream in = value.getRawStream();
 
 		try {
-			int tag;
-			while ((tag = in.readTag()) != 0) {
+			do {
+				int tag = in.readTag(); 
+				if (tag == 0) return value;
+					
 				int fieldId = tag >> 3;
 				if (fieldId > maxField) break;
 				FieldHandler<PbufFieldValue> handler = container.findFieldHandler(fieldId);
 				if (handler == null) {
 					in.skipField(tag);
+					context.onXourceFieldSkipped();
 					continue;
 				}
+				context.onXourceFieldParsed();
 				
 				int wireType = tag & 7;
 				long rawValue;
@@ -88,11 +92,10 @@ public class PbufXource extends StiXourceByIntTags<Binary, PbufFieldValue>
 				}
 				handler.process(context, fieldValue);
 			} while (!context.hasResultValue());
+			return null;
 		} catch (IOException e) {
 			throw new PBufIOException(e);
 		}
-		
-		return value;
 	}
 
 	@Override public Class<PbufFieldValue> resultType()

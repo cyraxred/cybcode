@@ -1,4 +1,4 @@
-package org.cybcode.stix.ops;
+package org.cybcode.tools.type;
 
 import java.util.HashMap;
 import java.util.HashSet;

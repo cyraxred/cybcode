@@ -34,9 +34,9 @@ public abstract class StiXourceField<P0, T> extends StiXtractorLimiter<P0, Void,
 		super(p0, mode);
 	}
 
-	@Override public T evaluate(StiXecutorContext context)
+	@SuppressWarnings("unchecked") @Override public T evaluate(StiXecutorContext context)
 	{
-		return calculate(p0.getValue(context));
+		return calculate((P0) context.getInterimValue());
 	}
 
 	@Override protected final Void prepareContext(StiXecutorConstructionContext context)
@@ -47,6 +47,7 @@ public abstract class StiXourceField<P0, T> extends StiXtractorLimiter<P0, Void,
 	@Override protected StiXecutor processPush(StiXecutorContext context, Void info, Parameter<?> pushedParameter, Object pushedValue)
 	{
 		if (pushedValue == null) return null;
+		context.setInterimValue(pushedValue);
 		return getXecutor();
 	}
 }

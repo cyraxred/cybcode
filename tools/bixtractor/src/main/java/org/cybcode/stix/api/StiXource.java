@@ -20,6 +20,7 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 		private SpecialParameter(StiXtractor<? extends T> source) { super(source); }
 		protected abstract Object getOperationToken();
 		protected abstract FieldParameter<?, T> asField();
+		protected abstract T transform(Object value);
 	}
 
 	private static final class FieldParameter<D, T> extends SpecialParameter<T>
@@ -34,11 +35,12 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 		}
 		@Override protected Object getOperationToken() { return fieldDetails; }
 		
-		@Override public ParameterMode getMode()
+		@Override public ParameterKind getKind()
 		{
-			return ParameterMode.CALLBACK;
+			return ParameterKind.CALLBACK;
 		}
 		@Override protected FieldParameter<?, T> asField() { return this; };
+		@SuppressWarnings("unchecked") @Override protected T transform(Object value) { return (T) value; };
 	}
 
 	private static final class TransformParameter<P, T> extends SpecialParameter<T>
@@ -52,14 +54,14 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 			this.fn = fn;
 		}
 		
-		@SuppressWarnings("unchecked") public T getValue(StiXParamContext context)
+		public T getValue(StiXParamContext context)
 		{
-			P value = (P) context.getParamValue(getParamIndex());
-			return fn.apply(value);
+			return transform(context.getParamValue(getParamIndex()));
 		}		
 
 		@Override protected Object getOperationToken() { return fn.getOperationToken(); }
 		@Override protected FieldParameter<?, T> asField() { return null; };
+		@SuppressWarnings("unchecked") @Override protected T transform(Object value) { return fn.apply((P) value); };
 	}
 	
 	protected static class Settings
@@ -117,11 +119,12 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 	
 	protected abstract C createFieldContainer(List<StiXecutorCallback> callbacks, Settings settings);
 	
-	@SuppressWarnings("unchecked") @Override protected final StiXecutor processPush(StiXecutorContext context, TokenPair<C, Settings> container, 
+	@Override protected final StiXecutor processPush(StiXecutorContext context, TokenPair<C, Settings> container, 
 		Parameter<?> pushedParameter, Object pushedValue)
 	{
 		Settings settings = container.getP1();
-		T valueForPush = processNestedFields(context, container.getP0(), settings, (T) pushedValue);
+		T value = ((SpecialParameter<T>) p0).transform(pushedValue);
+		T valueForPush = processNestedFields(context, container.getP0(), settings, value);
 		context.setInterimValue(settings.hasPushTargets() ? valueForPush : null);
 		return getXecutor();
 	}

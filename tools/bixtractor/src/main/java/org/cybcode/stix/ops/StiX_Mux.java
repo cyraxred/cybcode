@@ -9,6 +9,7 @@ import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xecutors.AbstractXecutor;
 import org.cybcode.stix.core.xecutors.XecutorFinal;
+import org.cybcode.tools.type.ClassUtil;
 
 public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutative
 {

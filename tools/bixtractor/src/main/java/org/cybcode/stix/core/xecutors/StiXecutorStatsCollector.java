@@ -8,10 +8,14 @@ public interface StiXecutorStatsCollector
 		@Override public void onPushAttempt() {}
 		@Override public void onEvaluate() {}
 		@Override public void resetStats(int nodeCount) {}
+		@Override public void onFieldSkipped() {}
+		@Override public void onFieldParsed() {}
 	};
 
 	void onPushEvaluate();
 	void onPushAttempt();
 	void onEvaluate();
 	void resetStats(int nodeCount);
+	void onFieldSkipped();
+	void onFieldParsed();
 }

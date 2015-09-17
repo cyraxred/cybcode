@@ -9,4 +9,6 @@ public interface StiXecutorContext extends StiXParamContext
 	StiXtractor<?> getCurrentXtractor();
 
 	boolean hasResultValue();
+	void onXourceFieldSkipped();
+	void onXourceFieldParsed();
 }

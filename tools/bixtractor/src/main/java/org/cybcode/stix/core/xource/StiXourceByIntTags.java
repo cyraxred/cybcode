@@ -4,12 +4,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.cybcode.stix.api.StiXFunction;
+import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXourceByIntTags<S, V extends StiXourceByTags.FieldValue<Integer>> 
 	extends StiXourceByTags<S, StiXourceByTags.FieldContainer<Integer, V>, Integer, V>
 {
-	public StiXourceByIntTags(StiXourceByIntTags<S, V> p0, Integer fieldDetails, ValueLimit limitMode)
+	public StiXourceByIntTags(StiXource<?, ?, Integer, V> p0, Integer fieldDetails, ValueLimit limitMode)
 	{
 		super(p0, fieldDetails, limitMode);
 	}

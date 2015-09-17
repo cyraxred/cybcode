@@ -1,4 +1,4 @@
-package org.cybcode.stix.ops.aggregators;
+package org.cybcode.tools.mutable;
 
 public abstract class MutableNumber
 {

@@ -27,7 +27,7 @@ public abstract class StiXtractorMonoIntercept<P0, V, T> extends AbstractXtracto
 	private static class PushXecutor<T> extends Xecutor<T>
 	{
 		PushXecutor(T info) { super(info); }
-		@Override public boolean isPushOrFinal() { return false; }
+		@Override public boolean isPushOrFinal() { return true; }
 	}
 	
 	protected StiXtractorMonoIntercept(PushParameter<P0> p0)

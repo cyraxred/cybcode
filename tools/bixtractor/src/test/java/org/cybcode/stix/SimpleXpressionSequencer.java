@@ -9,38 +9,35 @@ import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 
 class SimpleXpressionSequencer implements StiXpressionSequencer
 {
-	private final LinkedList<PushTarget> pushQueue = new LinkedList<>();
-	private final LinkedList<PushTarget> notifyQueue;
+	private final LinkedList<PushTarget> immediateQueue = new LinkedList<>();
+	private final LinkedList<PushTarget> postponeQueue = new LinkedList<>();
 	
-	public SimpleXpressionSequencer(boolean enableNotify)
+	@Override public void addImmediateTargets(List<PushTarget> targets)
 	{
-		if (enableNotify) {
-			notifyQueue = new LinkedList<>();
-		} else {
-			notifyQueue = null;
-		}
+		immediateQueue.addAll(targets);
 	}
 
-	@Override public void addPushTargets(List<PushTarget> targets)
+	@Override public void addPostponeTargets(List<PushTarget> targets)
 	{
-		pushQueue.addAll(targets);
-	}
-
-	@Override public void addNotifyTargets(List<PushTarget> targets)
-	{
-		if (notifyQueue == null) return;
-		notifyQueue.addAll(targets);
-	}
-
-	@Override public PushTarget nextTargetBefore(StiXpressionNode node)
-	{
-		if (!pushQueue.isEmpty()) return pushQueue.removeLast();
-		if (notifyQueue == null || notifyQueue.isEmpty()) return null;
-		return notifyQueue.removeLast();
+		postponeQueue.addAll(targets);
 	}
 
 	@Override public void resetSequencer()
 	{
-		pushQueue.clear();
+		immediateQueue.clear();
+		postponeQueue.clear();
+	}
+
+	@Override public PushTarget nextImmediateTarget()
+	{
+		if (!immediateQueue.isEmpty()) return immediateQueue.removeLast();
+		return null;
+	}
+
+	@Override public PushTarget nextPostponedTargetBefore(StiXpressionNode node)
+	{
+		if (!immediateQueue.isEmpty()) return immediateQueue.removeLast();
+		if (!postponeQueue.isEmpty()) return postponeQueue.removeLast();
+		return null;
 	}
 }

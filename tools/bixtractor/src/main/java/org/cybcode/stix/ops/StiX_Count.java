@@ -3,7 +3,7 @@ package org.cybcode.stix.ops;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorAggregate;
-import org.cybcode.stix.ops.aggregators.MutableLong;
+import org.cybcode.tools.mutable.MutableLong;
 
 public class StiX_Count extends StiXtractorAggregate<Object, MutableLong, Long>
 {

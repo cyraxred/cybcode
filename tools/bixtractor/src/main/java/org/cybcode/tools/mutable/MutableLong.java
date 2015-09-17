@@ -1,24 +1,24 @@
-package org.cybcode.stix.ops.aggregators;
+package org.cybcode.tools.mutable;
 
-public class MutableDouble extends MutableNumber
+public class MutableLong extends MutableNumber
 {
-	private double	value;
+	private long	value;
 
-	public MutableDouble(double value)
+	public MutableLong(long value)
 	{
 		this.value = value;
 	}
 
 	@Override public boolean isFloatingPoint()
 	{
-		return true;
+		return false;
 	}
 
 	@Override public boolean hasValue()
 	{
-		return !Double.isNaN(value);
+		return true;
 	}
-
+	
 	@Override public double doubleValue()
 	{
 		return value;
@@ -29,7 +29,7 @@ public class MutableDouble extends MutableNumber
 		return (long) value;
 	}
 
-	@Override public MutableDouble add(long p)
+	@Override public MutableLong add(long p)
 	{
 		value += p;
 		return this;
@@ -37,11 +37,10 @@ public class MutableDouble extends MutableNumber
 
 	@Override public MutableDouble add(double p)
 	{
-		value += p;
-		return this;
+		return new MutableDouble(value).add(p);
 	}
 
-	@Override public MutableDouble mul(long p)
+	@Override public MutableLong mul(long p)
 	{
 		value *= p;
 		return this;
@@ -49,7 +48,6 @@ public class MutableDouble extends MutableNumber
 
 	@Override public MutableDouble mul(double p)
 	{
-		value *= p;
-		return this;
+		return new MutableDouble(value).mul(p);
 	}
 }

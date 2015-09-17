@@ -3,6 +3,7 @@ package org.cybcode.stix.ops;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorDuo;
+import org.cybcode.tools.type.ClassUtil;
 
 public class StiX_NullIf<T> extends StiXtractorDuo<T, T, T>
 {

@@ -1,12 +1,13 @@
 package org.cybcode.stix.core.xecutors;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorCallback;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
+
+import com.google.common.collect.ImmutableList;
 
 class XecutorConstructionContext implements StiXecutorConstructionContext
 {
@@ -22,15 +23,22 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 	@Override public List<StiXecutorCallback> getXecutorCallbacks()
 	{
 		List<PushTarget> targets = node.getCallbackTargets();
-		if (targets.isEmpty()) throw new IllegalStateException();
-		
-		List<StiXecutorCallback> result = new ArrayList<>(targets.size());
-		for (PushTarget target : targets) {
-			result.add(new XecutorCallback(target));
-		}
 		callbacksClaimed = true;
+
+		if (targets.isEmpty()) return ImmutableList.of();
 		
-		return result;
+		StiXecutorCallback[] result = new StiXecutorCallback[targets.size()];
+		for (int i = result.length - 1; i >= 0; i--) {
+			result[i] = new XecutorCallback(targets.get(i));
+		}
+		
+		return ImmutableList.copyOf(result);
+	}
+	
+	@Override public StiXecutorCallback createCallbackGroup(List<StiXecutorCallback> callbacks)
+	{
+		if (callbacks.isEmpty()) throw new IllegalArgumentException();
+		return XecutorCallbackGroup.newInstance(callbacks);
 	}
 	
 	@Override public boolean hasPushTargets()

@@ -2,7 +2,7 @@ package org.cybcode.stix.ops;
 
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMathAgg;
-import org.cybcode.stix.ops.aggregators.MutableNumber;
+import org.cybcode.tools.mutable.MutableNumber;
 
 public class StiX_AddA extends StiXtractorMathAgg
 {

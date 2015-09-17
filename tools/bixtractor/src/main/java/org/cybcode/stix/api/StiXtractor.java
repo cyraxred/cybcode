@@ -7,13 +7,13 @@ public interface StiXtractor<T>
 	public interface Commutative {}
 	
 	StiXecutor createXecutor(StiXecutorConstructionContext context);
-	
 	T evaluate(StiXecutorContext context);
+
 	void visit(Visitor visitor);
 	int paramCount();
+	
 	boolean isRepeatable();
 	Class<? extends T> resultType();
-	
 	
 	Object getOperationToken();
 	int getOperationComplexity(StiXComplexityHelper helper);
@@ -31,7 +31,7 @@ public interface StiXtractor<T>
 		void visitParameter(Parameter<?> param);	
 	}
 
-	enum ParameterMode
+	enum ParameterKind
 	{
 		REGULAR, PUSH_ALL, NOTIFY_ON_FINAL, NEVER, CALLBACK
 	}
@@ -93,11 +93,11 @@ public interface StiXtractor<T>
 
 		/**
 		 * DO NOT EVER OVERRIDE THIS METHOD
-		 * @return
+		 * @return not null
 		 */
-		public ParameterMode getMode()
+		public ParameterKind getKind()
 		{
-			return ParameterMode.REGULAR;
+			return ParameterKind.REGULAR;
 		}
 		
 		@Override public String toString()
@@ -136,9 +136,9 @@ public interface StiXtractor<T>
 			return isRepeatable;
 		}
 
-		@Override public ParameterMode getMode()
+		@Override public ParameterKind getKind()
 		{
-			return ParameterMode.PUSH_ALL;
+			return ParameterKind.PUSH_ALL;
 		}
 	}
 
@@ -149,9 +149,9 @@ public interface StiXtractor<T>
 			super(source);
 		}
 
-		@Override public ParameterMode getMode()
+		@Override public ParameterKind getKind()
 		{
-			return ParameterMode.NOTIFY_ON_FINAL;
+			return ParameterKind.NOTIFY_ON_FINAL;
 		}
 	}
 }

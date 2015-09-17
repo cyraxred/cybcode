@@ -46,6 +46,9 @@ public class StiX_Ops
 	public static StiXtractor<Boolean> orA(StiXtractor<? extends Boolean> p0) { return new StiX_OrA(p0); }
 	public static StiXtractor<Boolean> orIfNull(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, boolean nullValue) { return new StiX_Or(p0, p1, nullValue); } 
 	public static StiXtractor<Boolean> xor(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1) { return new StiX_Xor(p0, p1); }
+
+	public static <T> StiXtractor<T> last(StiXtractor<T> p0) { return new StiX_Last<>(p0); } 
+	public static <T> StiXtractor<T> first(StiXtractor<T> p0) { return new StiX_First<>(p0); } 
 	
 	public static StiXtractor<Long> asInt(StiXtractor<?> p0) { return new StiX_Fn<>(p0, StiX_Fns.AS_INT); } 
 	public static StiXtractor<Double> asFloat(StiXtractor<?> p0) { return new StiX_Fn<>(p0, StiX_Fns.AS_FLOAT); } 

@@ -10,7 +10,7 @@ import org.cybcode.stix.core.xource.StiXourceByTags;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.WireFormat;
 
-class PbufFieldValue implements StiXourceByTags.FieldValue<Integer>
+public class PbufFieldValue implements StiXourceByTags.FieldValue<Integer>
 {
 	private static final Charset UFT8 = Charset.forName("UTF-8");
 	
@@ -84,19 +84,23 @@ class PbufFieldValue implements StiXourceByTags.FieldValue<Integer>
 		return getAndResetRawStream();
 	}
 
-	public byte[] getBytes() throws IOException
+	public byte[] getBytes()
 	{
 		if (binaryValue != null) return binaryValue.length == 0 ? binaryValue : binaryValue.clone();
 		CodedInputStream in = getAndResetRawStream();
-		return in.readRawBytes(in.getBytesUntilLimit());
+		try {
+			return in.readRawBytes(in.getBytesUntilLimit());
+		} catch (IOException e) {
+			throw new PBufIOException(e);
+		}
 	}
 	
-	public ByteBuffer getByteBuffer() throws IOException
+	public ByteBuffer getByteBuffer()
 	{
 		return ByteBuffer.wrap(binaryValue != null ? binaryValue : getBytes()).asReadOnlyBuffer(); 
 	}
 	
-	public String getString() throws IOException
+	public String getString()
 	{
 		return new String(binaryValue != null ? binaryValue : getBytes(), UFT8); 
 	}

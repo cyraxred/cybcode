@@ -53,8 +53,8 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		currentIndex = 0;
 		currentNode = nodes[0];
 		setFinalValue(0, rootValue);
-		sequencer.addPushTargets(currentNode.getPushTargets());
-		sequencer.addNotifyTargets(currentNode.getNotifyTargets());
+		sequencer.addPostponeTargets(currentNode.getPushTargets());
+		sequencer.addPostponeTargets(currentNode.getNotifyTargets());
 		
 		if (nodes.length > 1) {
 			setCurrentIndex(1);
@@ -132,7 +132,9 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	@Override public void setInterimValue(Object value)
 	{
 		int index = currentIndex();
-		if (hasPublicValue(index)) throw new IllegalStateException();
+		if (hasPublicValue(index)) {
+			throw new IllegalStateException();
+		}
 		if (currentState[index] == null) {
 			currentState[index] = initialState[index];
 		}
@@ -195,8 +197,8 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		setFinalValue(index, result);
 		if (result == null) return false;
 		
-		sequencer.addPushTargets(node.getPushTargets());
-		sequencer.addNotifyTargets(node.getNotifyTargets());
+		sequencer.addPostponeTargets(node.getPushTargets());
+		sequencer.addPostponeTargets(node.getNotifyTargets());
 		return true;
 	}
 	
@@ -214,16 +216,45 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		int index = target.getXtractorIndex();
 		if (hasPublicValue(index)) return false;
 		Object pushedValue = getValue(target.getValueIndex());
+		if (pushedValue == null) return false;
+		
 		evaluatePush(index, target.getXtractorParam(), pushedValue);
 		return true;
 	}
 	
-	boolean evaluateDirectPush(StiXpressionNode.PushTarget target, Object pushedValue)
+	void evaluateDirectPush(StiXpressionNode.PushTarget[] targets, Object pushedValue)
 	{
-		int index = target.getXtractorIndex();
-		if (hasPublicValue(index)) return false;
-		evaluatePush(index, target.getXtractorParam(), pushedValue);
-		return true;
+		if (pushedValue == null || targets.length == 0) return;
+		
+		StiXpressionNode callingNode = currentNode;
+		try {
+			for (StiXpressionNode.PushTarget target : targets) {
+				int index = target.getXtractorIndex();
+				if (hasPublicValue(index)) continue;
+				evaluatePush(index, target.getXtractorParam(), pushedValue);
+				if (hasResultValue()) break;
+			}
+			executeImmediateTargets();
+		} finally {
+			setCurrentNode(callingNode);
+		}
+	}
+	
+	void evaluateDirectPush(StiXpressionNode.PushTarget target, Object pushedValue)
+	{
+		if (pushedValue == null) return;
+		
+		StiXpressionNode callingNode = currentNode;
+		try {
+			int index = target.getXtractorIndex();
+			if (hasPublicValue(index)) return;
+			evaluatePush(index, target.getXtractorParam(), pushedValue);
+			if (hasResultValue()) return;
+	
+			executeImmediateTargets();		
+		} finally {
+			setCurrentNode(callingNode);
+		}
 	}
 	
 	private void evaluatePush(int targetIndex, Parameter<?> targetParam, Object pushedValue)
@@ -253,9 +284,9 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		}
 		if (result == null) return;
 		
-		sequencer.addPushTargets(currentNode.getPushTargets());
+		sequencer.addImmediateTargets(currentNode.getPushTargets());
 		if (xecutor == DefaultXecutors.FINAL) {
-			sequencer.addNotifyTargets(currentNode.getNotifyTargets());
+			sequencer.addPostponeTargets(currentNode.getNotifyTargets());
 		}
 	}
 	
@@ -291,15 +322,24 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		return currentNode.getXtractor();
 	}
 
-	private boolean executeBefore(StiXpressionNode nextNode)
+	private boolean executeImmediateTargets()
 	{
 		StiXpressionNode.PushTarget pushTarget;
-		boolean stateWasChanged = false;
-		while ((pushTarget = sequencer.nextTargetBefore(nextNode)) != null) {
-			if (evaluatePush(pushTarget)) stateWasChanged = true;
-			if (hasResultValue()) break;
+		while ((pushTarget = sequencer.nextImmediateTarget()) != null) {
+			evaluatePush(pushTarget);
+			if (hasResultValue()) return true;
 		}
-		return stateWasChanged;
+		return false;
+	}
+	
+	private boolean executePostponedTargetsBefore(StiXpressionNode nextNode)
+	{
+		StiXpressionNode.PushTarget pushTarget;
+		while ((pushTarget = sequencer.nextPostponedTargetBefore(nextNode)) != null) {
+			if (hasResultValue()) return true;
+			evaluatePush(pushTarget);
+		}
+		return false;
 	}
 
 	//executeNode
@@ -312,13 +352,11 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 				StiXpressionNode nextNode = currentNode;
 				if (nextNode == null) continue;
 				
-				//boolean stateWasChanged = 
-				executeBefore(nextNode);
-				if (!hasResultValue()) {
-					setCurrentNode(nextNode);
-					evaluateCurrent();
-					if (!hasResultValue()) continue;
-				}
+				if (executePostponedTargetsBefore(nextNode)) break;
+				
+				setCurrentNode(nextNode);
+				evaluateCurrent();
+				if (!hasResultValue()) continue;
 				setCurrentIndex(currentFrame.getResultIndex());
 			} while (nextNode());
 		}
@@ -345,5 +383,15 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	public int getNodeCount()
 	{
 		return nodes.length;
+	}
+
+	@Override public void onXourceFieldSkipped()
+	{
+		stats.onFieldSkipped();
+	}
+
+	@Override public void onXourceFieldParsed()
+	{
+		stats.onFieldParsed();		
 	}
 }

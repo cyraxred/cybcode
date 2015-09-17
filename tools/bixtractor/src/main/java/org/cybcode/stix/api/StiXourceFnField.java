@@ -23,6 +23,7 @@ public class StiXourceFnField<P0, T> extends StiXourceField<P0, T>
 	
 	@Override protected T calculate(P0 pv0)
 	{
+		if (pv0 == null) return null;
 		return fn.apply(pv0);
 	}
 	

@@ -6,7 +6,6 @@ import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMonoIntercept;
-import org.cybcode.stix.core.xecutors.XecutorFinal;
 
 public class StiX_Last<T> extends StiXtractorMonoIntercept<T, Void, T>
 {
@@ -42,7 +41,7 @@ public class StiX_Last<T> extends StiXtractorMonoIntercept<T, Void, T>
 
 	@Override public int getOperationComplexity(StiXComplexityHelper helper)
 	{
-		return helper.getComplexityOf(this, 10);
+		return helper.getComplexityOf(this, 10000);
 	}
 
 	@Override protected T calculate(T p0)
@@ -52,10 +51,9 @@ public class StiX_Last<T> extends StiXtractorMonoIntercept<T, Void, T>
 
 	@Override protected StiXecutor processPush(StiXecutorContext context, Void info, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		if (pushedValue != null) {
-			context.setInterimValue(pushedValue);
-		}
-		return XecutorFinal.getInstance();
-	}
+		if (pushedValue == null) return null;
 
+		context.setInterimValue(pushedValue);
+		return null;
+	}
 }

@@ -2,9 +2,9 @@ package org.cybcode.stix.core;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.ops.aggregators.MutableDouble;
-import org.cybcode.stix.ops.aggregators.MutableLong;
-import org.cybcode.stix.ops.aggregators.MutableNumber;
+import org.cybcode.tools.mutable.MutableDouble;
+import org.cybcode.tools.mutable.MutableLong;
+import org.cybcode.tools.mutable.MutableNumber;
 
 public abstract class StiXtractorMathAgg extends StiXtractorAggregate<Number, MutableNumber, Number>
 {

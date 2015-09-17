@@ -4,9 +4,10 @@ import java.util.List;
 
 public interface StiXpressionSequencer
 {
-	public abstract void addPushTargets(List<StiXpressionNode.PushTarget> targets);
-	public abstract void addNotifyTargets(List<StiXpressionNode.PushTarget> targets);
+	public abstract void addImmediateTargets(List<StiXpressionNode.PushTarget> targets);
+	public abstract void addPostponeTargets(List<StiXpressionNode.PushTarget> targets);
 	
-	public abstract StiXpressionNode.PushTarget nextTargetBefore(StiXpressionNode node);
+	public abstract StiXpressionNode.PushTarget nextImmediateTarget();
+	public abstract StiXpressionNode.PushTarget nextPostponedTargetBefore(StiXpressionNode node);
 	public abstract void resetSequencer();
 }

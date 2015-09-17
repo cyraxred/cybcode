@@ -12,7 +12,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class StiXExpressionsTest
+public class StiXpressionsTest
 {
 	private StatsCollector stats = new StatsCollector();
 	
@@ -102,8 +102,13 @@ public class StiXExpressionsTest
 	}
 
 	//behavior on no-push
-	
+
 	private static <T> StiXecutorDefaultContext B(StiXtractor<T> expression)
+	{
+		return B(false, expression);
+	}
+	
+	private static <T> StiXecutorDefaultContext B(boolean regularAsNotify, StiXtractor<T> expression)
 	{
 		StiXpressionRecursiveParser parser = new StiXpressionRecursiveParser();
 		parser.step1_buildTree(expression);
@@ -111,15 +116,16 @@ public class StiXExpressionsTest
 		parser.step3_linkTree();
 		parser.step4_optimizeLinkedTree();
 		StiXecutorDefaultContextBuilder builder = new StiXecutorDefaultContextBuilder();
+		builder.setRegularAsNotify(regularAsNotify);
 		parser.step5_flattenTree(builder);
 		return builder.build();
 	}
 
-	private <T> T E(boolean enableNotify, Object rootValue, StiXtractor<T> expression)
+	private <T> T E(boolean regularAsNotify, Object rootValue, StiXtractor<T> expression)
 	{
-		StiXecutorDefaultContext context = B(expression);
+		StiXecutorDefaultContext context = B(regularAsNotify, expression);
 		context.setStatsCollector(stats);
-		StiXpressionSequencer sequencer = new SimpleXpressionSequencer(enableNotify);
+		StiXpressionSequencer sequencer = new SimpleXpressionSequencer();
 		@SuppressWarnings("unchecked") T result = (T) context.evaluateExpression(sequencer, rootValue);
 		return result;
 	}

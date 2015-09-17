@@ -8,6 +8,7 @@ class StatsCollector implements StiXecutorStatsCollector
 	public int pushAttemptCount;
 	public int pushEvaluateCount;
 	public int nodeCount;
+	public int fieldCount;
 	
 	@Override public void onEvaluate()
 	{
@@ -30,5 +31,16 @@ class StatsCollector implements StiXecutorStatsCollector
 		evaluateCount = 0;
 		pushAttemptCount = 0;
 		pushEvaluateCount = 0;
+		fieldCount = 0;
+	}
+
+	@Override public void onFieldSkipped()
+	{
+		fieldCount++;
+	}
+
+	@Override public void onFieldParsed()
+	{
+		fieldCount++;
 	}
 }
