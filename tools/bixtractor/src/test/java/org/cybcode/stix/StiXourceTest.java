@@ -25,6 +25,25 @@ public class StiXourceTest
 {
 	private StatsCollector stats = new StatsCollector();
 	
+	@Test public void test_pbuf_first() throws IOException
+	{
+		assertEquals((Long) 19L, E(buildPbuf(), first(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
+
+		assertEquals(5, stats.nodeCount);
+		assertEquals(1, stats.evaluateCount);
+		assertEquals(3, stats.fieldCount);
+		assertEquals(4, stats.pushAttemptCount);
+		assertEquals(4, stats.pushEvaluateCount);
+
+		assertEquals((Long) 19L, E(buildPbuf(), pbufFirst(StiX_Ops.<Binary>root(), PbufFields.INT, 21)));
+
+		assertEquals(4, stats.nodeCount);
+		assertEquals(1, stats.evaluateCount);
+		assertEquals(2, stats.fieldCount);
+		assertEquals(3, stats.pushAttemptCount);
+		assertEquals(3, stats.pushEvaluateCount);
+	}
+
 	@Test public void test_pbuf_last() throws IOException
 	{
 		assertEquals((Long) 21L, E(buildPbuf(), last(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
@@ -34,19 +53,16 @@ public class StiXourceTest
 		assertEquals(8, stats.fieldCount);
 		assertEquals(10, stats.pushAttemptCount);
 		assertEquals(7, stats.pushEvaluateCount);
-	}
-	
-	@Test public void test_pbuf_first() throws IOException
-	{
-		assertEquals((Long) 19L, E(buildPbuf(), first(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
 
-		assertEquals(5, stats.nodeCount);
-		assertEquals(1, stats.evaluateCount);
-		assertEquals(2, stats.fieldCount);
-		assertEquals(4, stats.pushAttemptCount);
+		assertEquals((Long) 21L, E(buildPbuf(), pbufLast(StiX_Ops.<Binary>root(), PbufFields.INT, 21)));
+
+		assertEquals(4, stats.nodeCount);
+		assertEquals(2, stats.evaluateCount);
+		assertEquals(8, stats.fieldCount);
+		assertEquals(7, stats.pushAttemptCount);
 		assertEquals(4, stats.pushEvaluateCount);
 	}
-
+	
 	@Test public void test_pbuf_sum() throws IOException
 	{
 		assertEquals((Long) 60L, E(buildPbuf(), addA(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
@@ -58,13 +74,55 @@ public class StiXourceTest
 		assertEquals(7, stats.pushEvaluateCount);
 	}
 
+	@Test public void test_pbuf_no_value() throws IOException
+	{
+		assertEquals(null, E(buildPbuf(), first(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 1))));
+		assertEquals(null, E(buildPbuf(), last(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 1))));
+		assertEquals(null, E(buildPbuf(), addA(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 1))));
+	}
+	
+	@Test public void test_pbuf_only_value() throws IOException
+	{
+		assertEquals((Long) 22L, E(buildPbuf(), pbufOnly(StiX_Ops.<Binary>root(), PbufFields.INT, 22)));
+		assertTrue(E(buildPbuf(), eq(constOf(22), pbufOnly(StiX_Ops.<Binary>root(), PbufFields.INT, 22))));
+		assertEquals(null, E(buildPbuf(), pbufOnly(StiX_Ops.<Binary>root(), PbufFields.INT, 2)));
+		assertEquals(null, E(buildPbuf(), eq(constOf(22), pbufOnly(StiX_Ops.<Binary>root(), PbufFields.INT, 2))));
+	}
+
+	
+	@Test(expected = IllegalStateException.class) 
+	public void test_pbuf_only_value_exception() throws IOException
+	{
+		assertEquals((Long) 19L, E(buildPbuf(), pbufOnly(StiX_Ops.<Binary>root(), PbufFields.INT, 21)));
+	}
+	
+	@Test public void test_pbuf_ifNull() throws IOException
+	{
+		assertEquals((Long) 1L, E(buildPbuf(), ifNull(first(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 1)), constOf(1))));
+	}
+	
 	private static <T> StiXtractor<T> pbuf(StiXtractor<Binary> p0, StiXFunction<PbufFieldValue, T> fn, int... path)
 	{
-		PbufXource<Binary> result = new PbufXource<Binary>(p0, Binary.PREPARE, PbufXource.ValueLimit.ALL);
-		for (int id : path) {
-			result = new PbufXource<Binary>(result, id, PbufXource.ValueLimit.ALL);
-		}
-		return StiXourceField.newRepeatedValue(result, fn);
+		PbufXource<Binary> result = StiX_Ops.pbuf(p0, Binary.PREPARE, path);
+		return StiX_Ops.pbufRepeatedValue(result, fn);
+	}
+
+	private static <T> StiXtractor<T> pbufFirst(StiXtractor<Binary> p0, StiXFunction<PbufFieldValue, T> fn, int... path)
+	{
+		PbufXource<Binary> result = StiX_Ops.pbuf(p0, Binary.PREPARE, path);
+		return StiX_Ops.pbufFirstValue(result, fn);
+	}
+
+	private static <T> StiXtractor<T> pbufLast(StiXtractor<Binary> p0, StiXFunction<PbufFieldValue, T> fn, int... path)
+	{
+		PbufXource<Binary> result = StiX_Ops.pbuf(p0, Binary.PREPARE, path);
+		return StiX_Ops.pbufLastValue(result, fn);
+	}
+
+	private static <T> StiXtractor<T> pbufOnly(StiXtractor<Binary> p0, StiXFunction<PbufFieldValue, T> fn, int... path)
+	{
+		PbufXource<Binary> result = StiX_Ops.pbuf(p0, Binary.PREPARE, path);
+		return StiXourceField.newOnlyValue(result, fn);
 	}
 
 	private static Binary buildPbuf() throws IOException

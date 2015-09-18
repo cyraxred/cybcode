@@ -215,10 +215,11 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	{
 		int index = target.getXtractorIndex();
 		if (hasPublicValue(index)) return false;
+		
 		Object pushedValue = getValue(target.getValueIndex());
 		if (pushedValue == null) return false;
 		
-		evaluatePush(index, target.getXtractorParam(), pushedValue);
+		evaluatePush(false, index, target.getXtractorParam(), pushedValue);
 		return true;
 	}
 	
@@ -231,7 +232,9 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			for (StiXpressionNode.PushTarget target : targets) {
 				int index = target.getXtractorIndex();
 				if (hasPublicValue(index)) continue;
-				evaluatePush(index, target.getXtractorParam(), pushedValue);
+				if (executePostponedTargetsBefore(nodes[index])) return;
+				
+				evaluatePush(true, index, target.getXtractorParam(), pushedValue);
 				if (hasResultValue()) break;
 			}
 			executeImmediateTargets();
@@ -248,7 +251,9 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		try {
 			int index = target.getXtractorIndex();
 			if (hasPublicValue(index)) return;
-			evaluatePush(index, target.getXtractorParam(), pushedValue);
+			if (executePostponedTargetsBefore(nodes[index])) return;
+
+			evaluatePush(true, index, target.getXtractorParam(), pushedValue);
 			if (hasResultValue()) return;
 	
 			executeImmediateTargets();		
@@ -257,7 +262,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		}
 	}
 	
-	private void evaluatePush(int targetIndex, Parameter<?> targetParam, Object pushedValue)
+	private void evaluatePush(boolean immediate, int targetIndex, Parameter<?> targetParam, Object pushedValue)
 	{
 		setCurrentIndex(targetIndex);
 		StiXecutor xecutor = getXecutor(targetIndex);
@@ -284,9 +289,13 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		}
 		if (result == null) return;
 		
-		sequencer.addImmediateTargets(currentNode.getPushTargets());
 		if (xecutor == DefaultXecutors.FINAL) {
+			sequencer.addPostponeTargets(currentNode.getPushTargets());
 			sequencer.addPostponeTargets(currentNode.getNotifyTargets());
+		} else if (immediate) {
+			sequencer.addImmediateTargets(currentNode.getPushTargets());
+		} else {
+			sequencer.addPostponeTargets(currentNode.getPushTargets());
 		}
 	}
 	
@@ -336,8 +345,8 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	{
 		StiXpressionNode.PushTarget pushTarget;
 		while ((pushTarget = sequencer.nextPostponedTargetBefore(nextNode)) != null) {
-			if (hasResultValue()) return true;
 			evaluatePush(pushTarget);
+			if (hasResultValue()) return true;
 		}
 		return false;
 	}

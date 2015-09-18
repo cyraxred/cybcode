@@ -14,9 +14,9 @@ public abstract class StiXourceField<P0, T> extends StiXtractorLimiter<P0, Void,
 		return newInstance(p0, ValueLimit.ALL, transform);
 	}
 	
-	public static <P0, T> StiXourceField<P0, T> newSingleValue(StiXource<?, ?, ?, P0> p0, StiXFunction<P0, T> transform)
+	public static <P0, T> StiXourceField<P0, T> newOnlyValue(StiXource<?, ?, ?, P0> p0, StiXFunction<P0, T> transform)
 	{
-		return newInstance(p0, ValueLimit.SINGLE, transform);
+		return newInstance(p0, ValueLimit.ONLY, transform);
 	}
 	
 	public static <P0, T> StiXourceField<P0, T> newFirstValue(StiXource<?, ?, ?, P0> p0, StiXFunction<P0, T> transform)

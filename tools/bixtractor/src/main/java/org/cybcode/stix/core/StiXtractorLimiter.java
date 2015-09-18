@@ -10,7 +10,7 @@ public abstract class StiXtractorLimiter<P0, V, T> extends StiXtractorMonoInterc
 {
 	public enum ValueLimit { 
 		/** This may not work as expected */ //TODO This may not work as expected 
-		SINGLE { @Override boolean isFirstOnly() { return true; } }, 
+		ONLY { @Override boolean isFirstOnly() { return true; } }, 
 		FIRST  { @Override boolean isFirstOnly() { return true; } },
 		LAST, 
 		ALL;
@@ -53,7 +53,7 @@ public abstract class StiXtractorLimiter<P0, V, T> extends StiXtractorMonoInterc
 	protected final StiXecutor getXecutor()
 	{
 		switch (mode) {
-			case SINGLE: return XecutorFail.getInstance();
+			case ONLY: return XecutorFail.getInstance();
 			case FIRST: return XecutorFinal.getInstance();
 			case LAST: return null;
 			case ALL: return null;
