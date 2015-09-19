@@ -13,6 +13,7 @@ import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContext;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContextBuilder;
 import org.cybcode.stix.core.xecutors.StiXpressionSequencer;
+import org.cybcode.stix.core.xecutors.XecutorFailException;
 import org.cybcode.stix.ops.StiX_Ops;
 import org.cybcode.stix.xrc.pbuf.PbufFieldValue;
 import org.cybcode.stix.xrc.pbuf.PbufFields;
@@ -90,7 +91,7 @@ public class StiXourceTest
 	}
 
 	
-	@Test(expected = IllegalStateException.class) 
+	@Test(expected = XecutorFailException.class) 
 	public void test_pbuf_only_value_exception() throws IOException
 	{
 		assertEquals((Long) 19L, E(buildPbuf(), pbufOnly(StiX_Ops.<Binary>root(), PbufFields.INT, 21)));

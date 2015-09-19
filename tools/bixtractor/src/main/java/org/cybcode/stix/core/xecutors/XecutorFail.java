@@ -8,7 +8,7 @@ import org.cybcode.stix.api.StiXtractor.Parameter;
 public class XecutorFail extends AbstractXecutor
 {
 	private static final XecutorFail INSTANCE = new XecutorFail();
-
+	
 	public static StiXecutor getInstance()
 	{
 		return INSTANCE;
@@ -16,6 +16,6 @@ public class XecutorFail extends AbstractXecutor
 
 	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		throw new IllegalStateException();
+		throw new XecutorFailException();
 	}
 }

@@ -31,7 +31,7 @@ class XecutorCallbackGroup implements StiXecutorCallback
 {
 	private final PushTarget[] targets;
 	
-	@SuppressWarnings("unchecked") public static XecutorCallbackGroup newInstance(List<StiXecutorCallback> targets) 
+	@SuppressWarnings("unchecked") public static XecutorCallbackGroup newInstance(List<StiXecutorCallback> targets)  
 	{
 		return new XecutorCallbackGroup((List<XecutorCallback>) (List<? extends StiXecutorCallback>) targets);
 	}
