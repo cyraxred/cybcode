@@ -51,7 +51,6 @@ public class XecutorDefaultContext implements StiXecutorContext, StiXecutorPushC
 		currentIndex = 0;
 		currentNode = nodes[0];
 		setFinalValue(0, rootValue);
-		sequencer.addPostponeTargets(currentNode.getPushTargets());
 		sequencer.addPostponeTargets(currentNode.getNotifyTargets());
 		
 		if (nodes.length > 1) {

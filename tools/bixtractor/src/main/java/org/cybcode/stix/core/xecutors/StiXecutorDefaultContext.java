@@ -54,7 +54,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext, StiXecutorPu
 		currentIndex = 0;
 		currentNode = nodes[0];
 		setFinalValue(0, rootValue);
-		sequencer.addPostponeTargets(currentNode.getPushTargets());
 		sequencer.addPostponeTargets(currentNode.getNotifyTargets());
 		
 		if (nodes.length > 1) {
@@ -182,7 +181,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext, StiXecutorPu
 
 		if (!setValue(index, finalValue) || finalValue == null) return;
 		
-		sequencer.addPostponeTargets(node.getPushTargets()); //TODO push in notify
 		sequencer.addPostponeTargets(node.getNotifyTargets());
 	}
 	
@@ -273,17 +271,11 @@ public class StiXecutorDefaultContext implements StiXecutorContext, StiXecutorPu
 			stats.onPushEvaluated();
 			
 			currentFrame.setFinalIfResult(targetIndex);
-			sequencer.addPostponeTargets(currentNode.getPushTargets());
-			sequencer.addPostponeTargets(currentNode.getNotifyTargets()); //TODO getNotifyTargets should include getPushTargets  
+			sequencer.addPostponeTargets(currentNode.getNotifyTargets());  
 		} else {
 			if (finalValue == null || !setValue(targetIndex, finalValue)) return;
 			stats.onPushEvaluated();
-			
-			if (immediate) {
-				sequencer.addImmediateTargets(currentNode.getPushTargets());
-			} else {
-				sequencer.addImmediateTargets(currentNode.getPushTargets());
-			}
+			sequencer.addImmediateTargets(currentNode.getPushTargets());
 		}
 	}
 	

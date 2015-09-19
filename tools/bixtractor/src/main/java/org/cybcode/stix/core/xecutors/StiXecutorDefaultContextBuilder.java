@@ -51,11 +51,12 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 			switch (pushTarget.getXtractorParam().getBehavior()) {
 				case NEVER_NOTIFY: 
 					break;
-				case PUSH_ALL: 
-					pushTargets.add(pushTarget); 
-					break;
 				case CALLBACK:
 					callbackTargets.add(pushTarget);
+					break;
+				case PUSH_ALL: 
+					pushTargets.add(pushTarget); 
+					notifyTargets.add(pushTarget); 
 					break;
 				case REGULAR: 
 					if (!regularAsNotify) break;
@@ -180,6 +181,7 @@ public class StiXecutorDefaultContextBuilder implements StiXecutorContextBuilder
 		{
 			if (callbackTargets == null || pushTargets == null || notifyTargets == null) throw new NullPointerException();
 			if (this.pushTargets != null) throw new IllegalStateException();
+			if (pushTargets.size() > notifyTargets.size()) throw new IllegalArgumentException();
 			this.callbackTargets = callbackTargets;
 			this.pushTargets = pushTargets;
 			this.notifyTargets = notifyTargets;
