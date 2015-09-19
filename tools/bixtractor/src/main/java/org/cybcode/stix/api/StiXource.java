@@ -2,7 +2,7 @@ package org.cybcode.stix.api;
 
 import java.util.List;
 
-import org.cybcode.stix.core.StiXtractorLimiter;
+import org.cybcode.stix.core.Multiplicity;
 
 /**
  * 
@@ -13,14 +13,44 @@ import org.cybcode.stix.core.StiXtractorLimiter;
  * @param <D> description of a field
  * @param <T> internal field type
  */
-public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenPair<C, StiXource.Settings>, T>
+public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
 {
+	private static class SpecialXecutor<C> implements StiXecutor
+	{
+		private final Settings settings;
+		private final C innerContext;
+		
+		SpecialXecutor(Settings settings, C innerContext)
+		{
+			this.settings = settings;
+			this.innerContext = innerContext;
+		}
+
+		@SuppressWarnings("unchecked") @Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
+		{
+			Object parseValue = ((SpecialParameter<?>) pushedParameter).transform(pushedValue);
+			Object valueForPush = ((StiXource<?, C, ?, Object>) context.getCurrentXtractor()).processNestedFields(context, innerContext, settings, parseValue);
+			if (settings.hasPushTargets()) return valueForPush;
+			return null;
+		}
+
+		@Override public Object evaluateFinal(StiXecutorPushContext context)
+		{
+			return context.getCurrentXtractor().apply(context);
+		}
+	}
+	
 	private static abstract class SpecialParameter<T> extends PushParameter<T>
 	{
 		private SpecialParameter(StiXtractor<? extends T> source) { super(source); }
 		protected abstract Object getOperationToken();
 		protected abstract FieldParameter<?, T> asField();
 		protected abstract T transform(Object value);
+		
+		@Override public Object evaluatePush(StiXecutorPushContext context, Object pushedValue)
+		{
+			throw new UnsupportedOperationException("Can't be called directly");
+		}
 	}
 
 	private static final class FieldParameter<D, T> extends SpecialParameter<T>
@@ -35,10 +65,7 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 		}
 		@Override protected Object getOperationToken() { return fieldDetails; }
 		
-		@Override public ParameterKind getKind()
-		{
-			return ParameterKind.CALLBACK;
-		}
+		@Override ParameterBehavior getParamBehavior() { return ParameterBehavior.CALLBACK; }
 		@Override protected FieldParameter<?, T> asField() { return this; };
 		@SuppressWarnings("unchecked") @Override protected T transform(Object value) { return (T) value; };
 	}
@@ -73,16 +100,19 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 		public boolean hasSortedFields() { return hasSortedFields; }
 	}
 	
-	public StiXource(StiXource<?, ?, D, T> p0, D fieldDetails, StiXtractorLimiter.ValueLimit limitMode)
+	private final SpecialParameter<T> p0;
+	
+	public StiXource(StiXource<?, ?, D, T> p0, D fieldDetails, Multiplicity limitMode)
 	{
-		super(new FieldParameter<>(p0, fieldDetails), limitMode);
-		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
+		this.p0 = new FieldParameter<>(p0, fieldDetails);
+		//TODO
+//		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
 	}
 
-	public StiXource(StiXtractor<? extends S> p0, StiXFunction<? super S, T> fn, ValueLimit limitMode)
+	public StiXource(StiXtractor<? extends S> p0, StiXFunction<? super S, T> fn, Multiplicity limitMode)
 	{
-		super(new TransformParameter<>(p0, fn), limitMode);
-		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
+		this.p0 = new TransformParameter<>(p0, fn);
+//		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
 	}
 	
 	@Override public final boolean isRepeatable()
@@ -99,41 +129,26 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 	
 	@Override public Object getOperationToken()
 	{
-		return TokenPair.of(super.getOperationToken(), ((SpecialParameter<?>) p0).getOperationToken());
+		return TokenPair.of(null, ((SpecialParameter<?>) p0).getOperationToken());
 	}
 
-	@Override protected final T calculate(T p0)
-	{
-		return p0;
-	}
-	
-	@Override protected TokenPair<C, Settings> prepareContext(StiXecutorConstructionContext context)
+	@Override public final StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		Settings settings = new Settings();
 		settings.hasPushTargets = context.hasPushTargets();
 		settings.hasSortedFields = context.hasSortedFields();
 		
-		C fieldContainer = createFieldContainer(context.getXecutorCallbacks(), settings);
-		return TokenPair.of(fieldContainer, settings);
+		C innerContext = createFieldContainer(context.getXecutorCallbacks(), settings);
+		return new SpecialXecutor<C>(settings, innerContext);
 	}
 	
 	protected abstract C createFieldContainer(List<StiXecutorCallback> callbacks, Settings settings);
 	
-	@Override protected final StiXecutor processPush(StiXecutorContext context, TokenPair<C, Settings> container, 
-		Parameter<?> pushedParameter, Object pushedValue)
-	{
-		Settings settings = container.getP1();
-		T value = ((SpecialParameter<T>) p0).transform(pushedValue);
-		T valueForPush = processNestedFields(context, container.getP0(), settings, value);
-		context.setInterimValue(settings.hasPushTargets() ? valueForPush : null);
-		return getXecutor();
-	}
+	protected abstract T processNestedFields(StiXecutorPushContext context, C container, Settings settings, T pushedValue);
 
-	protected abstract T processNestedFields(StiXecutorContext context, C container, Settings settings, T pushedValue);
-
-	@SuppressWarnings("unchecked") @Override public final T evaluate(StiXecutorContext context)
+	@Override public final T apply(StiXecutorContext context)
 	{
-		return (T) context.getInterimValue();
+		return null;
 	}
 	
 	@Override public StiXtractor<? extends T> curry(int parameterIndex, Object value)
@@ -158,5 +173,15 @@ public abstract class StiXource<S, C, D, T> extends StiXtractorLimiter<T, TokenP
 	{
 		if (!(param instanceof FieldParameter)) return null;
 		return ((FieldParameter<?, ?>) param).fieldDetails;
+	}
+	
+	@Override public int paramCount()
+	{
+		return 1;
+	}
+	
+	@Override public void visit(Visitor visitor)
+	{
+		visitor.visitParameter(p0);
 	}
 }

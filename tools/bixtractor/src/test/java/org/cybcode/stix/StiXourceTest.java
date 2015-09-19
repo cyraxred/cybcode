@@ -9,6 +9,7 @@ import java.io.IOException;
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXourceField;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.Multiplicity;
 import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContext;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContextBuilder;
@@ -32,9 +33,9 @@ public class StiXourceTest
 
 		assertEquals(5, stats.nodeCount);
 		assertEquals(1, stats.evaluateCount);
-		assertEquals(3, stats.fieldCount);
+		assertEquals(2, stats.fieldCount);
 		assertEquals(4, stats.pushAttemptCount);
-		assertEquals(4, stats.pushEvaluateCount);
+		assertEquals(3, stats.pushEvaluateCount);
 
 		assertEquals((Long) 19L, E(buildPbuf(), pbufFirst(StiX_Ops.<Binary>root(), PbufFields.INT, 21)));
 
@@ -42,7 +43,7 @@ public class StiXourceTest
 		assertEquals(1, stats.evaluateCount);
 		assertEquals(2, stats.fieldCount);
 		assertEquals(3, stats.pushAttemptCount);
-		assertEquals(3, stats.pushEvaluateCount);
+		assertEquals(2, stats.pushEvaluateCount);
 	}
 
 	@Test public void test_pbuf_last() throws IOException
@@ -50,18 +51,18 @@ public class StiXourceTest
 		assertEquals((Long) 21L, E(buildPbuf(), last(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
 
 		assertEquals(5, stats.nodeCount);
-		assertEquals(2, stats.evaluateCount);
+		assertEquals(5, stats.evaluateCount);
 		assertEquals(8, stats.fieldCount);
 		assertEquals(10, stats.pushAttemptCount);
-		assertEquals(7, stats.pushEvaluateCount);
+		assertEquals(6, stats.pushEvaluateCount);
 
 		assertEquals((Long) 21L, E(buildPbuf(), pbufLast(StiX_Ops.<Binary>root(), PbufFields.INT, 21)));
 
 		assertEquals(4, stats.nodeCount);
-		assertEquals(2, stats.evaluateCount);
+		assertEquals(4, stats.evaluateCount);
 		assertEquals(8, stats.fieldCount);
 		assertEquals(7, stats.pushAttemptCount);
-		assertEquals(4, stats.pushEvaluateCount);
+		assertEquals(3, stats.pushEvaluateCount);
 	}
 	
 	@Test public void test_pbuf_sum() throws IOException
@@ -69,10 +70,10 @@ public class StiXourceTest
 		assertEquals((Long) 60L, E(buildPbuf(), addA(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
 
 		assertEquals(5, stats.nodeCount);
-		assertEquals(2, stats.evaluateCount);
+		assertEquals(5, stats.evaluateCount);
 		assertEquals(8, stats.fieldCount);
 		assertEquals(10, stats.pushAttemptCount);
-		assertEquals(7, stats.pushEvaluateCount);
+		assertEquals(6, stats.pushEvaluateCount);
 	}
 
 	@Test public void test_pbuf_no_value() throws IOException
@@ -123,7 +124,7 @@ public class StiXourceTest
 	private static <T> StiXtractor<T> pbufOnly(StiXtractor<Binary> p0, StiXFunction<PbufFieldValue, T> fn, int... path)
 	{
 		PbufXource<Binary> result = StiX_Ops.pbuf(p0, Binary.PREPARE, path);
-		return StiXourceField.newOnlyValue(result, fn);
+		return new StiXourceField<>(result, Multiplicity.ONLY, fn);
 	}
 
 	private static Binary buildPbuf() throws IOException

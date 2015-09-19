@@ -2,10 +2,9 @@ package org.cybcode.stix.ops;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.xecutors.XecutorFinal;
 
 public final class StiX_Const<T> implements StiXtractor<T>
 {
@@ -38,10 +37,10 @@ public final class StiX_Const<T> implements StiXtractor<T>
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return XecutorFinal.getInstance();
+		return null;
 	}
 	
-	@Override public T evaluate(StiXecutorContext context)
+	@Override public T apply(StiXecutorContext context)
 	{
 		return value;
 	}

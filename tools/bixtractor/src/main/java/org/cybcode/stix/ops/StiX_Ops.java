@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXourceField;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.Multiplicity;
 import org.cybcode.stix.xrc.pbuf.PbufFieldValue;
 import org.cybcode.stix.xrc.pbuf.PbufXource;
 
@@ -87,30 +88,30 @@ public class StiX_Ops
 	
 	public static <S> PbufXource<S> pbuf(StiXtractor<S> p0, StiXFunction<? super S, PbufFieldValue> prepare, int... path)
 	{
-		PbufXource<S> result = new PbufXource<S>(p0, prepare, PbufXource.ValueLimit.ALL);
+		PbufXource<S> result = new PbufXource<S>(p0, prepare, Multiplicity.ALL);
 		for (int id : path) {
-			result = new PbufXource<S>(result, id, PbufXource.ValueLimit.ALL);
+			result = new PbufXource<S>(result, id, Multiplicity.ALL);
 		}
 		return result;
 	}
 	
 	public static <S> PbufXource<S> pbufStart(StiXtractor<S> p0, StiXFunction<? super S, PbufFieldValue> prepare)
 	{
-		return new PbufXource<S>(p0, prepare, PbufXource.ValueLimit.ALL);
+		return new PbufXource<S>(p0, prepare, Multiplicity.ALL);
 	}
 
 	public static <S> PbufXource<S> pbufPath(PbufXource<S> p0, int... path)
 	{
 		PbufXource<S> result = p0;
 		for (int id : path) {
-			result = new PbufXource<S>(result, id, PbufXource.ValueLimit.ALL);
+			result = new PbufXource<S>(result, id, Multiplicity.ALL);
 		}
 		return result;
 	}
 	
-	public static <S> PbufXource<S> pbufLimit(PbufXource<?> p0, int fieldId, PbufXource.ValueLimit limit) { return new PbufXource<S>(p0, fieldId, limit); }
-	public static <T> StiXtractor<T> pbufRepeatedValue(PbufXource<?> p0, StiXFunction<PbufFieldValue, T> fn) { return StiXourceField.newRepeatedValue(p0, fn); }
-	public static <T> StiXtractor<T> pbufFirstValue(PbufXource<?> p0, StiXFunction<PbufFieldValue, T> fn) { return StiXourceField.newFirstValue(p0, fn); }
-	public static <T> StiXtractor<T> pbufLastValue(PbufXource<?> p0, StiXFunction<PbufFieldValue, T> fn) { return StiXourceField.newLastValue(p0, fn); }
+	public static <S> PbufXource<S> pbufLimit(PbufXource<?> p0, int fieldId, Multiplicity limit) { return new PbufXource<S>(p0, fieldId, limit); }
+	public static <T> StiXtractor<T> pbufRepeatedValue(PbufXource<?> p0, StiXFunction<PbufFieldValue, T> fn) { return new StiXourceField<>(p0, Multiplicity.ALL, fn); }
+	public static <T> StiXtractor<T> pbufFirstValue(PbufXource<?> p0, StiXFunction<PbufFieldValue, T> fn) { return new StiXourceField<>(p0, Multiplicity.FIRST, fn); }
+	public static <T> StiXtractor<T> pbufLastValue(PbufXource<?> p0, StiXFunction<PbufFieldValue, T> fn) { return new StiXourceField<>(p0, Multiplicity.LAST, fn); }
 	
 }

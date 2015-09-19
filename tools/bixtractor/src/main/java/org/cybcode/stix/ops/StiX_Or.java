@@ -20,9 +20,10 @@ public class StiX_Or extends StiXtractorBoolDuo implements StiXtractor.Commutati
 		return p0 || p1;
 	}
 
-	@Override protected boolean isPushToFinal(int parameterIndex, boolean value)
+	@Override protected Boolean calculatePartial(boolean p)
 	{
-		return value;
+		if (p) return Boolean.TRUE;
+		return null;
 	}
 
 	@Override protected StiXtractor<Boolean> curry(boolean value, StiXtractor<Boolean> otherParam)

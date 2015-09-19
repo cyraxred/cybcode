@@ -4,19 +4,31 @@ import java.util.Collection;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.xecutors.AbstractXecutor;
-import org.cybcode.stix.core.xecutors.XecutorFinal;
 import org.cybcode.tools.type.ClassUtil;
 
 public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutative
 {
-	private final PushParameter<?>[] params; //TODO ensure mandatory push
+	private final MuxParameter<?>[] params; //TODO ensure mandatory push
 	private final boolean repeatable;
 
-	private StiX_Mux(PushParameter<?>... params)
+	private static class MuxParameter<T> extends PushParameter<T>
+	{
+		public MuxParameter(StiXtractor<? extends T> source) { super(source); }
+		
+		@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue)
+		{
+			if (!context.getCurrentXtractor().isRepeatable()) {
+				context.setFinalState();
+			}
+			return (T) pushedValue;
+		}
+	}
+	
+	private StiX_Mux(MuxParameter<?>... params)
 	{
 		this.params = params;
 		this.repeatable = params.length > 1 || params[0].isRepeatable();
@@ -24,12 +36,12 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 
 	public StiX_Mux(StiXtractor<? extends T> p0)
 	{
-		this(new PushParameter<T>(p0));
+		this(new MuxParameter<T>(p0));
 	}
 
 	public StiX_Mux(StiXtractor<? extends T> p0, StiXtractor<? extends T> p1)
 	{
-		this(new PushParameter<T>(p0), new PushParameter<T>(p1));
+		this(new MuxParameter<T>(p0), new MuxParameter<T>(p1));
 	}
 
 	public StiX_Mux(Collection<StiXtractor<? extends T>> paramList)
@@ -37,13 +49,13 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 		this(toArray(paramList));
 	}
 
-	private static PushParameter<?>[] toArray(Collection<? extends StiXtractor<?>> paramList)
+	private static MuxParameter<?>[] toArray(Collection<? extends StiXtractor<?>> paramList)
 	{
 		if (paramList.isEmpty()) throw new IllegalArgumentException();
-		PushParameter<?>[] result = new PushParameter<?>[paramList.size()];
+		MuxParameter<?>[] result = new MuxParameter<?>[paramList.size()];
 		int i = 0;
 		for (StiXtractor<?> param : paramList) {
-			result[i++] = new PushParameter<>(param);
+			result[i++] = new MuxParameter<>(param);
 		}
 		return result;
 	}
@@ -78,12 +90,12 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return Xecutor.INSTANCE;
+		return null;
 	}
 
-	@SuppressWarnings("unchecked") @Override public T evaluate(StiXecutorContext context)
+	@Override public T apply(StiXecutorContext context)
 	{
-		return (T) context.getInterimValue();
+		return null;
 	}
 
 	@Override public void visit(Visitor visitor)
@@ -108,23 +120,5 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 		if (parameterIndex < 0 || parameterIndex > paramCount()) throw new IllegalArgumentException();
 		if (isRepeatable() || paramCount() > 1) return null;
 		return StiX_Const.of((T) value);
-	}
-	
-	private static class Xecutor extends AbstractXecutor
-	{
-		public static final Xecutor INSTANCE = new Xecutor(); 
-		
-		@Override public StiXecutor push(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue)
-		{
-			StiX_Mux<?> xtractor = (StiX_Mux<?>) context.getCurrentXtractor();
-			verifyParameterIndex(context, pushedParameter);
-			context.setInterimValue(pushedValue);
-			return xtractor.isRepeatable() ? this : XecutorFinal.getInstance();
-		}
-
-		@Override public boolean isPushOrFinal()
-		{
-			return true;
-		}
 	}
 }

@@ -3,9 +3,10 @@ package org.cybcode.stix.xrc.pbuf;
 import java.io.IOException;
 
 import org.cybcode.stix.api.StiXFunction;
-import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.Multiplicity;
 import org.cybcode.stix.core.xource.StiXourceByIntTags;
 
 import com.google.protobuf.CodedInputStream;
@@ -13,12 +14,12 @@ import com.google.protobuf.WireFormat;
 
 public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 {
-	public PbufXource(StiXource<?, ?, Integer, PbufFieldValue> p0, int fieldId, ValueLimit limitMode)
+	public PbufXource(StiXource<?, ?, Integer, PbufFieldValue> p0, int fieldId, Multiplicity limitMode)
 	{
 		super(p0, fieldId, limitMode);
 	}
 
-	public PbufXource(StiXtractor<? extends S> p0, StiXFunction<? super S, PbufFieldValue> fn, ValueLimit limitMode)
+	public PbufXource(StiXtractor<? extends S> p0, StiXFunction<? super S, PbufFieldValue> fn, Multiplicity limitMode)
 	{
 		super(p0, fn, limitMode);
 	}
@@ -28,7 +29,7 @@ public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 //		return new PbufFieldValue(fieldId == null ? 0 : fieldId, CodedInputStream.newInstance(value.getBytes()), false);
 //	}
 
-	@Override protected PbufFieldValue processNestedFields(StiXecutorContext context, FieldContainer<Integer, PbufFieldValue> container, 
+	@Override protected PbufFieldValue processNestedFields(StiXecutorPushContext context, FieldContainer<Integer, PbufFieldValue> container, 
 		Settings settings, final PbufFieldValue pushedValue)
 	{
 		if (container == null) return pushedValue;

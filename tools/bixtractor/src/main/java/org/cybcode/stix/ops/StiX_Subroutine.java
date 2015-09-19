@@ -2,17 +2,15 @@ package org.cybcode.stix.ops;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorMonoPush;
-import org.cybcode.stix.core.xecutors.XecutorMono;
-import org.cybcode.stix.core.xecutors.XecutorMonoPush;
 
 public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 {
-	private static final StiXecutor XECUTOR = new XecutorMono(1);
-	private static final StiXecutor XECUTOR_PUSH = new XecutorMonoPush(1);
+//	private static final StiXecutor XECUTOR = new XecutorMono(1);
+//	private static final StiXecutor XECUTOR_PUSH = new XecutorMonoPush(1);
 	
 	private final PushParameter<S> p0;
 	private final Parameter<T> p1;
@@ -45,10 +43,11 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return isRepeatable() ? XECUTOR_PUSH : XECUTOR;
+		throw new UnsupportedOperationException();
+//		return isRepeatable() ? XECUTOR_PUSH : XECUTOR;
 	}
 
-	@Override public T evaluate(StiXecutorContext context)
+	@Override public T apply(StiXecutorContext context)
 	{
 		return p1.getValue(context);
 	}

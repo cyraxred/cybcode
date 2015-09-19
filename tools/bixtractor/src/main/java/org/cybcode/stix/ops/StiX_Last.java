@@ -4,19 +4,28 @@ import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.StiXtractorMonoIntercept;
+import org.cybcode.stix.core.AbstractXtractorMono;
 
-public class StiX_Last<T> extends StiXtractorMonoIntercept<T, Void, T>
+public class StiX_Last<T> extends AbstractXtractorMono<T, T>
 {
 	public StiX_Last(StiXtractor<? extends T> p0)
 	{
-		super(new PushParameter<>(p0));
+		super(new PushParameter<T>(p0) 
+		{
+			@Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue)
+			{
+				if (pushedValue == null) return null;
+				context.setInterimValue(pushedValue);
+				return null;
+			}
+		});
 	}
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return createXecutor(null, false);
+		return null;
 	}
 
 	@Override public Class<? extends T> resultType()
@@ -34,7 +43,7 @@ public class StiX_Last<T> extends StiXtractorMonoIntercept<T, Void, T>
 		return false;
 	}
 
-	@SuppressWarnings("unchecked") @Override public T evaluate(StiXecutorContext context)
+	@SuppressWarnings("unchecked") @Override public T apply(StiXecutorContext context)
 	{
 		return calculate((T) context.getInterimValue());
 	}
@@ -47,13 +56,5 @@ public class StiX_Last<T> extends StiXtractorMonoIntercept<T, Void, T>
 	@Override protected T calculate(T p0)
 	{
 		return p0;
-	}
-
-	@Override protected StiXecutor processPush(StiXecutorContext context, Void info, Parameter<?> pushedParameter, Object pushedValue)
-	{
-		if (pushedValue == null) return null;
-
-		context.setInterimValue(pushedValue);
-		return null;
 	}
 }

@@ -3,11 +3,11 @@ package org.cybcode.stix.core;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.ops.StiX_Const;
 
-abstract class AbstractXtractorMono<P0, T> implements StiXtractor<T>
+public abstract class AbstractXtractorMono<P0, T> implements StiXtractor<T>
 {
 	protected final Parameter<P0> p0;
 
-	AbstractXtractorMono(Parameter<P0> p0)
+	protected AbstractXtractorMono(Parameter<P0> p0)
 	{
 		this.p0 = p0;
 	}

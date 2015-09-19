@@ -1,7 +1,6 @@
 package org.cybcode.stix.core.xecutors;
 
-import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
@@ -26,6 +25,11 @@ public class XecutorPartial extends AbstractXecutor
 		if (state >= 0 && STATES.length > state) return STATES[state];
 		return new XecutorPartial(state);
 	}
+
+	private static int getAllParametersMask(int paramCount)
+	{
+		return paramCount == MAX_PARAM_COUNT ? MAX_PARAM_MASK : (1 << paramCount) - 1;
+	}
 	
 	public static XecutorPartial newInstance(StiXtractor<?> usedBy)
 	{
@@ -35,7 +39,7 @@ public class XecutorPartial extends AbstractXecutor
 			throw new UnsupportedOperationException("Parameter count=" + paramCount + " is not supported, max=" + MAX_PARAM_COUNT);
 		}
 		
-		return STATES[0];
+		return valueOf(getAllParametersMask(paramCount));
 	}
 	
 	private XecutorPartial(int state) 
@@ -43,55 +47,40 @@ public class XecutorPartial extends AbstractXecutor
 		this.state = state; 
 	}
 	
-	public boolean hasParameterResolved(int paramIndex)
+	public boolean isParameterResolved(int paramIndex)
 	{
-		if (paramIndex < 0) throw new IllegalArgumentException();
-		if (paramIndex >= MAX_PARAM_COUNT) return false;
-		return (state & (1 << paramIndex)) != 0;
+		verifyParamIndex(paramIndex);
+		return (state & (1 << paramIndex)) == 0;
 	}
 
-	private static int getAllParametersMask(int paramCount)
+	public boolean hasAllParametersResolved()
 	{
-		return paramCount == MAX_PARAM_COUNT ? MAX_PARAM_MASK : (1 << paramCount) - 1;
-	}
-	
-	public boolean hasAllParametersResolved(int paramCount)
-	{
-		if (paramCount < 0) throw new IllegalArgumentException();
-		if (paramCount > MAX_PARAM_COUNT) return false;
-		int mask = getAllParametersMask(paramCount); 
-		return mask == (state & mask);
+		return state == 0;
 	}
 
-	public XecutorPartial nextParameterResolved(int resolvedParamater)
+	public XecutorPartial resolveParameter(int resolvedParamater)
 	{
 		verifyParamIndex(resolvedParamater);
-		int resolvedState = state | (1 << resolvedParamater);
-		if (state == resolvedState) return this;
-		return valueOf(resolvedState);
+		int nextState = state & ~(1 << resolvedParamater);
+		if (state == nextState) return this;
+		return valueOf(nextState);
 	}
 	
-	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
+	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		int paramIndex = pushedParameter.getParamIndex();
-		StiXtractor<?> xtractor = context.getCurrentXtractor();
-		int paramCount = xtractor.paramCount();
-		if (paramIndex >= paramCount) {
-			throw new IllegalArgumentException("Parameter index=" + paramIndex + ", xtractor=" + xtractor);
+		if (pushedParameter.hasFinalValue(context)) {
+			XecutorPartial nextState = this.resolveParameter(pushedParameter.getParamIndex());
+			if (nextState.hasAllParametersResolved()) {
+				context.setFinalState();
+				return context.getCurrentXtractor().apply(context);
+			}
+			context.setNextState(nextState);
 		}
-		
-		StiXecutorPushCallback callback = (StiXecutorPushCallback) xtractor;
+		return pushedParameter.evaluatePush(context, pushedValue);
+	}
 
-		int nextState = this.state | (1 << paramIndex);
-		if (this.state == nextState) return this;
-		
-		if (callback.isPushToFinal(context, pushedParameter, pushedValue)) return XecutorFinal.getInstance();
-		
-		if (!pushedParameter.hasValue(context)) return this; //the parameter is not available in the context, means it is direct-push parameter
-
-		int allParamMask = getAllParametersMask(paramCount);
-		if (allParamMask == (nextState & allParamMask)) return XecutorFinal.getInstance();
-		
-		return valueOf(nextState);
+	@Override public Object evaluateFinal(StiXecutorPushContext context)
+	{
+		return context.getCurrentXtractor().apply(context);
 	}
 }

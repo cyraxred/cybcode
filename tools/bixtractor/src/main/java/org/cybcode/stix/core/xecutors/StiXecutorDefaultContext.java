@@ -4,11 +4,12 @@ import java.util.Arrays;
 
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 import org.cybcode.stix.ops.StiX_Root;
 
-public class StiXecutorDefaultContext implements StiXecutorContext
+public class StiXecutorDefaultContext implements StiXecutorContext, StiXecutorPushContext
 {
 	private final StiXpressionNode[] nodes;
 
@@ -59,7 +60,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		if (nodes.length > 1) {
 			setCurrentIndex(1);
 		}
-		stats.onEvaluate();
+		stats.onEvaluated();
 	}
 
 	private void resetFrameContent()
@@ -79,7 +80,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 			StiXpressionNode node = nodes[i];
 			context.setNode(node);
 			StiXecutor xecutor = node.createXecutor(context);
-			if (xecutor == null) throw new NullPointerException("Xecutor can't be null, xtractor=" + node.getXtractor());
+//			if (xecutor == null) throw new NullPointerException("Xecutor can't be null, xtractor=" + node.getXtractor());
 			initialState[i] = xecutor; 
 		}
 	}
@@ -90,15 +91,11 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		return state == DefaultXecutors.FINAL;
 	}
 	
-	private boolean hasPrivateValue(int xtractorIndex)
+	private boolean setValue(int xtractorIndex, Object value)
 	{
-		StiXecutor state = currentState[xtractorIndex];
-		return state != null && state != DefaultXecutors.FINAL;
-	}
-
-	private void setValue(int xtractorIndex, Object value)
-	{
+		if (value == StiXecutor.KEEP_LAST_VALUE) return false;
 		results[xtractorIndex] = value;
+		return true;
 	}
 
 	private boolean hasValue(int xtractorIndex)
@@ -118,10 +115,10 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		return getValue(index);
 	}
 
-	@Override public boolean hasParamValue(int paramIndex)
+	@Override public boolean hasParamFinalValue(int paramIndex)
 	{
 		int index = mapParamIndex(paramIndex);
-		return hasPublicValue(index) && hasValue(index);
+		return hasPublicValue(index);
 	}
 
 	@Override public boolean hasResultValue()
@@ -134,9 +131,6 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		int index = currentIndex();
 		if (hasPublicValue(index)) {
 			throw new IllegalStateException();
-		}
-		if (currentState[index] == null) {
-			currentState[index] = initialState[index];
 		}
 		setValue(index, value);
 	}
@@ -151,17 +145,7 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	@Override public boolean hasInterimValue()
 	{
 		int index = currentIndex();
-		return hasPrivateValue(index) && hasValue(index);
-	}
-	
-	private StiXecutor getXecutor(int index)
-	{
-		StiXecutor result = currentState[index];
-		if (result != null) return result;
-		
-		result = initialState[index];
-		currentState[index] = result;
-		return result;
+		return currentState[index] != DefaultXecutors.FINAL && hasValue(index);
 	}
 	
 	void enterFrame()
@@ -178,28 +162,28 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 		currentState[startIndex] = initialState[startIndex]; //clears FINAL to enable frame re-enter and not null to enable frame cleanup
 	}
 	
-	private boolean evaluateCurrent()
+	private void evaluateCurrent()
 	{
 		int index = currentIndex();
 		StiXpressionNode node = currentNode;
-		if (node == null) return false;
+		if (node == null) return;
 
 		StiXecutor xecutor = currentState[index];
-		if (xecutor != null && xecutor.isPushOrFinal()) {
-			if (xecutor == DefaultXecutors.FINAL) return false;
-			setFinalValue(index, null);
-			return false;
-		} 
-
-		stats.onEvaluate();
-		StiXtractor<?> xtractor = getCurrentXtractor();
-		Object result = xtractor.evaluate(this);
-		setFinalValue(index, result);
-		if (result == null) return false;
+		if (xecutor == DefaultXecutors.FINAL) return;
 		
-		sequencer.addPostponeTargets(node.getPushTargets());
+		Object finalValue;
+		if (xecutor != null) {
+			finalValue = xecutor.evaluateFinal(this);
+		} else {
+			finalValue = getCurrentXtractor().apply(this);
+		}
+		currentState[index] = DefaultXecutors.FINAL;
+		stats.onEvaluated();
+
+		if (!setValue(index, finalValue) || finalValue == null) return;
+		
+		sequencer.addPostponeTargets(node.getPushTargets()); //TODO push in notify
 		sequencer.addPostponeTargets(node.getNotifyTargets());
-		return true;
 	}
 	
 	private void setFinalValue(int xtractorIndex, Object value)
@@ -265,37 +249,41 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	private void evaluatePush(boolean immediate, int targetIndex, Parameter<?> targetParam, Object pushedValue)
 	{
 		setCurrentIndex(targetIndex);
-		StiXecutor xecutor = getXecutor(targetIndex);
-
 		stats.onPushAttempt();
-		xecutor = xecutor.push(this, targetParam, pushedValue);
-		if (xecutor == null) throw new NullPointerException();
+//		if (currentNode == null) return; //TODO do we need it?
 
-		if (xecutor == DefaultXecutors.FINAL) {
-			currentState[targetIndex] = DefaultXecutors.PUSH_FINAL; 
+		Object finalValue;
+		StiXecutor xecutor = currentState[targetIndex];
+		if (xecutor == null) {
+			xecutor = initialState[targetIndex];
+			if (xecutor == null) {
+				finalValue = targetParam.evaluatePush(this, pushedValue);
+			} else {
+				currentState[targetIndex] = xecutor;
+				finalValue = xecutor.evaluatePush(this, targetParam, pushedValue);
+			}
+		} else if (xecutor == DefaultXecutors.FINAL) {
+			return;
 		} else {
-			currentState[targetIndex] = xecutor;
-			if (!xecutor.isPushOrFinal()) return;
+			finalValue = xecutor.evaluatePush(this, targetParam, pushedValue);
 		}
 		
-		stats.onPushEvaluate();
-		StiXtractor<?> xtractor = getCurrentXtractor();
-		Object result = xtractor.evaluate(this);
-		
-		if (xecutor == DefaultXecutors.FINAL) { //replace PUSH_FINAL
-			setFinalValue(targetIndex, result);
-		} else {
-			setValue(targetIndex, result);
-		}
-		if (result == null) return;
-		
-		if (xecutor == DefaultXecutors.FINAL) {
+		if (currentState[targetIndex] == DefaultXecutors.FINAL) {
+			if (!setValue(targetIndex, finalValue) || finalValue == null) return;
+			stats.onPushEvaluated();
+			
+			currentFrame.setFinalIfResult(targetIndex);
 			sequencer.addPostponeTargets(currentNode.getPushTargets());
-			sequencer.addPostponeTargets(currentNode.getNotifyTargets());
-		} else if (immediate) {
-			sequencer.addImmediateTargets(currentNode.getPushTargets());
+			sequencer.addPostponeTargets(currentNode.getNotifyTargets()); //TODO getNotifyTargets should include getPushTargets  
 		} else {
-			sequencer.addPostponeTargets(currentNode.getPushTargets());
+			if (finalValue == null || !setValue(targetIndex, finalValue)) return;
+			stats.onPushEvaluated();
+			
+			if (immediate) {
+				sequencer.addImmediateTargets(currentNode.getPushTargets());
+			} else {
+				sequencer.addImmediateTargets(currentNode.getPushTargets());
+			}
 		}
 	}
 	
@@ -402,5 +390,16 @@ public class StiXecutorDefaultContext implements StiXecutorContext
 	@Override public void onXourceFieldParsed()
 	{
 		stats.onFieldParsed();		
+	}
+
+	@Override public void setNextState(StiXecutor xecutor)
+	{
+		if (xecutor == null) throw new NullPointerException();
+		currentState[currentIndex] = xecutor;
+	}
+
+	@Override public void setFinalState()
+	{
+		currentState[currentIndex] = DefaultXecutors.FINAL;
 	}
 }

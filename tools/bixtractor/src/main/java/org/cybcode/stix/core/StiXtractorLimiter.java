@@ -1,64 +1,58 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.StiXComplexityHelper;
+import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.xecutors.XecutorFail;
-import org.cybcode.stix.core.xecutors.XecutorFinal;
+import org.cybcode.stix.api.TokenPair;
 
-public abstract class StiXtractorLimiter<P0, V, T> extends StiXtractorMonoIntercept<P0, V, T>
+public abstract class StiXtractorLimiter<P0, T> extends AbstractXtractorMono<P0, T>
 {
-	public enum ValueLimit { 
-		/** This may not work as expected */ //TODO This may not work as expected 
-		ONLY { @Override boolean isFirstOnly() { return true; } }, 
-		FIRST  { @Override boolean isFirstOnly() { return true; } },
-		LAST, 
-		ALL;
-		
-		boolean isFirstOnly() { return false; }
-	}
+	private final Multiplicity mode;
 	
-	private final ValueLimit mode;
-
-	public StiXtractorLimiter(StiXtractor<? extends P0> p0, ValueLimit mode)
+	public StiXtractorLimiter(StiXtractor<? extends P0> p0, Multiplicity mode, StiXFunction<P0, ? extends T> fn)
 	{
-		this(new PushParameter<>(p0), mode);
-	}
-
-	protected StiXtractorLimiter(PushParameter<P0> p0, ValueLimit mode)
-	{
-		super(p0);
-		if (mode == null) throw new NullPointerException();
+		super(mode.createParameter(p0, fn));
 		this.mode = mode;
 	}
 
+	@SuppressWarnings("unchecked") @Override public final T apply(StiXecutorContext context)
+	{
+		if (!mode.usesInterim()) return null;
+		Object value = context.getInterimValue();
+		if (value == null) return null;
+		return ((MultiplicityParameter<P0, T>) p0).convert(value);
+	}
+	
 	@Override public Object getOperationToken()
 	{
-		return mode;
+		return TokenPair.of(mode, getFn().getOperationToken());
 	}
 	
-	@Override public boolean isRepeatable()
+	@SuppressWarnings("unchecked") protected final StiXFunction<P0, ? extends T> getFn()
 	{
-		return mode == ValueLimit.ALL && p0.isRepeatable();
+		return ((MultiplicityParameter<P0, T>) p0).fn;
 	}
 	
-	protected abstract V prepareContext(StiXecutorConstructionContext context);
-	
+	@SuppressWarnings("unchecked") @Override protected final T calculate(P0 p0)
+	{
+		return ((MultiplicityParameter<P0, T>) p0).convert(p0);
+	}
+
+	@Override public int getOperationComplexity(StiXComplexityHelper helper)
+	{
+		return helper.getComplexityOf(getFn(), mode.getOperationComplexity());
+	}
+
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		V info = prepareContext(context);
-		return createXecutor(info, mode == ValueLimit.ALL);
+		return null;
 	}
-	
-	protected final StiXecutor getXecutor()
+
+	@Override public Class<? extends T> resultType()
 	{
-		switch (mode) {
-			case ONLY: return XecutorFail.getInstance();
-			case FIRST: return XecutorFinal.getInstance();
-			case LAST: return null;
-			case ALL: return null;
-			default:
-				throw new UnsupportedOperationException();
-		} 
+		return getFn().resultType();
 	}
 }

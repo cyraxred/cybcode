@@ -55,7 +55,7 @@ public class StiXpressionsTest
 		assertEquals(Boolean.FALSE, EP(2L, and(constOf(true), constOf(false))));
 		assertEquals(4, stats.nodeCount);
 		assertEquals(4, stats.evaluateCount);
-		assertEquals(0, stats.pushAttemptCount);
+		assertEquals(1, stats.pushAttemptCount);
 		assertEquals(0, stats.pushEvaluateCount);
 	}
 
@@ -63,9 +63,9 @@ public class StiXpressionsTest
 	{
 		assertEquals(Boolean.FALSE, E(2L, andIfNull(constOf(false), constOf(true), true)));
 		assertEquals(4, stats.nodeCount);
-		assertEquals(4, stats.evaluateCount);
-		assertEquals(0, stats.pushAttemptCount);
-		assertEquals(0, stats.pushEvaluateCount);
+		assertEquals(2, stats.evaluateCount);
+		assertEquals(1, stats.pushAttemptCount);
+		assertEquals(1, stats.pushEvaluateCount);
 		
 		assertEquals(Boolean.FALSE, EP(2L, andIfNull(constOf(false), constOf(true), true)));
 		assertEquals(4, stats.nodeCount);
@@ -75,9 +75,9 @@ public class StiXpressionsTest
 
 		assertEquals(Boolean.FALSE, EP(2L, andIfNull(constOf(true), constOf(false), true)));
 		assertEquals(4, stats.nodeCount);
-		assertEquals(3, stats.evaluateCount);
-		assertEquals(2, stats.pushAttemptCount);
-		assertEquals(1, stats.pushEvaluateCount);
+		assertEquals(4, stats.evaluateCount);
+		assertEquals(1, stats.pushAttemptCount);
+		assertEquals(0, stats.pushEvaluateCount);
 	}
 
 	@Test public void test_aggregating_AND()

@@ -1,6 +1,7 @@
 package org.cybcode.stix.core;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 
 public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean, Boolean>
@@ -9,13 +10,13 @@ public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean
 
 	protected StiXtractorBoolDuo(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1)
 	{
-		super(p0, p1);
+		super(p0, false, p1, false);
 		this.defaultValue = null;
 	}
 
 	protected StiXtractorBoolDuo(StiXtractor<? extends Boolean> p0, StiXtractor<? extends Boolean> p1, boolean defaultParamValue)
 	{
-		super(new NotifyParameter<>(p0), new NotifyParameter<>(p1));
+		super(p0, true, p1, true);
 		this.defaultValue = defaultParamValue;
 	}
 
@@ -33,14 +34,28 @@ public abstract class StiXtractorBoolDuo extends StiXtractorDuo<Boolean, Boolean
 	{
 		return Boolean.class;
 	}
-	
-	@Override protected boolean isPushToFinal(int parameterIndex, Object value)
-	{
-		if (defaultValue == null) return false;
-		return isPushToFinal(parameterIndex, ((Boolean) value).booleanValue());
-	}
 
-	protected abstract boolean isPushToFinal(int parameterIndex, boolean value);
+	@Override protected Boolean evaluatePushP0(StiXecutorPushContext context, Boolean pushedValue)
+	{
+		if (pushedValue == null || defaultValue == null) return null;
+		Boolean result = calculatePartial(pushedValue.booleanValue());
+		if (result != null) {
+			context.setFinalState();
+		}
+		return result;
+	}
+	
+	@Override protected Boolean evaluatePushP1(StiXecutorPushContext context, Boolean pushedValue)
+	{
+		if (pushedValue == null || defaultValue == null) return null;
+		Boolean result = calculatePartial(pushedValue.booleanValue());
+		if (result != null) {
+			context.setFinalState();
+		}
+		return result;
+	}
+	
+	protected abstract Boolean calculatePartial(boolean p);
 	protected abstract boolean calculate(boolean p0, boolean p1);
 	
 	@Override protected Boolean calculate(Boolean p0, Boolean p1)

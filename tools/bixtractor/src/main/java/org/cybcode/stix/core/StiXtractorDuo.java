@@ -2,43 +2,63 @@ package org.cybcode.stix.core;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.xecutors.XecutorDuo;
-import org.cybcode.stix.ops.StiX_Const;
 
 public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 {
-	private final static XecutorDuo XECUTOR = new XecutorDuo(0, 1) 
-	{
-		@Override protected boolean isPushToFinal(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue) 
-		{
-			return ((StiXtractorDuo<?, ?, ?>) context.getCurrentXtractor()).isPushToFinal(context, pushedParameter, pushedValue);
-		}
-	};
-	
 	protected final Parameter<P0> p0;
 	protected final Parameter<P1> p1;
 
-	public StiXtractorDuo(StiXtractor<? extends P0> p0, StiXtractor<? extends P1> p1)
+	protected StiXtractorDuo(StiXtractor<? extends P0> p0, boolean p0_notify, StiXtractor<? extends P1> p1, boolean p1_notify)
 	{
-		this.p0 = new Parameter<P0>(p0);
-		this.p1 = new Parameter<P1>(p1);
+		if (p0_notify) {
+			this.p0 = new NotifyParameter<P0>(p0) 
+			{
+				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP0(context, (P0) pushedValue); }
+			};
+		} else {
+			this.p0 = new Parameter<P0>(p0) 
+			{
+				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP0(context, (P0) pushedValue); }
+			};
+		}
+		if (p1_notify) {
+			this.p1 = new NotifyParameter<P1>(p1) 
+			{
+				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP1(context, (P1) pushedValue); }
+			};
+		} else {
+			this.p1 = new Parameter<P1>(p1) 
+			{
+				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP1(context, (P1) pushedValue); }
+			};
+		}
 	}
 	
-	protected StiXtractorDuo(Parameter<P0> p0, Parameter<P1> p1)
+	protected StiXtractorDuo(StiXtractor<? extends P0> p0, StiXtractor<? extends P1> p1)
 	{
-		this.p0 = p0;
-		this.p1 = p1;
+		this(p0, false, p1, false);
 	}
 	
+	protected T evaluatePushP0(StiXecutorPushContext context, P0 pushedValue)
+	{
+		return null; //calculate(pushedValue, p1.getValue(context));
+	}
+
+	protected T evaluatePushP1(StiXecutorPushContext context, P1 pushedValue)
+	{
+		return null; //calculate(p0.getValue(context), pushedValue);
+	}
+
 	@Override public final boolean isRepeatable()
 	{
 		return false;
 	}
 	
-	@Override public final T evaluate(StiXecutorContext context)
+	@Override public final T apply(StiXecutorContext context)
 	{
 		P0 pv0 = p0.getValue(context);
 		P1 pv1 = p1.getValue(context);
@@ -48,26 +68,9 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 
 	protected abstract T calculate(P0 p0, P1 p1);
 
-	protected boolean isPushToFinal(int parameterIndex, Object value) 
-	{
-		return false;
-	};
-	
-	private boolean isPushToFinal(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue) 
-	{
-		int index = pushedParameter.getParamIndex();
-		switch (index) {
-			case 0:
-			case 1:
-				return isPushToFinal(index, pushedValue);
-			default:
-				throw new IllegalArgumentException();
-		}
-	}
-	
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return XECUTOR;
+		return null;
 	}
 	
 	@Override public int paramCount()
@@ -83,29 +86,30 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 
 	@Override public StiXtractor<? extends T> curry(int parameterIndex, Object value)
 	{
-		switch (parameterIndex) {
-			case 0: {
-				@SuppressWarnings("unchecked") final P0 pv0 = (P0) value;
-				
-				if (isPushToFinal(parameterIndex, value)) {
-					T result = calculate(pv0, null); 
-					return StiX_Const.of(result);
-				}
-				return new CurriedP0<P0, P1, T>(this, pv0, p1);
-			}
-			case 1: {
-				@SuppressWarnings("unchecked") final P1 pv1 = (P1) value;
-				
-				if (isPushToFinal(parameterIndex, value)) {
-					T result = calculate(null, pv1); 
-					return StiX_Const.of(result);
-				}
-				return new CurriedP1<P0, P1, T>(this, p0, pv1);
-			}
-				
-			default:
-				throw new IllegalArgumentException();
-		}
+		throw new UnsupportedOperationException();
+//		switch (parameterIndex) {
+//			case 0: {
+//				@SuppressWarnings("unchecked") final P0 pv0 = (P0) value;
+//				
+//				if (isPushToFinal(parameterIndex, value)) {
+//					T result = calculate(pv0, null); 
+//					return StiX_Const.of(result);
+//				}
+//				return new CurriedP0<P0, P1, T>(this, pv0, p1);
+//			}
+//			case 1: {
+//				@SuppressWarnings("unchecked") final P1 pv1 = (P1) value;
+//				
+//				if (isPushToFinal(parameterIndex, value)) {
+//					T result = calculate(null, pv1); 
+//					return StiX_Const.of(result);
+//				}
+//				return new CurriedP1<P0, P1, T>(this, p0, pv1);
+//			}
+//				
+//			default:
+//				throw new IllegalArgumentException();
+//		}
 	}
 	
 	private static abstract class CurriedDuo<V, P, O extends StiXtractor<?>, T> extends StiXtractorMono<P, T>

@@ -1,18 +1,24 @@
 package org.cybcode.stix.core.xecutors;
 
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
 class FrameStartXecutor implements StiXecutor
 {
 	public static final StiXecutor INSTANCE = new FrameStartXecutor();
 	
-	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
+	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
 		((StiXecutorDefaultContext) context).enterFrame();
-		return DefaultXecutors.FINAL;
+		context.setFinalState();
+		return pushedValue;
 	}
 
-	@Override public boolean isPushOrFinal() { return false; }
+	@Override public Object evaluateFinal(StiXecutorPushContext context)
+	{
+		((StiXecutorDefaultContext) context).enterFrame();
+		context.setFinalState();
+		return context.getCurrentXtractor().apply(context);
+	}
 }

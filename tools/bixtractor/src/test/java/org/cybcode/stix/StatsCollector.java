@@ -10,7 +10,7 @@ class StatsCollector implements StiXecutorStatsCollector
 	public int nodeCount;
 	public int fieldCount;
 	
-	@Override public void onEvaluate()
+	@Override public void onEvaluated()
 	{
 		evaluateCount++;
 	}
@@ -20,7 +20,7 @@ class StatsCollector implements StiXecutorStatsCollector
 		pushAttemptCount++;
 	}
 	
-	@Override public void onPushEvaluate()
+	@Override public void onPushEvaluated()
 	{
 		pushEvaluateCount++;
 	}

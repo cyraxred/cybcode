@@ -1,21 +1,13 @@
 package org.cybcode.stix.core.xecutors;
 
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXtractor.Parameter;
 
-//TODO this may not work as expected
-public class XecutorFail extends AbstractXecutor
+public abstract class XecutorFail implements StiXecutor
 {
-	private static final XecutorFail INSTANCE = new XecutorFail();
-	
+	private XecutorFail() {}
+
 	public static StiXecutor getInstance()
 	{
-		return INSTANCE;
-	}
-
-	@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
-	{
-		throw new XecutorFailException();
+		return DefaultXecutors.FAIL;
 	}
 }

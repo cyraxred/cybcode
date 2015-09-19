@@ -2,6 +2,8 @@ package org.cybcode.stix.api;
 
 public interface StiXecutor
 {
-	StiXecutor push(StiXecutorContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue);
-	boolean isPushOrFinal();
+	public static final Object KEEP_LAST_VALUE = new Object();
+	
+	Object evaluatePush(StiXecutorPushContext context, StiXtractor.Parameter<?> pushedParameter, Object pushedValue);
+	Object evaluateFinal(StiXecutorPushContext context);
 }

@@ -1,11 +1,10 @@
 package org.cybcode.stix.core;
 
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
+import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.xecutors.AbstractXecutor;
-import org.cybcode.stix.core.xecutors.XecutorFinal;
 
 public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 {
@@ -13,10 +12,31 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 
 	public StiXtractorAggregate(StiXtractor<? extends P0> p0)
 	{
-		this.p0 = new PushParameter<P0>(p0);
+		this.p0 = new PushParameter<P0>(p0) 
+		{
+			@Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue)
+			{
+				@SuppressWarnings("unchecked") final P0 pv0 = (P0) pushedValue;
+				A accumOut;
+				if (context.hasInterimValue()) {
+					@SuppressWarnings("unchecked") A accumIn = (A) context.getInterimValue();
+					accumOut = aggregateNextValue(accumIn, pv0);
+				} else {
+					accumOut = aggregateFirstValue(pv0);
+				}
+				
+				if (!isRepeatable() || isFinalStateValue(accumOut)) {
+					context.setFinalState();
+					return calculate(accumOut);
+				} else {
+					context.setInterimValue(accumOut);
+					return null;
+				}
+			}
+		};
 	}
 	
-	@Override public T evaluate(StiXecutorContext context)
+	@Override public T apply(StiXecutorContext context)
 	{
 		if (!context.hasInterimValue()) return null; //no values in, no values out
 		
@@ -42,7 +62,7 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return XecutorAggregate.INSTANCE;
+		return null;
 	}
 	
 	@Override public StiXtractor<T> curry(int parameterIndex, Object value)
@@ -72,21 +92,5 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 		}
 		context.setInterimValue(accumOut);
 		return !p0.isRepeatable() || isFinalStateValue(accumOut);
-	}
-
-	private static class XecutorAggregate extends AbstractXecutor
-	{
-		public static final XecutorAggregate INSTANCE = new XecutorAggregate(); 
-
-		@Override public StiXecutor push(StiXecutorContext context, Parameter<?> pushedParameter, Object pushedValue)
-		{
-			verifyParameterIndex(context, pushedParameter);
-			
-			StiXtractorAggregate<?, ?, ?> aggregator = (StiXtractorAggregate<?, ?, ?>) context.getCurrentXtractor();
-			if (pushedValue == null) return this; //sanity check
-			
-			if (aggregator.aggregateNextAndIsFinal(context, pushedValue)) return XecutorFinal.getInstance(); 
-			return this;
-		}
 	}
 }

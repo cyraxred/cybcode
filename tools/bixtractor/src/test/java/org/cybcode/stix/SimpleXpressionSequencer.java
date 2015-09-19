@@ -37,7 +37,13 @@ class SimpleXpressionSequencer implements StiXpressionSequencer
 	@Override public PushTarget nextPostponedTargetBefore(StiXpressionNode node)
 	{
 		if (!immediateQueue.isEmpty()) return immediateQueue.removeLast();
-		if (!postponeQueue.isEmpty()) return postponeQueue.removeLast();
+		
+		int nodeIndex = node.getIndex();
+		
+		while (!postponeQueue.isEmpty()) {
+			PushTarget result = postponeQueue.removeLast();
+			if (result.getXtractorIndex() > nodeIndex || result.getXtractorParam().getBehavior().isMandatory()) return result;
+		}
 		return null;
 	}
 }

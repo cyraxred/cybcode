@@ -1,6 +1,7 @@
 package org.cybcode.stix.ops;
 
 import org.cybcode.stix.api.StiXComplexityHelper;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.StiXtractorDuo;
 import org.cybcode.tools.type.ClassUtil;
@@ -9,7 +10,7 @@ public class StiX_IfNull<T> extends StiXtractorDuo<T, T, T>
 {
 	public StiX_IfNull(StiXtractor<? extends T> pValue, StiXtractor<? extends T> pValueForNull)
 	{
-		super(new NotifyParameter<>(pValue), new Parameter<>(pValueForNull));
+		super(pValue, true, pValueForNull, false);
 	}
 
 	@Override public Class<? extends T> resultType()
@@ -29,9 +30,11 @@ public class StiX_IfNull<T> extends StiXtractorDuo<T, T, T>
 		return helper.getComplexityOf(this, 10);
 	}
 	
-	@Override protected boolean isPushToFinal(int parameterIndex, Object value)
+	@Override protected T evaluatePushP0(StiXecutorPushContext context, T pushedValue)
 	{
-		return parameterIndex == 0 && value != null;
+		if (pushedValue == null) return null;
+		context.setFinalState();
+		return pushedValue;
 	}
 	
 	@Override protected T calculate(T p0, T p1)

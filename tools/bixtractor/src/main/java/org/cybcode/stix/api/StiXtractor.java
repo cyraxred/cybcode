@@ -2,12 +2,14 @@ package org.cybcode.stix.api;
 
 import org.cybcode.stix.ops.StiX_Const;
 
-public interface StiXtractor<T>
+import com.google.common.base.Function;
+
+public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 {
 	public interface Commutative {}
 	
 	StiXecutor createXecutor(StiXecutorConstructionContext context);
-	T evaluate(StiXecutorContext context);
+	@Override T apply(StiXecutorContext context);
 
 	void visit(Visitor visitor);
 	int paramCount();
@@ -31,9 +33,14 @@ public interface StiXtractor<T>
 		void visitParameter(Parameter<?> param);	
 	}
 
-	enum ParameterKind
+	enum ParameterBehavior
 	{
-		REGULAR, PUSH_ALL, NOTIFY_ON_FINAL, NEVER, CALLBACK
+		REGULAR, 
+		NOTIFY_ON_FINAL, NEVER_NOTIFY,
+		PUSH_ALL { public boolean isMandatory() { return true; }}, 
+		CALLBACK { public boolean isMandatory() { return true; }};
+		
+		public boolean isMandatory() { return false; }
 	}
 	
 	class Parameter<P>
@@ -56,9 +63,9 @@ public interface StiXtractor<T>
 			return (P) context.getParamValue(paramIndex);
 		}
 		
-		public boolean hasValue(StiXParamContext context)
+		public boolean hasFinalValue(StiXecutorContext context)
 		{
-			return context.hasParamValue(paramIndex);
+			return context.hasParamFinalValue(paramIndex);
 		}
 		
 		public void setParamIndex(int paramIndex)
@@ -91,18 +98,24 @@ public interface StiXtractor<T>
 			return false;
 		}
 
-		/**
-		 * DO NOT EVER OVERRIDE THIS METHOD
-		 * @return not null
-		 */
-		public ParameterKind getKind()
+		public final ParameterBehavior getBehavior()
 		{
-			return ParameterKind.REGULAR;
+			return getParamBehavior();
+		}
+		
+		ParameterBehavior getParamBehavior()
+		{
+			return ParameterBehavior.REGULAR;
 		}
 		
 		@Override public String toString()
 		{
 			return toString(toNameString());
+		}
+		
+		public Object evaluatePush(StiXecutorPushContext context, Object pushedValue)
+		{
+			return null;
 		}
 
 		String toNameString()
@@ -136,9 +149,9 @@ public interface StiXtractor<T>
 			return isRepeatable;
 		}
 
-		@Override public ParameterKind getKind()
+		@Override ParameterBehavior getParamBehavior()
 		{
-			return ParameterKind.PUSH_ALL;
+			return ParameterBehavior.PUSH_ALL;
 		}
 	}
 
@@ -149,9 +162,22 @@ public interface StiXtractor<T>
 			super(source);
 		}
 
-		@Override public ParameterKind getKind()
+		@Override ParameterBehavior getParamBehavior()
 		{
-			return ParameterKind.NOTIFY_ON_FINAL;
+			return ParameterBehavior.NOTIFY_ON_FINAL;
+		}
+	}
+
+	class NeverNotifyParameter<P> extends Parameter<P>
+	{
+		public NeverNotifyParameter(StiXtractor<? extends P> source)
+		{
+			super(source);
+		}
+
+		@Override ParameterBehavior getParamBehavior()
+		{
+			return ParameterBehavior.NEVER_NOTIFY;
 		}
 	}
 }
