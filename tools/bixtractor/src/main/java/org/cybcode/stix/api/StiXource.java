@@ -2,8 +2,6 @@ package org.cybcode.stix.api;
 
 import java.util.List;
 
-import org.cybcode.stix.core.Multiplicity;
-
 /**
  * 
  * @author Kirill "Red Cyrax" Ivkushkin <kirill@ivkushkin.name>
@@ -100,14 +98,14 @@ public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
 	
 	private final SpecialParameter<T> p0;
 	
-	public StiXource(StiXource<?, ?, D, T> p0, D fieldDetails, Multiplicity limitMode)
+	public StiXource(StiXource<?, ?, D, T> p0, D fieldDetails)
 	{
 		this.p0 = new FieldParameter<>(p0, fieldDetails);
 		//TODO
 //		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
 	}
 
-	public StiXource(StiXtractor<? extends S> p0, StiXFunction<? super S, T> fn, Multiplicity limitMode)
+	public StiXource(StiXtractor<? extends S> p0, StiXFunction<? super S, T> fn)
 	{
 		this.p0 = new TransformParameter<>(p0, fn);
 //		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");

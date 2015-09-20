@@ -114,7 +114,7 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 		
 		@Override public String toString()
 		{
-			return toString(toNameString());
+			return toNameString() + "=" + source;
 		}
 		
 		public Object evaluatePush(StiXecutorPushContext context, Object pushedValue)
@@ -122,14 +122,9 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 			return null;
 		}
 
-		String toNameString()
+		public String toNameString()
 		{
 			return "p" + (paramIndex < 0 ? "?" : "" + paramIndex);
-		}
-
-		public String toString(String paramName)
-		{
-			return paramName + (/*this instanceof PushParameter ? "<<=" :*/"=") + source;
 		}
 	}
 	

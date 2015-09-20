@@ -9,15 +9,12 @@ import org.cybcode.stix.core.StiXtractorMonoPush;
 
 public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 {
-//	private static final StiXecutor XECUTOR = new XecutorMono(1);
-//	private static final StiXecutor XECUTOR_PUSH = new XecutorMonoPush(1);
-	
-	private final PushParameter<S> p0;
+	private final Parameter<S> p0; //EntryPoint parameter MUST come FIRST
 	private final Parameter<T> p1;
 	
 	public StiX_Subroutine(StiXtractor<? extends S> pSource, StiXtractor<? extends T> pResult)
 	{
-		p0 = new PushParameter<>(new EntryPoint(pSource));
+		p0 = new Parameter<>(new EntryPoint(pSource));
 		p1 = new Parameter<>(pResult);
 	}
 	
@@ -28,7 +25,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 
 	@Override public Object getOperationToken()
 	{
-		return this; //subroutines can't be deduplicated
+		return null;
 	}
 
 	@Override public int getOperationComplexity(StiXComplexityHelper helper)
@@ -75,7 +72,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		}
 	}
 	
-	class EntryPoint extends StiXtractorMonoPush<S, S>
+	public class EntryPoint extends StiXtractorMonoPush<S, S>
 	{
 		private EntryPoint(StiXtractor<? extends S> p0)
 		{

@@ -61,4 +61,14 @@ public class SmallListCollector<T>
 			default: return (List<T>) value1;
 		}
 	}
+	
+	@Override public String toString()
+	{
+		switch (count) {
+			case 0: return Collections.emptyList().toString();
+			case 1: return "[" + value0 + "]";
+			case 2: return "[" + value0 + "," + value1 + "]";
+			default: return value1.toString();
+		}
+	}
 }

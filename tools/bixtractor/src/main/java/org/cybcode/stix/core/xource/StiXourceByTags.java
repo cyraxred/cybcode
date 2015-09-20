@@ -10,7 +10,6 @@ import org.cybcode.stix.api.StiXecutorCallback;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.Multiplicity;
 
 public abstract class StiXourceByTags<S, C extends StiXourceByTags.FieldContainer<FieldTag, V>, FieldTag, V extends StiXourceByTags.FieldValue<? extends FieldTag>> 
 	extends StiXource<S, C, FieldTag, V>
@@ -33,14 +32,14 @@ public abstract class StiXourceByTags<S, C extends StiXourceByTags.FieldContaine
 		FieldValue<FieldTag> enableMultipleUse();
 	}
 	
-	public StiXourceByTags(StiXource<?, ?, FieldTag, V> p0, FieldTag fieldDetails, Multiplicity limitMode)
+	public StiXourceByTags(StiXource<?, ?, FieldTag, V> p0, FieldTag fieldDetails)
 	{
-		super(p0, fieldDetails, limitMode);
+		super(p0, fieldDetails);
 	}
 
-	public StiXourceByTags(StiXtractor<? extends S> p0, StiXFunction<? super S, V> fn, Multiplicity limitMode)
+	public StiXourceByTags(StiXtractor<? extends S> p0, StiXFunction<? super S, V> fn)
 	{
-		super(p0, fn, limitMode);
+		super(p0, fn);
 	}
 
 	@Override protected C createFieldContainer(List<StiXecutorCallback> callbacks, Settings settings)

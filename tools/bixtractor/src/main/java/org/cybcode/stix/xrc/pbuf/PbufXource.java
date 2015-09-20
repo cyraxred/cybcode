@@ -6,7 +6,6 @@ import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.Multiplicity;
 import org.cybcode.stix.core.xource.StiXourceByIntTags;
 
 import com.google.protobuf.CodedInputStream;
@@ -14,27 +13,22 @@ import com.google.protobuf.WireFormat;
 
 public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 {
-	public PbufXource(StiXource<?, ?, Integer, PbufFieldValue> p0, int fieldId, Multiplicity limitMode)
+	public PbufXource(StiXource<?, ?, Integer, PbufFieldValue> p0, int fieldId)
 	{
-		super(p0, fieldId, limitMode);
+		super(p0, fieldId);
 	}
 
-	public PbufXource(StiXtractor<? extends S> p0, StiXFunction<? super S, PbufFieldValue> fn, Multiplicity limitMode)
+	public PbufXource(StiXtractor<? extends S> p0, StiXFunction<? super S, PbufFieldValue> fn)
 	{
-		super(p0, fn, limitMode);
+		super(p0, fn);
 	}
-
-//	@Override protected PbufFieldValue prepareValue(Binary value)
-//	{
-//		return new PbufFieldValue(fieldId == null ? 0 : fieldId, CodedInputStream.newInstance(value.getBytes()), false);
-//	}
 
 	@Override protected PbufFieldValue processNestedFields(StiXecutorPushContext context, FieldContainer<Integer, PbufFieldValue> container, 
 		Settings settings, final PbufFieldValue pushedValue)
 	{
 		if (container == null) return pushedValue;
 
-		//TODO silent mode
+		//TODO silent fail mode
 		pushedValue.ensureWireType(WireFormat.WIRETYPE_LENGTH_DELIMITED);
 		final PbufFieldValue value = settings.hasPushTargets() ? pushedValue.enableMultipleUse() : pushedValue;
 		

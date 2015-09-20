@@ -7,8 +7,8 @@ import org.cybcode.stix.api.StiXtractor;
 public class StiXpressionRecursiveParser 
 {
 	private final boolean deduplicate;
-	private StiXpressionParserSlot rootSlot;
-	private StiXpressionParserSlot resultSlot;
+	private RegularParserSlot rootSlot;
+	private RegularParserSlot resultSlot;
 //	private int nodesCount;
 	private boolean	linked;
 	private StiXComplexityHelper complexityHelper;
@@ -24,18 +24,18 @@ public class StiXpressionRecursiveParser
 		setComplexityHelper(null);
 	}
 	
-	public void step1_buildTree(StiXpressionParserSlot.ParserContext context, StiXtractor<?> resultNode)
+	public void step1_buildTree(RegularParserSlot.ParserContext context, StiXtractor<?> resultNode)
 	{
 		if (resultSlot != null) throw new IllegalStateException();
 
 		rootSlot = context.getRoot();
-		resultSlot = StiXpressionParserSlot.parse(context, resultNode);
+		resultSlot = RegularParserSlot.parse(context, resultNode);
 //		nodesCount = context.getNodeCount();
 	}
 	
 	public void step1_buildTree(StiXtractor<?> resultNode)
 	{
-		step1_buildTree(StiXpressionParserSlot.createDefaultContext(256, deduplicate, complexityHelper), resultNode);
+		step1_buildTree(RegularParserSlot.createDefaultContext(256, deduplicate, complexityHelper), resultNode);
 	}
 	
 	public void step2_optimizeTree()
@@ -82,7 +82,7 @@ public class StiXpressionRecursiveParser
 class StiXpressionFlattenToXecutorContextBuilder implements StiXpressionFlattenContext
 {
 	private final StiXecutorContextBuilder builder;
-	private StiXpressionParserSlot prev;
+	private RegularParserSlot prev;
 	private int nodeCount;
 
 	public StiXpressionFlattenToXecutorContextBuilder(StiXecutorContextBuilder builder)
@@ -99,7 +99,7 @@ class StiXpressionFlattenToXecutorContextBuilder implements StiXpressionFlattenC
 	{
 	}
 	
-	@Override public int addNode(StiXpressionParserSlot slot)
+	@Override public int addNode(RegularParserSlot slot)
 	{
 		if (prev != null) {
 			builder.addNode(prev);

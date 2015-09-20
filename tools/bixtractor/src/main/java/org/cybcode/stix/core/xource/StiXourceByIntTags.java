@@ -6,19 +6,18 @@ import java.util.Map;
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.Multiplicity;
 
 public abstract class StiXourceByIntTags<S, V extends StiXourceByTags.FieldValue<Integer>> 
 	extends StiXourceByTags<S, StiXourceByTags.FieldContainer<Integer, V>, Integer, V>
 {
-	public StiXourceByIntTags(StiXource<?, ?, Integer, V> p0, Integer fieldDetails, Multiplicity limitMode)
+	public StiXourceByIntTags(StiXource<?, ?, Integer, V> p0, Integer fieldDetails)
 	{
-		super(p0, fieldDetails, limitMode);
+		super(p0, fieldDetails);
 	}
 
-	public StiXourceByIntTags(StiXtractor<? extends S> p0, StiXFunction<? super S, V> fn, Multiplicity limitMode)
+	public StiXourceByIntTags(StiXtractor<? extends S> p0, StiXFunction<? super S, V> fn)
 	{
-		super(p0, fn, limitMode);
+		super(p0, fn);
 	}
 
 	@Override protected FieldContainer<Integer, V> createFieldContainer(Map<Integer, ? extends SingleFieldHandler<V>> callbackMap, Settings settings)

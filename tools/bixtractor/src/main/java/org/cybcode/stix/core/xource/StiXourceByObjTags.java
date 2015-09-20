@@ -5,19 +5,18 @@ import java.util.Set;
 
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.Multiplicity;
 
 public abstract class StiXourceByObjTags<S, F, V extends StiXourceByTags.FieldValue<F>> 
 	extends StiXourceByTags<S, StiXourceByTags.FieldContainer<F, V>, F, V>
 {
-	public StiXourceByObjTags(StiXourceByObjTags<S, F, V> p0, F fieldDetails, Multiplicity limitMode)
+	public StiXourceByObjTags(StiXourceByObjTags<S, F, V> p0, F fieldDetails)
 	{
-		super(p0, fieldDetails, limitMode);
+		super(p0, fieldDetails);
 	}
 
-	public StiXourceByObjTags(StiXtractor<? extends S> p0, StiXFunction<? super S, V> fn, Multiplicity limitMode)
+	public StiXourceByObjTags(StiXtractor<? extends S> p0, StiXFunction<? super S, V> fn)
 	{
-		super(p0, fn, limitMode);
+		super(p0, fn);
 	}
 	
 	protected F getMaxFieldTag(Set<F> tags)
