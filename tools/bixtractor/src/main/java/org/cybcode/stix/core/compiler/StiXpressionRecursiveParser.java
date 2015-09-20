@@ -114,6 +114,6 @@ class StiXpressionFlattenToXecutorContextBuilder implements StiXpressionFlattenC
 			builder.addNode(prev);
 			prev = null;
 		}
-		builder.getNodeTargets();
+		builder.processNodeTargets();
 	}
 }

@@ -14,28 +14,20 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 
 	protected StiXtractorDuo(StiXtractor<? extends P0> p0, boolean p0_notify, StiXtractor<? extends P1> p1, boolean p1_notify)
 	{
-		if (p0_notify) {
-			this.p0 = new NotifyParameter<P0>(p0) 
-			{
-				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP0(context, (P0) pushedValue); }
-			};
-		} else {
-			this.p0 = new Parameter<P0>(p0) 
-			{
-				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP0(context, (P0) pushedValue); }
-			};
-		}
-		if (p1_notify) {
-			this.p1 = new NotifyParameter<P1>(p1) 
-			{
-				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP1(context, (P1) pushedValue); }
-			};
-		} else {
-			this.p1 = new Parameter<P1>(p1) 
-			{
-				@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) { return evaluatePushP1(context, (P1) pushedValue); }
-			};
-		}
+		this.p0 = new Parameter<P0>(p0, p0_notify) 
+		{
+			@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) 
+			{ 
+				return evaluatePushP0(context, (P0) pushedValue); 
+			}
+		};
+		this.p1 = new Parameter<P1>(p1, p1_notify) 
+		{
+			@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue) 
+			{ 
+				return evaluatePushP1(context, (P1) pushedValue); 
+			}
+		};
 	}
 	
 	protected StiXtractorDuo(StiXtractor<? extends P0> p0, StiXtractor<? extends P1> p1)

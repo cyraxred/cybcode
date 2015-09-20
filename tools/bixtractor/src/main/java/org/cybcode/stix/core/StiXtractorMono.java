@@ -10,7 +10,7 @@ public abstract class StiXtractorMono<P0, T> extends AbstractXtractorMono<P0, T>
 {
 	public StiXtractorMono(StiXtractor<? extends P0> p0)
 	{
-		super(new NotifyParameter<P0>(p0) 
+		super(new Parameter<P0>(p0, true) 
 		{
 			@Override public Object evaluatePush(StiXecutorPushContext context, Object pushedValue)
 			{

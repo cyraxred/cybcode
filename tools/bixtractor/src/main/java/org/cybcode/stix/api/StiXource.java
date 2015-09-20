@@ -42,7 +42,7 @@ public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
 	
 	private static abstract class SpecialParameter<T> extends PushParameter<T>
 	{
-		private SpecialParameter(StiXtractor<? extends T> source) { super(source); }
+		private SpecialParameter(StiXtractor<? extends T> source, boolean callback) { super(source, callback); }
 		protected abstract Object getOperationToken();
 		protected abstract FieldParameter<?, T> asField();
 		protected abstract T transform(Object value);
@@ -59,13 +59,11 @@ public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
 
 		FieldParameter(StiXtractor<? extends T> source, D fieldDetails)
 		{
-			super(source);
+			super(source, true);
 			if (fieldDetails == null) throw new NullPointerException();
 			this.fieldDetails = fieldDetails;
 		}
 		@Override protected Object getOperationToken() { return fieldDetails; }
-		
-		@Override ParameterBehavior getParamBehavior() { return ParameterBehavior.CALLBACK; }
 		@Override protected FieldParameter<?, T> asField() { return this; };
 		@SuppressWarnings("unchecked") @Override protected T transform(Object value) { return (T) value; };
 	}
@@ -76,7 +74,7 @@ public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
 
 		@SuppressWarnings("unchecked") public TransformParameter(StiXtractor<? extends P> p0, StiXFunction<P, T> fn)
 		{
-			super((StiXtractor<? extends T>) (StiXtractor<?>) p0); //ugly hack
+			super((StiXtractor<? extends T>) (StiXtractor<?>) p0, false); //ugly hack
 			if (fn == null) throw new NullPointerException();
 			this.fn = fn;
 		}

@@ -1,5 +1,6 @@
 package org.cybcode.stix.core.xecutors;
 
+
 class ContextFrame
 {
 	private final ContextFrame outerFrame;

@@ -33,29 +33,38 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 		void visitParameter(Parameter<?> param);	
 	}
 
-	enum ParameterBehavior
-	{
-		REGULAR, 
-		NOTIFY_ON_FINAL, NEVER_NOTIFY,
-		PUSH_ALL { public boolean isMandatory() { return true; }}, 
-		CALLBACK { public boolean isMandatory() { return true; }};
-		
-		public boolean isMandatory() { return false; }
-	}
-	
 	class Parameter<P>
 	{
 		private int paramIndex = -1;
+		private ParameterBehavior behavior;
 		private final StiXtractor<? extends P> source;
 		
 		public Parameter(StiXtractor<? extends P> source)
 		{
+			this(source, ParameterBehavior.REGULAR);
+		}
+		
+		public Parameter(StiXtractor<? extends P> source, boolean notify)
+		{
+			this(source, notify ? ParameterBehavior.NOTIFY_ON_FINAL : ParameterBehavior.REGULAR);
+		}
+		
+		Parameter(StiXtractor<? extends P> source, ParameterBehavior behavior)
+		{
+			if (behavior == null || source == null) throw new NullPointerException();
 			this.source = source;
+			this.behavior = behavior;
 		}
 		
 		public final StiXtractor<? extends P> getSourceXtractor()
 		{
 			return source;
+		}
+		
+		public void disableNotify()
+		{
+			if (behavior.isMandatory()) throw new IllegalStateException("Push or callback parameters can't be disabled");
+			behavior = ParameterBehavior.NEVER_NOTIFY;
 		}
 
 		@SuppressWarnings("unchecked") public P getValue(StiXParamContext context)
@@ -93,19 +102,14 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 			return result;
 		}
 
+		public final ParameterBehavior getBehavior()
+		{
+			return behavior;
+		}
+
 		public boolean isRepeatable()
 		{
 			return false;
-		}
-
-		public final ParameterBehavior getBehavior()
-		{
-			return getParamBehavior();
-		}
-		
-		ParameterBehavior getParamBehavior()
-		{
-			return ParameterBehavior.REGULAR;
 		}
 		
 		@Override public String toString()
@@ -133,10 +137,15 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 	{
 		private final boolean	isRepeatable;
 
+		PushParameter(StiXtractor<? extends P> source, boolean callback)
+		{
+			super(source, callback ? ParameterBehavior.CALLBACK : ParameterBehavior.PUSH_ALL);
+			this.isRepeatable = source.isRepeatable();
+		}
+
 		public PushParameter(StiXtractor<? extends P> source)
 		{
-			super(source);
-			this.isRepeatable = source.isRepeatable();
+			this(source, false);
 		}
 
 		@Override public <T> StiXtractor<? extends T> tryCurryIfConst(StiXtractor<T> xtractor)
@@ -147,37 +156,6 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 		@Override public boolean isRepeatable()
 		{
 			return isRepeatable;
-		}
-
-		@Override ParameterBehavior getParamBehavior()
-		{
-			return ParameterBehavior.PUSH_ALL;
-		}
-	}
-
-	class NotifyParameter<P> extends Parameter<P>
-	{
-		public NotifyParameter(StiXtractor<? extends P> source)
-		{
-			super(source);
-		}
-
-		@Override ParameterBehavior getParamBehavior()
-		{
-			return ParameterBehavior.NOTIFY_ON_FINAL;
-		}
-	}
-
-	class NeverNotifyParameter<P> extends Parameter<P>
-	{
-		public NeverNotifyParameter(StiXtractor<? extends P> source)
-		{
-			super(source);
-		}
-
-		@Override ParameterBehavior getParamBehavior()
-		{
-			return ParameterBehavior.NEVER_NOTIFY;
 		}
 	}
 }

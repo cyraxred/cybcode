@@ -11,6 +11,7 @@ import org.cybcode.stix.api.StiXourceField;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.Multiplicity;
 import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
+import org.cybcode.stix.core.xecutors.SimpleXpressionSequencer;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContext;
 import org.cybcode.stix.core.xecutors.StiXecutorDefaultContextBuilder;
 import org.cybcode.stix.core.xecutors.StiXpressionSequencer;
