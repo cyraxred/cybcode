@@ -1,5 +1,7 @@
 package org.cybcode.stix.core.compiler;
 
+import java.util.IdentityHashMap;
+
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
 import org.cybcode.stix.api.StiXtractor;
@@ -49,7 +51,7 @@ public class StiXpressionRecursiveParser
 	{
 		if (resultSlot == null || linked) throw new IllegalStateException();
 		linked = true;
-		resultSlot.link();
+		resultSlot.link(new IdentityHashMap<RegularParserSlot, Boolean>());
 	}
 
 	public void step4_optimizeLinkedTree()
@@ -62,8 +64,8 @@ public class StiXpressionRecursiveParser
 	public void step5_flattenTree(StiXpressionFlattenContext context)
 	{
 		if (resultSlot == null || !linked) throw new IllegalStateException();
-		if (context.addNode(rootSlot) != 0) throw new IllegalStateException(); //TODO have special method
-		resultSlot.flatten(context);
+		if (context.addNode(rootSlot) != 0) throw new IllegalStateException(); //TODO have a special method
+		resultSlot.flatten(new IdentityHashMap<RegularParserSlot, Boolean>(), context);
 		context.finished();
 	}
 
@@ -73,6 +75,13 @@ public class StiXpressionRecursiveParser
 		step5_flattenTree(flattener);
 	}
 
+	public void print()
+	{
+		if (resultSlot == null) throw new IllegalStateException();
+		System.out.println();
+		resultSlot.print(new IdentityHashMap<RegularParserSlot, Boolean>());
+	}
+	
 	public void setComplexityHelper(StiXComplexityHelper complexityHelper)
 	{
 		this.complexityHelper = complexityHelper == null ? StiXComplexityHelper.DEFAULT : complexityHelper;

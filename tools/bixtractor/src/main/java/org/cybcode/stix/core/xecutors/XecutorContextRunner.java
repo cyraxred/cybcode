@@ -90,9 +90,19 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 	@Override public void enterFrame()
 	{
 		int rootIndex = currentNode.getIndex();
-		int resultIndex = currentNode.getFrameResultIndex();
+		int resultIndex = currentNode.getFrameLastIndex();
 		currentFrame = currentFrame.createInner(rootIndex, resultIndex, frames);
-		context.resetFrameContent(rootIndex, resultIndex);
+		context.resetFrameContent(rootIndex, resultIndex, false);
+	}
+	
+	@Override public void skipFrame()
+	{
+		if (!currentFrame.isInnerFrame()) throw new IllegalStateException();
+		int rootIndex = currentFrame.getRootIndex();
+		int resultIndex = currentFrame.getResultIndex();
+		currentFrame.closeFrame();
+		context.resetFrameContent(rootIndex, resultIndex, true);
+		nextIndex = resultIndex + 1; 
 	}
 	
 	private void exitFrame()
@@ -100,7 +110,7 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 		if (!currentFrame.isInnerFrame()) return; //don't need for the outermost frame
 		int startIndex = currentFrame.getRootIndex();
 		currentFrame.closeFrame();
-		context.finalizeFrameContent(startIndex);
+		context.completeFrameContent(startIndex);
 	}
 
 	@Override public boolean hasFrameResultValue()

@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
@@ -50,9 +51,10 @@ public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
 		return 1;
 	}
 	
-	@Override public boolean isRepeatable()
+	
+	@Override public OutputMode getOutputMode()
 	{
-		return false;
+		return OutputMode.REGULAR;
 	}
 
 	protected abstract boolean isFinalStateValue(A accumulator);

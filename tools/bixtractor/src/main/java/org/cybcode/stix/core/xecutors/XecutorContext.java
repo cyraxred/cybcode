@@ -50,7 +50,7 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 			createInitialState();
 			initialState[0] = DefaultXecutors.FINAL;
 		} else {
-			resetFrameContent(0, nodes.length - 1);
+			resetFrameContent(0, nodes.length - 1, false);
 		}
 
 		/* Imitation of root evaluation */
@@ -62,20 +62,28 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 		runner.setFinalValueOf(0, currentNode.getNotifyTargets());
 	}
 
-	public void resetFrameContent(int rootIndex, int resultIndex)
+	private StiXecutor ensureFrameStart(int rootIndex)
 	{
-		if (initialState[rootIndex] == null) throw new IllegalStateException();
-		if (currentState[rootIndex] == null) return;
-		
-		Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
+		StiXecutor init = initialState[rootIndex];
+		if (init == DefaultXecutors.START_FRAME) throw new IllegalStateException();
+		return init;
+	}
+	
+	@Override public void resetFrameContent(int rootIndex, int resultIndex, boolean finalState)
+	{
+		ensureFrameStart(rootIndex);
+		if (finalState) {
+			Arrays.fill(currentState, rootIndex, resultIndex + 1, DefaultXecutors.FINAL);
+		} else {
+			if (currentState[rootIndex] == null) return;
+			Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
+		}
 		Arrays.fill(results, rootIndex, resultIndex + 1, null);
 	}
 	
-	@Override public void finalizeFrameContent(int rootIndex)
+	@Override public void completeFrameContent(int rootIndex)
 	{
-		StiXecutor init = initialState[rootIndex];
-		if (init == null) throw new IllegalStateException();
-		currentState[rootIndex] = init;
+		currentState[rootIndex] = ensureFrameStart(rootIndex);
 	}
 
 	private void createInitialState()
@@ -162,6 +170,11 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 	void enterFrame()
 	{
 		runner.enterFrame();
+	}
+	
+	void skipFrame()
+	{
+		runner.skipFrame();
 	}
 	
 	private int currentIndex()

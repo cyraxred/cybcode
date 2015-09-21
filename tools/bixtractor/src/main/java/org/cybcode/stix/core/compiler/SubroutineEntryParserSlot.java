@@ -1,5 +1,7 @@
 package org.cybcode.stix.core.compiler;
 
+import java.util.Map;
+
 import org.cybcode.stix.ops.StiX_Subroutine;
 
 public class SubroutineEntryParserSlot extends RegularParserSlot
@@ -20,6 +22,23 @@ public class SubroutineEntryParserSlot extends RegularParserSlot
 	}
 
 	@Override protected FrameOwnerSlot findActualFrameOwner()
+	{
+		return subroutineSlot;
+	}
+	
+	@Override protected void registerOuterDependencies() {}
+
+	void addOuterDependencies(Map<Integer, SlotLink> outerDependencies)
+	{
+		for (int i = size() - 1; i >= 0; i--) {
+			outerDependencies.remove(get(i).target.getParsedIndex());
+		}
+		for (SlotLink link : outerDependencies.values()) {
+			add(link);
+		}
+	}
+
+	public SubroutineParserSlot getSubroutineSlot()
 	{
 		return subroutineSlot;
 	}

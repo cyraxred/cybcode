@@ -110,7 +110,8 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 	
 	public String toNameString()
 	{
-		return "#" + parsedIndex;
+		if (flattenIndex < 0) return "#" + parsedIndex;
+		return "#" + flattenIndex + ":" + parsedIndex; 
 	}
 
 	public RegularParserSlot(StiXtractor<?> node, RegularParserSlot nextToResult, ParserContext parserContext)
@@ -157,6 +158,23 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 	protected void afterParse()
 	{
 		this.actualFrameOwner = findActualFrameOwner();
+		registerOuterDependencies();
+	}
+	
+	protected void registerOuterDependencies()
+	{
+		registerOuterDependencies(getParamFrameOwner());
+	}
+
+	protected void registerOuterDependencies(FrameOwnerSlot expectedFrameOwner)
+	{
+		for (int i = size() - 1; i >= 0; i--) {
+			SlotLink paramLink = get(i);
+			FrameOwnerSlot targetFrameOwner = paramLink.target.actualFrameOwner;
+			if (targetFrameOwner == expectedFrameOwner) continue;
+			
+			expectedFrameOwner.registerOuterDependency(paramLink);
+		}
 	}
 
 	public FrameOwnerSlot getParamFrameOwner()
@@ -203,7 +221,7 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 				}
 				if (paramSlot == null) {
 					paramSlot = createParamSlot(paramSource, parserContext);
-					int parsedIndex = parserContext.nodesMap.size(); 
+					int parsedIndex = parserContext.nodesMap.size() + 1; 
 					parserContext.nodesMap.put(paramSource, paramSlot);
 					paramSlot.node.visit(paramSlot);
 					paramSlot.afterParseAndResetContext();
@@ -241,29 +259,45 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 		traversedFrameOwner.verifyAlternativeFrameOwner(nextToRoot.getParamFrameOwner());
 	}
 
-	public void link()
+	public void link(Map<RegularParserSlot, Boolean> processedSlots)
 	{
+		if (processedSlots.put(this, Boolean.TRUE) != null) return;
 		for (int i = 0; i < size(); i++) {
 			SlotLink slotParam = get(i);
 			RegularParserSlot slot = slotParam.target;
-			slot.link();
+			slot.link(processedSlots);
 			slot.addTarget(this, slotParam.parameter);
 		}
 	}
 
-	public void flatten(StiXpressionFlattenContext context)
+	public void print(Map<RegularParserSlot, Boolean> processedSlots)
 	{
+		System.out.println(this);
+		if (processedSlots.put(this, Boolean.TRUE) != null) return;
+		for (int i = 0; i < size(); i++) {
+			RegularParserSlot paramSlot = get(i).target;
+			paramSlot.print(processedSlots);
+		}
+	}
+	
+	public void flatten(Map<RegularParserSlot, Boolean> processedSlots, StiXpressionFlattenContext context)
+	{
+		if (flattenIndex >= 0) return;
+		if (processedSlots.put(this, Boolean.TRUE) != null) {
+			throw new IllegalStateException("Circular link: start=" + this + ", processed=" + processedSlots);
+		}
+		preFlatten(processedSlots, context);
 		context.addParamCount(size());
 		for (int i = 0; i < size(); i++) {
 			RegularParserSlot paramSlot = get(i).target;
-			paramSlot.flatten(context);
+			paramSlot.flatten(processedSlots, context);
 		}
-		if (flattenIndex < 0) {
-			flattenIndex = context.addNode(this);
-		}
+		flattenIndex = context.addNode(this);
 		context.addLinkCount(consumers.size());
 	}
 	
+	protected void preFlatten(Map<RegularParserSlot, Boolean> processedSlots, StiXpressionFlattenContext context) {}
+
 	private void addTarget(RegularParserSlot consumer, Parameter<?> parameter)
 	{
 		consumers.add(new SlotLink(consumer, parameter));
@@ -288,8 +322,8 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 
 	@Override public int getXtractorIndex()
 	{
-		if (flattenIndex < 0) throw new IllegalStateException();
-		return flattenIndex;
+		if (flattenIndex >= 0) return flattenIndex;
+		throw new IllegalStateException();		
 	}
 
 	@Override public StiXtractor<?> getXtractor()
@@ -328,5 +362,18 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 		stubSlot.visitParameter(new StiXtractor.Parameter<>(resultNode));
 		stubSlot.afterParseAndResetContext();
 		return stubSlot.getFirstValueOrNull().target;
+	}
+
+	public int getParsedIndex()
+	{
+		if (parsedIndex < 0) throw new IllegalStateException();
+		return parsedIndex;
+	}
+	
+	@Override public int getXtractorFrameStartIndex()
+	{
+//		if (actualFrameOwner == null) throw new IllegalStateException();
+//		return actualFrameOwner.getXtractorIndex();
+		return -1;
 	}
 }

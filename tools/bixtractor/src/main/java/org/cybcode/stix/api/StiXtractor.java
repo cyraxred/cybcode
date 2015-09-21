@@ -14,7 +14,7 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 	void visit(Visitor visitor);
 	int paramCount();
 	
-	boolean isRepeatable();
+	OutputMode getOutputMode();
 	Class<? extends T> resultType();
 	
 	Object getOperationToken();
@@ -61,7 +61,7 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 			return source;
 		}
 		
-		public void disableNotify()
+		public void disableNotify() throws IllegalStateException
 		{
 			if (behavior.isMandatory()) throw new IllegalStateException("Push or callback parameters can't be disabled");
 			behavior = ParameterBehavior.NEVER_NOTIFY;
@@ -130,12 +130,12 @@ public interface StiXtractor<T> extends Function<StiXecutorContext, T>
 	
 	class PushParameter<P> extends Parameter<P>
 	{
-		private final boolean	isRepeatable;
+		private final boolean isRepeatable;
 
 		PushParameter(StiXtractor<? extends P> source, boolean callback)
 		{
 			super(source, callback ? ParameterBehavior.CALLBACK : ParameterBehavior.PUSH_ALL);
-			this.isRepeatable = source.isRepeatable();
+			this.isRepeatable = source.getOutputMode().isRepeatable();
 		}
 
 		public PushParameter(StiXtractor<? extends P> source)

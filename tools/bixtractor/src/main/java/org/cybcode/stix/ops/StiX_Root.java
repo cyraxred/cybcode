@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
@@ -25,9 +26,9 @@ public final class StiX_Root<T> implements StiXtractor<T>
 		return 1;
 	}
 	
-	@Override public boolean isRepeatable()
+	@Override public final OutputMode getOutputMode()
 	{
-		return false;
+		return OutputMode.REGULAR;
 	}
 	
 	@Override public Class<? extends T> resultType()

@@ -1,5 +1,6 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
@@ -20,9 +21,9 @@ public final class StiX_Const<T> implements StiXtractor<T>
 		this.value = value;
 	}
 
-	@Override public boolean isRepeatable()
+	@Override public final OutputMode getOutputMode()
 	{
-		return false;
+		return OutputMode.REGULAR;
 	}
 	
 	@Override public Object getOperationToken()

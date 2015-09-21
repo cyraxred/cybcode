@@ -48,9 +48,9 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 
 	@Override public StiXecutor createFrameXecutor()
 	{
-		int index = node.getFrameResultIndex(); //checks validity of the claim to use frame
+		int index = node.getFrameLastIndex(); //checks validity of the claim to use frame
 		if (index < 0 || index > maxNodeIndex) throw new IllegalStateException("Node #" + node.getIndex() + "has returned a wrong frameResultIndex=" + index);
-		return FrameStartXecutor.INSTANCE;
+		return DefaultXecutors.START_FRAME;
 	}
 
 	public StiXpressionNode getNode()

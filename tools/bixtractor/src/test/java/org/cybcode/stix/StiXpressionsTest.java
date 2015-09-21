@@ -1,24 +1,25 @@
 package org.cybcode.stix;
 
-import static org.cybcode.stix.ops.StiX_Ops.*;
-import static org.junit.Assert.*;
+import static org.cybcode.stix.ops.StiX_Ops.add;
+import static org.cybcode.stix.ops.StiX_Ops.addA;
+import static org.cybcode.stix.ops.StiX_Ops.and;
+import static org.cybcode.stix.ops.StiX_Ops.andA;
+import static org.cybcode.stix.ops.StiX_Ops.andIfNull;
+import static org.cybcode.stix.ops.StiX_Ops.constOf;
+import static org.cybcode.stix.ops.StiX_Ops.div;
+import static org.cybcode.stix.ops.StiX_Ops.mul;
+import static org.cybcode.stix.ops.StiX_Ops.mux;
+import static org.cybcode.stix.ops.StiX_Ops.neg;
+import static org.cybcode.stix.ops.StiX_Ops.root;
+import static org.cybcode.stix.ops.StiX_Ops.subr;
+import static org.junit.Assert.assertEquals;
 
-import org.cybcode.stix.api.StiXecutorContextBuilder;
-import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
-import org.cybcode.stix.core.xecutors.StiXecutorDefaultContext;
-import org.cybcode.stix.core.xecutors.StiXecutorDefaultContextBuilder;
-import org.cybcode.stix.core.xecutors.XecutorContextBuilder;
-import org.cybcode.stix.core.xecutors.XpressionRunnerBuilder;
 import org.cybcode.stix.ops.StiX_Ops;
+import org.junit.Ignore;
 import org.junit.Test;
 
-import com.google.common.base.Function;
-
-public class StiXpressionsTest
+public class StiXpressionsTest extends TestBase
 {
-	private StatsCollector stats = new StatsCollector();
-	
 	@Test public void test_const()
 	{
 		assertEquals((Long) 1L, E(2L, constOf(1)));
@@ -33,20 +34,43 @@ public class StiXpressionsTest
 		assertEquals((Long) 4L, E(2L, add(StiX_Ops.<Long>root(), StiX_Ops.<Long>root())));
 	}
 
-	@Test public void test_commutative()
+	@Test public void test_parse_commutative()
 	{
 		assertEquals(6, B(add(div(constOf(1), constOf(2)), div(constOf(2), constOf(1)))).getNodeCount());
 		assertEquals(5, B(add(mul(constOf(1), constOf(2)), mul(constOf(2), constOf(1)))).getNodeCount());
 	}
 
-	@Test public void test_subroutine()
+	@Test public void test_parse_subroutine()
 	{
-//		assertEquals(9, B(addA(subr(mux(constOf(2), constOf(1)), mul(constOf(3), StiX_Ops.<Long>subrRoot())))).getNodeCount());
+		assertEquals(9, B(addA(subr(mux(constOf(2), constOf(1)), mul(constOf(3), StiX_Ops.<Long>subrRoot())))).getNodeCount());
 		assertEquals(12, B(addA(
 			subr(mux(constOf(2), constOf(1)), 
-				subr(mux(StiX_Ops.<Long>subrRoot(), constOf(3)), 
+				subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), 
 					mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot()))))
 		).getNodeCount());
+	}
+
+	@Test public void test_parse_subroutine_dedup()
+	{
+		assertEquals(13, B(addA(
+			subr(mux(constOf(2), constOf(1)), 
+				add(
+					subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot())),
+					subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot()))
+				)
+		))).getNodeCount());
+	}
+
+	@Ignore
+	@Test public void test_subroutine()
+	{
+		assertEquals(13L, E(1L, addA(
+			subr(mux(constOf(2), constOf(1)), 
+				add(
+					subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot())),
+					subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot()))
+				)
+		))));
 	}
 
 	@Test public void test_aggregate()
@@ -115,42 +139,4 @@ public class StiXpressionsTest
 	}
 
 	//behavior on no-push
-
-	private static <T> StiXecutorDefaultContext B(StiXtractor<T> expression)
-	{
-		StiXecutorDefaultContextBuilder builder = new StiXecutorDefaultContextBuilder();
-		B(expression, builder);
-		StiXecutorDefaultContext context = builder.build();
-		return context;
-	}
-	
-	private static void B(StiXtractor<?> expression, StiXecutorContextBuilder builder)
-	{
-		StiXpressionRecursiveParser parser = new StiXpressionRecursiveParser();
-		parser.step1_buildTree(expression);
-		parser.step2_optimizeTree();
-		parser.step3_linkTree();
-		parser.step4_optimizeLinkedTree();
-		parser.step5_flattenTree(builder);
-	}
-
-	private <T> T E(boolean regularAsNotify, Object rootValue, StiXtractor<T> expression)
-	{
-		XecutorContextBuilder<Function<Object, Object>> builder = new XpressionRunnerBuilder().setStats(stats).createBuilder();
-		
-		B(expression, builder);
-		Function<Object, Object> fn = builder.build();
-		@SuppressWarnings("unchecked") T result = (T) fn.apply(rootValue);
-		return result;
-	}
-
-	private <T> T E(Object rootValue, StiXtractor<T> expression)
-	{
-		return E(false, rootValue, expression);
-	}
-
-	private <T> T EP(Object rootValue, StiXtractor<T> expression)
-	{
-		return E(true, rootValue, expression);
-	}
 }

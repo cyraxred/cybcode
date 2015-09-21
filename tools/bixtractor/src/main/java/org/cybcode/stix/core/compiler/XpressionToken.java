@@ -46,7 +46,7 @@ public class XpressionToken
 	public XpressionToken(StiXtractor<?> operation, int arg0)
 	{
 		this(operation.getClass(), operation.getOperationToken(), arg0);
-		if (operation.paramCount() != getParamCount()) throw new IllegalArgumentException();
+//		if (operation.paramCount() != getParamCount()) throw new IllegalArgumentException();
 	}
 
 	public XpressionToken(StiXtractor<?> operation)

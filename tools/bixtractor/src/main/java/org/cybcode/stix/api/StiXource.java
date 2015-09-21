@@ -110,10 +110,10 @@ public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
 		this.p0 = new TransformParameter<>(p0, fn);
 //		if (limitMode == ValueLimit.LAST) throw new UnsupportedOperationException("Xource doesn't support LAST limit for a field");
 	}
-	
-	@Override public final boolean isRepeatable()
+
+	@Override public final OutputMode getOutputMode()
 	{
-		return true; //source can ALWAYS produce repeated values
+		return OutputMode.PUSH_MANY;
 	}
 
 	@Override public abstract Class<T> resultType();

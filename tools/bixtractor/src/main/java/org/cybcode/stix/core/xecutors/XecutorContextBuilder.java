@@ -120,7 +120,13 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 	@Override public void processNodeTargets()
 	{
 		for (int i = contextNodes.size() - 1; i >= 0; i--) {
-			getNodeTargets(nodeDetails.get(i), contextNodes.get(i));
+			NodeDetails node = nodeDetails.get(i);
+			Node contextNode = contextNodes.get(i);
+//			int frameStart = node.getXtractorFrameStartIndex();
+//			if (frameStart > 0) {
+//				contextNode.setFrameLastIndex(frameStart);
+//			}
+			getNodeTargets(node, contextNode);
 		}
 	}
 
@@ -171,6 +177,7 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 		private List<PushTarget> pushTargets;
 		private List<PushTarget> notifyTargets;
 		private List<PushTarget> callbackTargets;
+		private int	frameLastIndex;
 
 		Node(int xtractorIndex, StiXtractor<?> xtractor, int[] params)
 		{
@@ -223,9 +230,15 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 			return notifyTargets;
 		}
 
-		@Override public int getFrameResultIndex()
+		@Override public int getFrameLastIndex()
 		{
-			throw new IllegalStateException();
+			if (frameLastIndex == 0) throw new IllegalStateException();
+			return frameLastIndex;
+		}
+
+		public void setFrameLastIndex(int frameLastIndex)
+		{
+			this.frameLastIndex = frameLastIndex;
 		}
 	}
 

@@ -2,6 +2,7 @@ package org.cybcode.stix.ops;
 
 import java.util.Collection;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
@@ -21,7 +22,7 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 		
 		@SuppressWarnings("unchecked") @Override public T evaluatePush(StiXecutorPushContext context, Object pushedValue)
 		{
-			if (!context.getCurrentXtractor().isRepeatable()) {
+			if (!context.getCurrentXtractor().getOutputMode().isRepeatable()) {
 				context.setFinalState();
 			}
 			return (T) pushedValue;
@@ -110,15 +111,15 @@ public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutativ
 		return params.length;
 	}
 
-	@Override public boolean isRepeatable()
+	@Override public OutputMode getOutputMode()
 	{
-		return repeatable;
+		return OutputMode.pushMode(repeatable);
 	}
-
+	
 	@SuppressWarnings("unchecked") @Override public StiXtractor<T> curry(int parameterIndex, Object value)
 	{
 		if (parameterIndex < 0 || parameterIndex > paramCount()) throw new IllegalArgumentException();
-		if (isRepeatable() || paramCount() > 1) return null;
+		if (getOutputMode().isRepeatable() || paramCount() > 1) return null;
 		return StiX_Const.of((T) value);
 	}
 }

@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
@@ -45,9 +46,9 @@ public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
 		return null; //calculate(p0.getValue(context), pushedValue);
 	}
 
-	@Override public final boolean isRepeatable()
+	@Override public final OutputMode getOutputMode()
 	{
-		return false;
+		return OutputMode.REGULAR;
 	}
 	
 	@Override public final T apply(StiXecutorContext context)

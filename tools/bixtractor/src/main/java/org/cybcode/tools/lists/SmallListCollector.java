@@ -41,6 +41,13 @@ public class SmallListCollector<T>
 		return value0; 
 	}
 	
+	public void clear()
+	{
+		count = 0;
+		value0 = null;
+		value1 = null;
+	}
+	
 	@SuppressWarnings("unchecked") public T get(int index) 
 	{
 		switch (count) {

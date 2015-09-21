@@ -19,10 +19,6 @@ public class OuterParserSlot extends FrameOwnerSlot
 		return false;
 	}
 
-	@Override protected void registerInnerSlot(FrameOwnerSlot innerSlot)
-	{
-	}
-	
 	@Override protected FrameOwnerSlot findActualFrameOwner()
 	{
 		return this;

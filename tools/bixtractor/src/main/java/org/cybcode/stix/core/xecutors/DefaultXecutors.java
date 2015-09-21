@@ -13,7 +13,23 @@ enum DefaultXecutors implements StiXecutor
 		{
 			throw new XecutorFailException();
 		}
-	};
+	},
+
+	START_FRAME {
+		@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
+		{
+			((XecutorContext) context).enterFrame();
+			context.setFinalState();
+			return pushedValue;
+		}
+
+		@Override public Object evaluateFinal(StiXecutorPushContext context)
+		{
+			((XecutorContext) context).skipFrame();
+			return null;
+		}
+	}
+	;
 
 	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{

@@ -1,11 +1,14 @@
 package org.cybcode.stix.ops;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
-import org.cybcode.stix.core.StiXtractorMonoPush;
+import org.cybcode.stix.core.AbstractXtractorMono;
+import org.cybcode.stix.core.xecutors.XecutorFail;
 
 public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 {
@@ -14,15 +17,24 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 	
 	public StiX_Subroutine(StiXtractor<? extends S> pSource, StiXtractor<? extends T> pResult)
 	{
-		p0 = new Parameter<>(new EntryPoint(pSource));
-		p1 = new Parameter<>(pResult);
+		p0 = new Parameter<>(new EntryPoint(pSource)); 
+		p0.disableNotify(); //this parameter is used through p1, but must be present for proper dependency management
+		p1 = new Parameter<T>(pResult, true) 
+		{
+			@Override public Object evaluatePush(StiXecutorPushContext context, Object pushedValue)
+			{
+				context.setNextState(XecutorFail.getInstance());
+				return pushedValue;
+			}
+		};
+		if (p1.isRepeatable()) throw new IllegalArgumentException("Can only return a single value per invocation");
 	}
 	
-	@Override public boolean isRepeatable()
+	@Override public OutputMode getOutputMode()
 	{
-		return p0.isRepeatable();
+		return OutputMode.pushMode(p0.isRepeatable()); //well, inside we are regular (set-once), but the subr gots reset, resulting in multiple 
 	}
-
+	
 	@Override public Object getOperationToken()
 	{
 		return null;
@@ -40,13 +52,14 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		throw new UnsupportedOperationException();
+		return null;
+//		throw new UnsupportedOperationException();
 //		return isRepeatable() ? XECUTOR_PUSH : XECUTOR;
 	}
 
 	@Override public T apply(StiXecutorContext context)
 	{
-		return p1.getValue(context);
+		return null;
 	}
 
 	@Override public void visit(StiXtractor.Visitor visitor)
@@ -72,11 +85,11 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		}
 	}
 	
-	public class EntryPoint extends StiXtractorMonoPush<S, S>
+	public class EntryPoint extends AbstractXtractorMono<S, S> implements Commutative
 	{
 		private EntryPoint(StiXtractor<? extends S> p0)
 		{
-			super(p0);
+			super(new PushParameter<S>(p0));
 		}
 		
 		@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
@@ -107,6 +120,16 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		public StiXtractor<T> getSubroutine()
 		{
 			return StiX_Subroutine.this;
+		}
+
+		@Override public OutputMode getOutputMode()
+		{
+			return OutputMode.REGULAR;
+		}
+
+		@Override public S apply(StiXecutorContext context)
+		{
+			throw new UnsupportedOperationException();
 		}
 	}
 }

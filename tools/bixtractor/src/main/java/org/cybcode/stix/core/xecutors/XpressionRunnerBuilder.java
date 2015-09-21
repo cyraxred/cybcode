@@ -8,7 +8,12 @@ import com.google.common.base.Function;
 
 public class XpressionRunnerBuilder
 {
-	protected interface Runner extends Function<Object, Object>
+	public interface ContextInspector
+	{
+		int getNodeCount();
+	}
+	
+	public interface Runner extends Function<Object, Object>
 	{
 		boolean hasFrameResultValue();
 
@@ -19,15 +24,16 @@ public class XpressionRunnerBuilder
 		void setFinalValueOf(int xtractorIndex, List<PushTarget> notifyTargets);
 		
 		void enterFrame();
+		void skipFrame();
 	}
 
-	protected interface Context
+	protected interface Context extends ContextInspector
 	{
 		int getNodeCount();
 
 		void resetContext(Object rootValue, Runner xecutorContextRunner);
-		void resetFrameContent(int rootIndex, int resultIndex);
-		void finalizeFrameContent(int startIndex);
+		void resetFrameContent(int rootIndex, int resultIndex, boolean finalState);
+		void completeFrameContent(int startIndex);
 
 		StiXpressionNode setCurrentIndex(int xtractorIndex);
 		void evaluateFinalState(int xtractorIndex);
@@ -73,7 +79,18 @@ public class XpressionRunnerBuilder
 		return createRunner(context, sequencer);
 	}
 
-	public XecutorContextBuilder<Function<Object, Object>> createBuilder()
+	public XecutorContextBuilder<ContextInspector> createContextBuilder()
+	{
+		return new XecutorContextBuilder<ContextInspector>() 
+		{
+			@Override protected ContextInspector build(StiXpressionNode[] nodes)
+			{
+				return createContext(nodes);
+			}
+		};
+	}
+
+	public XecutorContextBuilder<Function<Object, Object>> createRunnerBuilder()
 	{
 		return new XecutorContextBuilder<Function<Object,Object>>() 
 		{

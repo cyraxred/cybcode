@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXComplexityHelper;
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutor;
@@ -54,5 +55,10 @@ public abstract class StiXtractorLimiter<P0, T> extends AbstractXtractorMono<P0,
 	@Override public Class<? extends T> resultType()
 	{
 		return getFn().resultType();
+	}
+	
+	@Override public OutputMode getOutputMode()
+	{
+		return mode.getOutputMode(p0.isRepeatable());
 	}
 }

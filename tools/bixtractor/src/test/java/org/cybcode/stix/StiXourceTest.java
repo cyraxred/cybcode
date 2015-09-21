@@ -1,7 +1,13 @@
 package org.cybcode.stix;
 
-import static org.cybcode.stix.ops.StiX_Ops.*;
-import static org.junit.Assert.*;
+import static org.cybcode.stix.ops.StiX_Ops.addA;
+import static org.cybcode.stix.ops.StiX_Ops.constOf;
+import static org.cybcode.stix.ops.StiX_Ops.eq;
+import static org.cybcode.stix.ops.StiX_Ops.first;
+import static org.cybcode.stix.ops.StiX_Ops.ifNull;
+import static org.cybcode.stix.ops.StiX_Ops.last;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,11 +16,6 @@ import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXourceField;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.Multiplicity;
-import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
-import org.cybcode.stix.core.xecutors.SimpleXpressionSequencer;
-import org.cybcode.stix.core.xecutors.StiXecutorDefaultContext;
-import org.cybcode.stix.core.xecutors.StiXecutorDefaultContextBuilder;
-import org.cybcode.stix.core.xecutors.StiXpressionSequencer;
 import org.cybcode.stix.core.xecutors.XecutorFailException;
 import org.cybcode.stix.ops.StiX_Ops;
 import org.cybcode.stix.xrc.pbuf.PbufFieldValue;
@@ -24,10 +25,8 @@ import org.junit.Test;
 
 import com.google.protobuf.CodedOutputStream;
 
-public class StiXourceTest
+public class StiXourceTest extends TestBase
 {
-	private StatsCollector stats = new StatsCollector();
-	
 	@Test public void test_pbuf_first() throws IOException
 	{
 		assertEquals((Long) 19L, E(buildPbuf(), first(pbuf(StiX_Ops.<Binary>root(), PbufFields.INT, 21))));
@@ -147,41 +146,4 @@ public class StiXourceTest
 	}
 
 	//behavior on no-push
-
-	static <T> StiXecutorDefaultContext B(StiXtractor<T> expression)
-	{
-		return B(false, expression);
-	}
-	
-	private static <T> StiXecutorDefaultContext B(boolean regularAsNotify, StiXtractor<T> expression)
-	{
-		StiXpressionRecursiveParser parser = new StiXpressionRecursiveParser();
-		parser.step1_buildTree(expression);
-		parser.step2_optimizeTree();
-		parser.step3_linkTree();
-		parser.step4_optimizeLinkedTree();
-		StiXecutorDefaultContextBuilder builder = new StiXecutorDefaultContextBuilder();
-		builder.setRegularAsNotify(regularAsNotify);
-		parser.step5_flattenTree(builder);
-		return builder.build();
-	}
-
-	private <T> T E(boolean regularAsNotify, Object rootValue, StiXtractor<T> expression)
-	{
-		StiXecutorDefaultContext context = B(regularAsNotify, expression);
-		context.setStatsCollector(stats);
-		StiXpressionSequencer sequencer = new SimpleXpressionSequencer();
-		@SuppressWarnings("unchecked") T result = (T) context.evaluateExpression(sequencer, rootValue);
-		return result;
-	}
-
-	private <T> T E(Object rootValue, StiXtractor<T> expression)
-	{
-		return E(false, rootValue, expression);
-	}
-
-	private <T> T EP(Object rootValue, StiXtractor<T> expression)
-	{
-		return E(true, rootValue, expression);
-	}
 }

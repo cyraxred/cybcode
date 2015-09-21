@@ -69,5 +69,6 @@ public abstract class FrameOwnerSlot extends RegularParserSlot
 		return currentFrameOwner;
 	}
 
-	protected abstract void registerInnerSlot(FrameOwnerSlot innerSlot);
+	protected void registerInnerSlot(FrameOwnerSlot innerSlot) {};
+	protected void registerOuterDependency(SlotLink paramLink) {};
 }

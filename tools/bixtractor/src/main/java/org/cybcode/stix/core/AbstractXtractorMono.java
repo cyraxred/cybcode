@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.ops.StiX_Const;
 
@@ -12,9 +13,9 @@ public abstract class AbstractXtractorMono<P0, T> implements StiXtractor<T>
 		this.p0 = p0;
 	}
 	
-	@Override public boolean isRepeatable()
+	@Override public OutputMode getOutputMode()
 	{
-		return p0.isRepeatable();
+		return OutputMode.valueOf(p0.isRepeatable());
 	}
 	
 	protected abstract T calculate(P0 p0);

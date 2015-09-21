@@ -1,5 +1,6 @@
 package org.cybcode.stix.core;
 
+import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
@@ -66,9 +67,16 @@ public enum Multiplicity {
 				}
 			}; 
 		}
+		@Override public OutputMode getOutputMode(boolean multiple) { return OutputMode.pushMode(multiple); } 
 	};
 	
 	public abstract <P0, T> MultiplicityParameter<P0, T> createParameter(StiXtractor<? extends P0> p0, StiXFunction<P0, ? extends T> fn);
 	public int getOperationComplexity() { return 1000; }
 	public boolean usesInterim() { return false; }
+	
+	public OutputMode getOutputMode(boolean repeatable) 
+	{
+		if (repeatable) throw new IllegalArgumentException();
+		return OutputMode.REGULAR; 
+	};
 }

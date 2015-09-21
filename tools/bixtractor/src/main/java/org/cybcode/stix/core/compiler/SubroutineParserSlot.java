@@ -1,5 +1,8 @@
 package org.cybcode.stix.core.compiler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 import org.cybcode.stix.ops.StiX_Subroutine;
@@ -8,6 +11,7 @@ import org.cybcode.stix.ops.StiX_SubroutineRoot;
 public class SubroutineParserSlot extends FrameOwnerSlot
 {
 	private SubroutineEntryParserSlot entrySlot;
+	private Map<Integer, SlotLink> outerDependencies;
 //	private Parameter<?> postponedParam;
 	
 	public SubroutineParserSlot(StiX_Subroutine<?, ?> node, RegularParserSlot nextToResult, ParserContext parserContext)
@@ -34,6 +38,11 @@ public class SubroutineParserSlot extends FrameOwnerSlot
 		}
 	}
 	
+	@Override protected void preFlatten(Map<RegularParserSlot, Boolean> processedSlots, StiXpressionFlattenContext context)
+	{
+		entrySlot.flatten(processedSlots, context); //ensures that EntryPoint and dependencies come first
+	}
+	
 	@Override protected RegularParserSlot createParamSlot(StiXtractor<?> paramSource, ParserContext parserContext)
 	{
 		if (paramSource instanceof StiX_Subroutine.EntryPoint) {
@@ -55,10 +64,47 @@ public class SubroutineParserSlot extends FrameOwnerSlot
 		throw new IllegalArgumentException("Invalid subroutine level: xtractor=" + parameter);
 	}
 
-	@Override protected void registerInnerSlot(FrameOwnerSlot innerSlot) {}
-	
 	@Override protected FrameOwnerSlot findActualFrameOwner()
 	{
 		return super.getOuterFrameOwner();
+	}
+	
+	@Override protected void registerOuterDependency(SlotLink paramLink)
+	{
+		try {
+			paramLink.parameter.disableNotify();
+		} catch (IllegalStateException e) {
+			throw new IllegalStateException("Push links are not allowed for cross-subroutine dependencies: from=" + this + ",  to=" + paramLink.target, e);
+		}
+		if (paramLink.target instanceof SubroutineEntryParserSlot) return; //it is an outer entry, so we are depended on it anyway 
+		if (paramLink.target instanceof SubroutineParserSlot) return; //result comes directly from another subroutine? huh //TODO is this acceptable? 
+		
+		if (outerDependencies == null) {
+			outerDependencies = new HashMap<>();
+		}
+		outerDependencies.put(paramLink.target.getParsedIndex(), paramLink);
+	}
+	
+	@Override protected void registerOuterDependencies() 
+	{
+		SlotLink resultLink = get(1);
+		RegularParserSlot resultSlot = resultLink.target;
+		FrameOwnerSlot resultSlotFrame = resultSlot.getParamFrameOwner();
+		if (resultSlotFrame == this || resultSlotFrame == entrySlot.getSubroutineSlot()) return;
+		registerOuterDependency(resultLink);
+	}
+	
+	@Override protected void afterParse()
+	{
+		super.afterParse();
+		if (outerDependencies != null) {
+			entrySlot.addOuterDependencies(outerDependencies);
+		}
+	}
+
+	@Override public int getXtractorFrameStartIndex()
+	{
+		if (entrySlot == null) throw new IllegalStateException();
+		return entrySlot.getXtractorIndex();
 	}
 }
