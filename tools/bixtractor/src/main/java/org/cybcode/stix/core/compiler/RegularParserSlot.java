@@ -286,7 +286,6 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 		if (processedSlots.put(this, Boolean.TRUE) != null) {
 			throw new IllegalStateException("Circular link: start=" + this + ", processed=" + processedSlots);
 		}
-		preFlatten(processedSlots, context);
 		context.addParamCount(size());
 		for (int i = 0; i < size(); i++) {
 			RegularParserSlot paramSlot = get(i).target;
@@ -296,8 +295,6 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 		context.addLinkCount(consumers.size());
 	}
 	
-	protected void preFlatten(Map<RegularParserSlot, Boolean> processedSlots, StiXpressionFlattenContext context) {}
-
 	private void addTarget(RegularParserSlot consumer, Parameter<?> parameter)
 	{
 		consumers.add(new SlotLink(consumer, parameter));
@@ -369,11 +366,10 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 		if (parsedIndex < 0) throw new IllegalStateException();
 		return parsedIndex;
 	}
-	
-	@Override public int getXtractorFrameStartIndex()
+
+	@Override public int getXtractorFrameOwnerIndex()
 	{
-//		if (actualFrameOwner == null) throw new IllegalStateException();
-//		return actualFrameOwner.getXtractorIndex();
-		return -1;
+		if (actualFrameOwner == null) throw new IllegalStateException();
+		return actualFrameOwner.getXtractorFrameOwnerIndex();
 	}
 }

@@ -42,4 +42,9 @@ public class SubroutineEntryParserSlot extends RegularParserSlot
 	{
 		return subroutineSlot;
 	}
+
+	@Override public int getXtractorFrameOwnerIndex()
+	{
+		return getXtractorIndex();
+	}
 }

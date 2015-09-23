@@ -8,5 +8,5 @@ public interface StiXecutorContext extends StiXParamContext
 
 	StiXtractor<?> getCurrentXtractor();
 
-	boolean hasResultValue();
+	boolean hasFrameFinalState();
 }

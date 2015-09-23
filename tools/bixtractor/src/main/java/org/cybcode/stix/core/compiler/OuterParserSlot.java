@@ -23,4 +23,14 @@ public class OuterParserSlot extends FrameOwnerSlot
 	{
 		return this;
 	}
+	
+	@Override public int getXtractorFrameOwnerIndex()
+	{
+		return 0;
+	}
+
+	@Override public int getXtractorIndex()
+	{
+		return 0;
+	}
 }

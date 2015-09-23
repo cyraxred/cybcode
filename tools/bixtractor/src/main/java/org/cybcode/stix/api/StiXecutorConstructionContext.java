@@ -8,5 +8,6 @@ public interface StiXecutorConstructionContext
 	StiXecutorCallback createCallbackGroup(List<StiXecutorCallback> callbacks);
 	boolean hasPushTargets();
 	boolean hasSortedFields();
-	StiXecutor createFrameXecutor();
+	StiXecutor createFrameStartXecutor();
+	StiXecutor createFrameResultXecutor();
 }

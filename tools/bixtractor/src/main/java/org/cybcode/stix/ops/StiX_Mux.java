@@ -9,9 +9,10 @@ import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.AbstractXtractor;
 import org.cybcode.tools.type.ClassUtil;
 
-public final class StiX_Mux<T> implements StiXtractor<T>, StiXtractor.Commutative
+public final class StiX_Mux<T> extends AbstractXtractor<T> implements StiXtractor.Commutative
 {
 	private final MuxParameter<?>[] params; //TODO ensure mandatory push
 	private final boolean repeatable;

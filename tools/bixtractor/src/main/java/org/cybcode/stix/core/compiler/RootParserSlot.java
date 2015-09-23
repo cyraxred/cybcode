@@ -13,4 +13,9 @@ public class RootParserSlot extends RegularParserSlot
 	{
 		return traversedFrameOwner;
 	}
+	
+	@Override public int getXtractorFrameOwnerIndex()
+	{
+		return 0;
+	}
 }

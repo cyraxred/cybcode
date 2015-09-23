@@ -4,7 +4,7 @@ import org.cybcode.stix.api.OutputMode;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.ops.StiX_Const;
 
-public abstract class AbstractXtractorMono<P0, T> implements StiXtractor<T>
+public abstract class AbstractXtractorMono<P0, T> extends AbstractXtractor<T>
 {
 	protected final Parameter<P0> p0;
 

@@ -19,9 +19,10 @@ public interface StiXpressionNode
 	StiXtractor<?> getXtractor();
 	int getIndex();
 	int mapParamIndex(int paramIndex);
-	int getFrameLastIndex();
 	
 	List<StiXpressionNode.PushTarget> getCallbackTargets();
 	List<StiXpressionNode.PushTarget> getPushTargets();
 	List<StiXpressionNode.PushTarget> getNotifyTargets();
+
+	int getFrameOwnerIndex();
 }

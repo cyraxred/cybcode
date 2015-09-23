@@ -8,7 +8,7 @@ import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 
-public abstract class StiXtractorDuo<P0, P1, T> implements StiXtractor<T>
+public abstract class StiXtractorDuo<P0, P1, T> extends AbstractXtractor<T>
 {
 	protected final Parameter<P0> p0;
 	protected final Parameter<P1> p1;

@@ -11,13 +11,16 @@ import com.google.common.collect.ImmutableList;
 
 class XecutorConstructionContext implements StiXecutorConstructionContext
 {
-	private final int maxNodeIndex;
+//	private final int nodeCount;
+	private CtxFrame frame;
 	private StiXpressionNode node;
 	private boolean callbacksClaimed;
+	private boolean possibleFrameEnd;
 	
-	public XecutorConstructionContext(int maxNodeIndex)
+	public XecutorConstructionContext(int nodeCount, CtxFrame outerFrame)
 	{
-		this.maxNodeIndex = maxNodeIndex;
+//		this.nodeCount = nodeCount;
+		this.frame = outerFrame;
 	}
 
 	@Override public List<StiXecutorCallback> getXecutorCallbacks()
@@ -46,11 +49,17 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 		return !node.getPushTargets().isEmpty();
 	}
 
-	@Override public StiXecutor createFrameXecutor()
+	@Override public StiXecutor createFrameStartXecutor()
 	{
-		int index = node.getFrameLastIndex(); //checks validity of the claim to use frame
-		if (index < 0 || index > maxNodeIndex) throw new IllegalStateException("Node #" + node.getIndex() + "has returned a wrong frameResultIndex=" + index);
-		return DefaultXecutors.START_FRAME;
+		frame = new CtxFrame(node.getIndex(), frame);
+		return new XecutorStartFrame(frame);
+	}
+	
+	@Override public StiXecutor createFrameResultXecutor()
+	{
+		possibleFrameEnd = true;
+		CtxFrame.ResultMarker frameResult = frame.registerFrameResult(node.getIndex());
+		return new XecutorResolveFrame(frameResult);
 	}
 
 	public StiXpressionNode getNode()
@@ -60,11 +69,29 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 
 	public void setNode(StiXpressionNode node)
 	{
-		if (this.node != null && !(callbacksClaimed || this.node.getCallbackTargets().isEmpty())) {
-			throw new IllegalStateException("Callbacks are defined, but not claimed by xtractorIndex=" + node.getIndex());
+		if (this.node != null) {
+			if (!callbacksClaimed && !this.node.getCallbackTargets().isEmpty()) {
+				throw new IllegalStateException("Callbacks are defined, but not claimed by xtractorIndex=" + node.getIndex());
+			}
 		}
-		callbacksClaimed = false;
+		this.callbacksClaimed = false;
 		this.node = node;
+		validateFrame();
+		this.possibleFrameEnd = false;
+	}
+	
+	private void validateFrame()
+	{
+		int index = node.getFrameOwnerIndex();
+		
+		if (index == frame.getStartIndex()) return; 
+			
+		if (possibleFrameEnd) {
+			if (frame.getOuterFrame().getStartIndex() == index) return;
+		}
+
+		throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
+			", nodeFrame=" + index + ", nodeIndex=" + node.getIndex());
 	}
 
 	@Override public boolean hasSortedFields()

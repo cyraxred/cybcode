@@ -15,32 +15,29 @@ public class XpressionRunnerBuilder
 	
 	public interface Runner extends Function<Object, Object>
 	{
-		boolean hasFrameResultValue();
-
 		boolean executePostponedTargetsBefore(StiXpressionNode stiXpressionNode);
 		boolean executeImmediateTargets();
 		
 		void setPushValueOf(int targetIndex, List<PushTarget> pushTargets, Object finalValue);
 		void setFinalValueOf(int xtractorIndex, List<PushTarget> notifyTargets);
 		
-		void enterFrame();
-		void skipFrame();
+		void discardPushTargets(int startIndex, int endIndex);
+		void jumpTo(int index);
 	}
 
 	protected interface Context extends ContextInspector
 	{
 		int getNodeCount();
+		void setStatsCollector(StiXecutorStatsCollector stats);
 
 		void resetContext(Object rootValue, Runner xecutorContextRunner);
-		void resetFrameContent(int rootIndex, int resultIndex, boolean finalState);
-		void completeFrameContent(int startIndex);
 
 		StiXpressionNode setCurrentIndex(int xtractorIndex);
 		void evaluateFinalState(int xtractorIndex);
 		boolean evaluatePush(PushTarget pushTarget);
 
 		Object getPublicValue(int xecutorIndex);
-		void setStatsCollector(StiXecutorStatsCollector stats);
+		boolean hasFrameFinalState();
 	}
 
 	private StiXecutorStatsCollector stats = StiXecutorStatsCollector.NULL;

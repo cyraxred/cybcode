@@ -86,7 +86,7 @@ public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 					fieldValue = fieldValue.enableMultipleUse();
 				}
 				handler.process(context, fieldValue);
-			} while (!context.hasResultValue());
+			} while (!context.hasFrameFinalState());
 			return null;
 		} catch (IOException e) {
 			throw new PBufIOException(e);

@@ -1,6 +1,7 @@
 package org.cybcode.stix.core.xecutors;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
@@ -84,7 +85,7 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 		
 		int[] params = getParamIndexes(node);
 
-		Node contextNode = new Node(node.getXtractorIndex(), node.getXtractor(), params);
+		Node contextNode = new Node(node.getXtractorIndex(), node.getXtractorFrameOwnerIndex(), node.getXtractor(), params);
 		contextNodes.add(contextNode);
 		nodeDetails.add(node);
 	}
@@ -167,21 +168,37 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 		{
 			return nodeIndex;
 		}
+		
+		@Override public String toString()
+		{
+			return "(#" + nodeIndex + "=>#" + targetIndex + ":" + param.toNameString() + ")";
+		}
 	}
 	
+	public boolean isRegularAsNotify()
+	{
+		return regularAsNotify;
+	}
+
+	public void setRegularAsNotify(boolean regularAsNotify)
+	{
+		this.regularAsNotify = regularAsNotify;
+	}
+
 	private static class Node implements StiXpressionNode
 	{
 		private final int	xtractorIndex;
 		private final StiXtractor<?>	xtractor;
 		private final int[] params;
+		private final int frameOwnerIndex;
 		private List<PushTarget> pushTargets;
 		private List<PushTarget> notifyTargets;
 		private List<PushTarget> callbackTargets;
-		private int	frameLastIndex;
 
-		Node(int xtractorIndex, StiXtractor<?> xtractor, int[] params)
+		Node(int xtractorIndex, int	frameOwnerIndex, StiXtractor<?> xtractor, int[] params)
 		{
 			this.xtractorIndex = xtractorIndex;
+			this.frameOwnerIndex = frameOwnerIndex;
 			this.xtractor = xtractor;
 			this.params = params;
 		}
@@ -230,25 +247,34 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 			return notifyTargets;
 		}
 
-		@Override public int getFrameLastIndex()
+		@Override public int getFrameOwnerIndex()
 		{
-			if (frameLastIndex == 0) throw new IllegalStateException();
-			return frameLastIndex;
+			return frameOwnerIndex;
 		}
 
-		public void setFrameLastIndex(int frameLastIndex)
+		@Override public String toString()
 		{
-			this.frameLastIndex = frameLastIndex;
+			StringBuilder result = new StringBuilder();
+			result.append(xtractor);
+			result.append("(#").append(xtractorIndex);
+			if (frameOwnerIndex != 0) {
+				result.append(",F:").append(frameOwnerIndex);
+			}
+			if (!callbackTargets.isEmpty()) {
+				result.append(",CT:").append(callbackTargets.size());
+			}
+			if (!pushTargets.isEmpty()) {
+				result.append(",PT:").append(pushTargets.size());
+			}
+			if (!notifyTargets.isEmpty()) {
+				result.append(",NT:").append(notifyTargets.size());
+			}
+			result.append(")");
+			result.append(Arrays.toString(params));
+			if (!notifyTargets.isEmpty()) {
+				result.append(">>").append(notifyTargets);
+			}
+			return result.toString();
 		}
-	}
-
-	public boolean isRegularAsNotify()
-	{
-		return regularAsNotify;
-	}
-
-	public void setRegularAsNotify(boolean regularAsNotify)
-	{
-		this.regularAsNotify = regularAsNotify;
 	}
 }

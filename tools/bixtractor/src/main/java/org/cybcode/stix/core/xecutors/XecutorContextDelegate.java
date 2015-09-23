@@ -43,8 +43,8 @@ public abstract class XecutorContextDelegate<T extends StiXecutorContext> implem
 		return backing.getCurrentXtractor();
 	}
 
-	@Override public boolean hasResultValue()
+	@Override public boolean hasFrameFinalState()
 	{
-		return backing.hasResultValue();
+		return backing.hasFrameFinalState();
 	}
 }

@@ -6,8 +6,9 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.AbstractXtractor;
 
-public final class StiX_SubroutineRoot<T> implements StiXtractor<T>
+public final class StiX_SubroutineRoot<T> extends AbstractXtractor<T>
 {
 	private static StiX_SubroutineRoot<?> INSTANCE = new StiX_SubroutineRoot<Object>(0);
 	

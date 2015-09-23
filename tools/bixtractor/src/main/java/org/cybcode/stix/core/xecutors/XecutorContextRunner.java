@@ -1,6 +1,5 @@
 package org.cybcode.stix.core.xecutors;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
@@ -12,8 +11,6 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 	private final XpressionRunnerBuilder.Context context;
 	private final StiXpressionSequencer sequencer;
 	private final int nodeCount; 
-	private final List<CtxFrame> frames;
-	private CtxFrame currentFrame;
 	private int nextIndex;
 	private StiXpressionNode currentNode;
 
@@ -22,16 +19,11 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 		this.context = context;
 		this.sequencer = sequencer;
 		this.nodeCount = context.getNodeCount();
-		this.currentFrame = new CtxFrame(0, nodeCount - 1);
-		this.frames = new ArrayList<>(8);
-		this.frames.add(this.currentFrame);
 	}
 	
 	private void resetContext(Object rootValue)
 	{
 		sequencer.resetSequencer();
-		currentFrame = CtxFrame.closeAllFrames(frames);
-
 		context.resetContext(rootValue, this);
 		setCurrentIndex(0);
 	}
@@ -46,7 +38,7 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 		StiXpressionNode.PushTarget pushTarget;
 		while ((pushTarget = sequencer.nextImmediateTarget()) != null) {
 			if (!context.evaluatePush(pushTarget)) continue;
-			if (hasFrameResultValue()) return true;
+			if (context.hasFrameFinalState()) return true;
 		}
 		return false;
 	}
@@ -58,64 +50,16 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 		while ((pushTarget = sequencer.nextPostponedTargetBefore(nextNode)) != null) {
 			if (pushTarget.getXtractorIndex() <= nextNodeIndex && !pushTarget.getXtractorParam().getBehavior().isMandatory()) continue;
 			if (!context.evaluatePush(pushTarget)) continue;
-			if (hasFrameResultValue()) return true;
+			if (context.hasFrameFinalState()) return true;
 		}
 		return false;
 	}
 
-	private void runExpression()
-	{
-		while (nextIndex < nodeCount) {
-			int currentIndex = nextIndex++;
-			setCurrentIndex(currentIndex);
-		
-			if (currentNode != null) {
-				if (executePostponedTargetsBefore(currentNode)) break;
-				context.evaluateFinalState(currentIndex);
-			}
-			
-			if (currentFrame.isEndOfFrame(currentIndex)) {
-				exitFrame();
-			}
-		}
-	}
-	
 	public Object apply(Object rootValue)
 	{
 		resetContext(rootValue);
 		runExpression();
 		return context.getPublicValue(nodeCount - 1);
-	}
-
-	@Override public void enterFrame()
-	{
-		int rootIndex = currentNode.getIndex();
-		int resultIndex = currentNode.getFrameLastIndex();
-		currentFrame = currentFrame.createInner(rootIndex, resultIndex, frames);
-		context.resetFrameContent(rootIndex, resultIndex, false);
-	}
-	
-	@Override public void skipFrame()
-	{
-		if (!currentFrame.isInnerFrame()) throw new IllegalStateException();
-		int rootIndex = currentFrame.getRootIndex();
-		int resultIndex = currentFrame.getResultIndex();
-		currentFrame.closeFrame();
-		context.resetFrameContent(rootIndex, resultIndex, true);
-		nextIndex = resultIndex + 1; 
-	}
-	
-	private void exitFrame()
-	{
-		if (!currentFrame.isInnerFrame()) return; //don't need for the outermost frame
-		int startIndex = currentFrame.getRootIndex();
-		currentFrame.closeFrame();
-		context.completeFrameContent(startIndex);
-	}
-
-	@Override public boolean hasFrameResultValue()
-	{
-		return currentFrame.hasResult();
 	}
 
 	@Override public void setPushValueOf(int targetIndex, List<PushTarget> pushTargets, Object finalValue)
@@ -126,7 +70,29 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 	@Override public void setFinalValueOf(int xtractorIndex, List<PushTarget> targets)
 	{
 		sequencer.addPostponeTargets(targets);
-		if (!currentFrame.setHasResult(xtractorIndex)) return;
-		nextIndex = currentFrame.getResultIndex() + 1;
+	}
+
+	private void runExpression()
+	{
+		while (nextIndex < nodeCount) {
+			int currentIndex = nextIndex++;
+			setCurrentIndex(currentIndex);
+
+			if (currentNode == null) continue;
+			
+			if (executePostponedTargetsBefore(currentNode)) break;
+			context.evaluateFinalState(currentIndex);
+		}
+	}
+	
+	@Override public void jumpTo(int index)
+	{
+		if (index < nextIndex) throw new IllegalArgumentException();
+		nextIndex = index;
+	}
+
+	@Override public void discardPushTargets(int startIndex, int endIndex)
+	{
+		sequencer.discardTargets(startIndex, endIndex);
 	}
 }

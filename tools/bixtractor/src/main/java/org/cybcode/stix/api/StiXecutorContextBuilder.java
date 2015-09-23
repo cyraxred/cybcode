@@ -13,7 +13,7 @@ public interface StiXecutorContextBuilder
 		NodeDetails getTargetXtractor(int index);
 		StiXtractor.Parameter<?> getTargetParameter(int index);
 
-		int getXtractorFrameStartIndex();
+		int getXtractorFrameOwnerIndex();
 	}
 	
 	void setCapacities(int nodesCount, int paramsCount, int linksCount);

@@ -5,7 +5,6 @@ import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
 import org.cybcode.stix.core.xecutors.XecutorContextBuilder;
 import org.cybcode.stix.core.xecutors.XpressionRunnerBuilder;
-import org.cybcode.stix.core.xecutors.XpressionRunnerBuilder.ContextInspector;
 
 import com.google.common.base.Function;
 

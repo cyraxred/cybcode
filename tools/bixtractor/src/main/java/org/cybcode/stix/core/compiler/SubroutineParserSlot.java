@@ -38,11 +38,6 @@ public class SubroutineParserSlot extends FrameOwnerSlot
 		}
 	}
 	
-	@Override protected void preFlatten(Map<RegularParserSlot, Boolean> processedSlots, StiXpressionFlattenContext context)
-	{
-		entrySlot.flatten(processedSlots, context); //ensures that EntryPoint and dependencies come first
-	}
-	
 	@Override protected RegularParserSlot createParamSlot(StiXtractor<?> paramSource, ParserContext parserContext)
 	{
 		if (paramSource instanceof StiX_Subroutine.EntryPoint) {
@@ -101,8 +96,8 @@ public class SubroutineParserSlot extends FrameOwnerSlot
 			entrySlot.addOuterDependencies(outerDependencies);
 		}
 	}
-
-	@Override public int getXtractorFrameStartIndex()
+	
+	@Override public int getXtractorFrameOwnerIndex()
 	{
 		if (entrySlot == null) throw new IllegalStateException();
 		return entrySlot.getXtractorIndex();

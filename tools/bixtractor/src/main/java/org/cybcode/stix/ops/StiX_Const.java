@@ -6,8 +6,9 @@ import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.AbstractXtractor;
 
-public final class StiX_Const<T> implements StiXtractor<T>
+public final class StiX_Const<T> extends AbstractXtractor<T>
 {
 	private final T value;
 	

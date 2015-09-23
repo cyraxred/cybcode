@@ -7,10 +7,11 @@ import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.core.AbstractXtractor;
 import org.cybcode.stix.core.AbstractXtractorMono;
 import org.cybcode.stix.core.xecutors.XecutorFail;
 
-public final class StiX_Subroutine<S, T> implements StiXtractor<T>
+public final class StiX_Subroutine<S, T> extends AbstractXtractor<T>
 {
 	private final Parameter<S> p0; //EntryPoint parameter MUST come FIRST
 	private final Parameter<T> p1;
@@ -94,7 +95,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 		
 		@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 		{
-			return context.createFrameXecutor();
+			return context.createFrameStartXecutor();
 		}
 
 		@Override public Class<? extends S> resultType()
@@ -109,7 +110,7 @@ public final class StiX_Subroutine<S, T> implements StiXtractor<T>
 
 		@Override public int getOperationComplexity(StiXComplexityHelper helper)
 		{
-			return 1;
+			return helper.getComplexityOf(this, 1);
 		}
 
 		@Override protected S calculate(S p0)

@@ -2,6 +2,8 @@ package org.cybcode.stix.api;
 
 import java.util.List;
 
+import org.cybcode.stix.core.AbstractXtractor;
+
 /**
  * 
  * @author Kirill "Red Cyrax" Ivkushkin <kirill@ivkushkin.name>
@@ -11,7 +13,7 @@ import java.util.List;
  * @param <D> description of a field
  * @param <T> internal field type
  */
-public abstract class StiXource<S, C, D, T> implements StiXtractor<T>
+public abstract class StiXource<S, C, D, T> extends AbstractXtractor<T>
 {
 	private static class SpecialXecutor<C> implements StiXecutor
 	{

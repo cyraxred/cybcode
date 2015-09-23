@@ -20,6 +20,9 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 	
 	private StiXecutorStatsCollector stats;
 	private XpressionRunnerBuilder.Runner runner;
+
+	private final CtxFrame outerFrame;
+	private CtxFrame currentFrame;
 	
 	private StiXpressionNode currentNode;
 	private int currentIndex;
@@ -29,6 +32,9 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 		if (!(nodes[0].getXtractor() instanceof StiX_Root)) throw new IllegalArgumentException("Root must be present as index 0");
 		this.nodes = nodes;
 		setStatsCollector(null);
+
+		this.outerFrame = new CtxFrame(nodes.length);
+		this.currentFrame = outerFrame;
 	}
 
 	@Override public void setStatsCollector(StiXecutorStatsCollector stats)
@@ -45,55 +51,108 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 		
 		if (currentState == null) {
 			initialState = new StiXecutor[nodes.length];
-			currentState = new StiXecutor[nodes.length];
-			results = new Object[nodes.length];
 			createInitialState();
 			initialState[0] = DefaultXecutors.FINAL;
-		} else {
-			resetFrameContent(0, nodes.length - 1, false);
-		}
 
-		/* Imitation of root evaluation */
+			currentState = new StiXecutor[nodes.length];
+			results = new Object[nodes.length];
+		} else {
+			Arrays.fill(currentState, null);
+			Arrays.fill(results, null);
+		}
+		
+		currentFrame = outerFrame.enterFrame(outerFrame);
+
+		/* Imitation of root being evaluated */
 		currentIndex = 0;
 		currentNode = nodes[0];
 		currentState[0] = DefaultXecutors.FINAL;
 		setValue(0, rootValue);
-		stats.onEvaluated();
+		stats.onEvaluated(currentNode, rootValue);
 		runner.setFinalValueOf(0, currentNode.getNotifyTargets());
 	}
 
-	private StiXecutor ensureFrameStart(int rootIndex)
+	void enterFrame(CtxFrame frame)
 	{
-		StiXecutor init = initialState[rootIndex];
-		if (init == DefaultXecutors.START_FRAME) throw new IllegalStateException();
-		return init;
+		currentFrame = currentFrame.enterFrame(frame);
+		int startIndex = frame.getStartIndex(); 
+		int endIndex = frame.getEndIndex();
+		Arrays.fill(currentState, startIndex, endIndex, null);
+		Arrays.fill(results, startIndex, endIndex, null);
 	}
 	
-	@Override public void resetFrameContent(int rootIndex, int resultIndex, boolean finalState)
+	void skipFrame(CtxFrame frame)
 	{
-		ensureFrameStart(rootIndex);
-		if (finalState) {
-			Arrays.fill(currentState, rootIndex, resultIndex + 1, DefaultXecutors.FINAL);
-		} else {
-			if (currentState[rootIndex] == null) return;
-			Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
+		int startIndex = frame.getStartIndex();
+		int endIndex = frame.getEndIndex();
+		currentState[startIndex] = DefaultXecutors.FINAL;
+		currentState[endIndex - 1] = DefaultXecutors.FINAL;
+		results[endIndex - 1] = null;
+		runner.jumpTo(endIndex);
+	}
+
+	void resolveFrame(CtxFrame.ResultMarker frameMarker, boolean repeatable)
+	{
+		final CtxFrame resolvedFrame = frameMarker.getFrame();
+		if (currentFrame != resolvedFrame) throw new IllegalStateException();
+		if (!frameMarker.setFinalState()) return;
+		
+		int startIndex = resolvedFrame.getStartIndex();
+		int endIndex = resolvedFrame.getEndIndex();
+		currentState[startIndex] = repeatable ? initialState[startIndex] : DefaultXecutors.FINAL;
+		
+		resolveInnerFrames(resolvedFrame);
+		
+		runner.discardPushTargets(startIndex, endIndex);
+		runner.jumpTo(endIndex);
+	}
+	
+	
+	private void resolveInnerFrames(CtxFrame resolvedFrame)
+	{
+		CtxFrame frame = currentFrame;
+		while (frame != resolvedFrame) {
+			frame = frame.getOuterFrame();
+			if (frame == outerFrame) {
+				throw new IllegalStateException("Inactive frame was resolved");
+			}
 		}
-		Arrays.fill(results, rootIndex, resultIndex + 1, null);
 	}
-	
-	@Override public void completeFrameContent(int rootIndex)
-	{
-		currentState[rootIndex] = ensureFrameStart(rootIndex);
-	}
+
+//	@Override public void resetFrameContent(int rootIndex, int resultIndex, boolean finalState)
+//	{
+//		ensureFrameStart(rootIndex);
+//		if (finalState) {
+//			Arrays.fill(currentState, rootIndex, resultIndex + 1, DefaultXecutors.FINAL);
+//		} else {
+//			if (currentState[rootIndex] == null) return;
+//			Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
+//		}
+//		Arrays.fill(results, rootIndex, resultIndex + 1, null);
+//	}
+//	
+//	@Override public void prepareFrameContent(int startIndex, int endIndex)
+//	{
+//		ensureFrameStart(rootIndex);
+//		if (currentState[rootIndex] == null) return;
+//			Arrays.fill(currentState, rootIndex, resultIndex + 1, null);
+//		}
+//		Arrays.fill(results, rootIndex, resultIndex + 1, null);
+//	}
+//	
+//	@Override public void completeFrameContent(int rootIndex)
+//	{
+//		currentState[rootIndex] = ensureFrameStart(rootIndex);
+//	}
 
 	private void createInitialState()
 	{
-		XecutorConstructionContext context = new XecutorConstructionContext(nodes.length - 1);
-		for (int i = nodes.length - 1; i >= 0; i--) { //MUST BE in reversed order, otherwise StiXourceXecutor will fail to initialize due to missing dependencies 
+		XecutorConstructionContext context = new XecutorConstructionContext(nodes.length, outerFrame);
+		for (int i = 0; i < nodes.length - 1; i++) { //MUST BE in direct order, otherwise frame initialization will break 
 			StiXpressionNode node = nodes[i];
 			context.setNode(node);
 			StiXecutor xecutor = node.createXecutor(context);
-			initialState[i] = xecutor; 
+			initialState[i] = xecutor;
 		}
 	}
 	
@@ -140,9 +199,9 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 		return hasPublicValue(index);
 	}
 
-	@Override public boolean hasResultValue()
+	@Override public boolean hasFrameFinalState()
 	{
-		return runner.hasFrameResultValue();
+		return currentFrame.hasFinalState();
 	}
 	
 	@Override public void setInterimValue(Object value)
@@ -165,16 +224,6 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 	{
 		int index = currentIndex();
 		return currentState[index] != DefaultXecutors.FINAL && hasValue(index);
-	}
-	
-	void enterFrame()
-	{
-		runner.enterFrame();
-	}
-	
-	void skipFrame()
-	{
-		runner.skipFrame();
 	}
 	
 	private int currentIndex()
@@ -233,6 +282,10 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 		StiXecutor xecutor = currentState[index];
 		if (xecutor == DefaultXecutors.FINAL) return;
 		
+		while (!currentFrame.isInsideFrame(index)) {
+			currentFrame = currentFrame.getOuterFrame();
+		}
+		
 		StiXpressionNode node = setCurrentIndex(index);
 		Object finalValue;
 		if (xecutor != null) {
@@ -241,7 +294,7 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 			finalValue = getCurrentXtractor().apply(this);
 		}
 		currentState[index] = DefaultXecutors.FINAL;
-		stats.onEvaluated();
+		stats.onEvaluated(currentNode, finalValue);
 		if (!setValue(index, finalValue) || finalValue == null) return;
 		runner.setFinalValueOf(index, node.getNotifyTargets());
 	}
@@ -261,7 +314,7 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 	private void evaluatePush0(int targetIndex, Parameter<?> targetParam, Object pushedValue)
 	{
 		StiXpressionNode node = setCurrentIndex(targetIndex);
-		stats.onPushAttempt();
+		stats.onPushAttempt(currentNode, targetParam, pushedValue);
 
 		Object finalValue;
 		StiXecutor xecutor = currentState[targetIndex];
@@ -279,13 +332,16 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 		}
 		
 		if (currentState[targetIndex] == DefaultXecutors.FINAL) {
+			if (targetIndex + 1 == outerFrame.getEndIndex() && outerFrame == currentFrame) {
+				outerFrame.resetFrame(true);
+			}
 			if (!setValue(targetIndex, finalValue) || finalValue == null) return;
-			stats.onPushEvaluated();
+			stats.onPushEvaluated(currentNode, finalValue);
 	
 			runner.setFinalValueOf(targetIndex, node.getNotifyTargets());
 		} else {
 			if (finalValue == null || !setValue(targetIndex, finalValue)) return;
-			stats.onPushEvaluated();
+			stats.onPushEvaluated(currentNode, finalValue);
 			
 			runner.setPushValueOf(targetIndex, node.getPushTargets(), finalValue);
 		}
@@ -302,7 +358,7 @@ class XecutorContext implements StiXecutorContext, StiXecutorPushContext, Xpress
 				if (hasPublicValue(index)) continue;
 				if (runner.executePostponedTargetsBefore(nodes[index])) return;
 				evaluatePush0(index, target.getXtractorParam(), pushedValue);
-				if (runner.hasFrameResultValue()) break;
+				if (hasFrameFinalState()) break;
 			}
 			runner.executeImmediateTargets();
 		} finally {

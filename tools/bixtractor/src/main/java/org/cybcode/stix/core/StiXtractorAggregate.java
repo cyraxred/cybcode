@@ -7,7 +7,7 @@ import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 
-public abstract class StiXtractorAggregate<P0, A, T> implements StiXtractor<T>
+public abstract class StiXtractorAggregate<P0, A, T> extends AbstractXtractor<T>
 {
 	private final PushParameter<P0> p0;
 

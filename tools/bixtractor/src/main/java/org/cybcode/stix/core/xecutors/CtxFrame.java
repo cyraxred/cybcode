@@ -1,92 +1,113 @@
 package org.cybcode.stix.core.xecutors;
 
-import java.util.List;
+import java.util.BitSet;
 
 class CtxFrame
 {
+	class ResultMarker
+	{
+		private final int resultIndex;
+		private final int endIndex;
+
+		private ResultMarker(int resultIndex, int endIndex)
+		{
+			this.resultIndex = resultIndex;
+			this.endIndex = endIndex;
+		}
+
+		public int getEndIndex()
+		{
+			return endIndex;
+		}
+		
+		public boolean setFinalState()
+		{
+			if (!results.get(resultIndex)) return false;
+			results.clear(resultIndex);
+			if (!results.isEmpty()) return false;
+			isFinal = true;
+			return true;
+		}
+
+		public CtxFrame getFrame()
+		{
+			return CtxFrame.this;
+		}
+	}
+	
+	private final CtxFrame outerFrame;
 	private final int frameLevel;
-	private int rootIndex;
-	private int resultIndex;
-	private boolean hasResult;
+	private final int startIndex;
+	private int endIndex;
 	
-	private CtxFrame(int rootIndex, int resultIndex, CtxFrame outerFrame)
+	private BitSet results;
+	private int resultCount;
+	
+	private boolean isFinal;
+	
+	CtxFrame(int startIndex, CtxFrame outerFrame)
 	{
-		this.rootIndex = rootIndex;
-		this.resultIndex = resultIndex;
+		if (startIndex <= 0) throw new IllegalArgumentException();
 		this.frameLevel = outerFrame.frameLevel + 1;
+		this.outerFrame = outerFrame;
+		this.startIndex = startIndex;
 	}
 	
-	CtxFrame(int rootIndex, int resultIndex)
+	CtxFrame(int endIndex)
 	{
-		this.rootIndex = rootIndex;
-		this.resultIndex = resultIndex;
+		if (endIndex < 0) throw new IllegalArgumentException();
 		this.frameLevel = 0;
+		this.outerFrame = null;
+		this.startIndex = 0;
+		this.endIndex = endIndex;
 	}
 	
-	public int getRootIndex()
+	public int getStartIndex()
 	{
-		if (rootIndex == Integer.MAX_VALUE) throw new IllegalStateException();
-		return rootIndex;
+		return startIndex;
 	}
 
-	public int getResultIndex()
+	public int getEndIndex()
 	{
-		if (rootIndex == Integer.MAX_VALUE) throw new IllegalStateException();
-		return resultIndex;
+		if (endIndex == 0) throw new IllegalStateException();
+		return endIndex;
+	}
+	
+	public ResultMarker registerFrameResult(int resultIndex)
+	{
+		if (results != null) throw new IllegalStateException();
+		if (resultIndex < startIndex) throw new IllegalArgumentException();
+		resultIndex++;
+		endIndex = Math.max(endIndex, resultIndex);
+		return new ResultMarker(resultCount++, resultIndex);
 	}
 
-	public CtxFrame createInner(int rootIndex, int resultIndex, List<CtxFrame> stack)
+	private void enterFrame()
 	{
-		if (rootIndex <= this.rootIndex || resultIndex >= this.resultIndex || rootIndex > resultIndex) throw new IllegalArgumentException();
-
-		if (frameLevel == stack.size() - 1) {
-			CtxFrame innerFrame = new CtxFrame(rootIndex, resultIndex, this);
-			stack.add(innerFrame);
-			return innerFrame;
+		if (results == null) {
+			if (resultCount == 0) throw new IllegalStateException();
+			results = new BitSet(resultCount);
+		} else {
+			results.set(0, resultCount);
 		}
-		
-		CtxFrame innerFrame = stack.get(frameLevel + 1);
-		if (rootIndex != Integer.MAX_VALUE) throw new IllegalStateException();
-		innerFrame.rootIndex = rootIndex;
-		innerFrame.resultIndex = resultIndex;
-		
-		return innerFrame;
+		isFinal = false;
 	}
 	
-	public void closeFrame()
+	public void resetFrame()
 	{
-		if (rootIndex == Integer.MAX_VALUE) throw new IllegalStateException();
-		if (frameLevel == 0) throw new IllegalStateException();
-		cleanState();
-	}
-
-	private void cleanState()
-	{
-		rootIndex = Integer.MAX_VALUE;
-		resultIndex = Integer.MIN_VALUE;
-		hasResult = false;
-	}
-
-	public boolean setHasResult(int xtractorIndex)
-	{
-		if (xtractorIndex != resultIndex) return false;
-		hasResult = true;
-		return true;
+		resetFrame(false);
 	}
 	
-	public static CtxFrame closeAllFrames(List<CtxFrame> stack)
+	public void resetFrame(boolean finalState)
 	{
-		for (int i = stack.size() - 1; i >= 1; i--) {
-			stack.get(i).cleanState();
-		}
-		CtxFrame result = stack.get(0);
-		result.hasResult = false;
-		return result;
+		if (results == null) throw new IllegalStateException();
+		results.clear();
+		isFinal = finalState;
 	}
 	
-	public boolean hasResult()
+	public boolean hasFinalState()
 	{
-		return hasResult;
+		return isFinal;
 	}
 	
 	public boolean isInnerFrame()
@@ -94,8 +115,30 @@ class CtxFrame
 		return frameLevel > 0;
 	}
 	
-	public boolean isEndOfFrame(int xtractorIndex)
+	public CtxFrame getOuterFrame()
 	{
-		return resultIndex == xtractorIndex;
+		return outerFrame;
+	}
+
+	public boolean isInsideFrame(int xtractorIndex)
+	{
+		return xtractorIndex >= startIndex && xtractorIndex < endIndex;
+	}
+
+	public CtxFrame enterFrame(CtxFrame frame)
+	{
+		if (frame == this) {
+			//self entry - is only allowed for outer frame
+			if (isInnerFrame()) throw new IllegalStateException();
+			if (resultCount == 0) {
+				resultCount++;
+			}
+		} else {
+			if (frame.getOuterFrame() != this) throw new IllegalStateException();
+		}
+		if (results != null && !results.isEmpty()) throw new IllegalStateException();
+		frame.enterFrame();
+		return frame;
 	}
 }
+
