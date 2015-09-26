@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableList;
 
 class XecutorConstructionContext implements StiXecutorConstructionContext
 {
-//	private final int nodeCount;
 	private CtxFrame frame;
 	private StiXpressionNode node;
 	private boolean callbacksClaimed;
@@ -19,7 +18,6 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 	
 	public XecutorConstructionContext(int nodeCount, CtxFrame outerFrame)
 	{
-//		this.nodeCount = nodeCount;
 		this.frame = outerFrame;
 	}
 
@@ -70,25 +68,43 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 	public void setNode(StiXpressionNode node)
 	{
 		if (this.node != null) {
-			if (!callbacksClaimed && !this.node.getCallbackTargets().isEmpty()) {
-				throw new IllegalStateException("Callbacks are defined, but not claimed by xtractorIndex=" + node.getIndex());
-			}
+			validateProcessedNode();
+			validateFrame(true);
+			validateAndCloseFrame(node.getFrameOwnerIndex());
 		}
 		this.callbacksClaimed = false;
 		this.node = node;
-		validateFrame();
+		validateFrame(false);
 		this.possibleFrameEnd = false;
 	}
+
+	private void validateProcessedNode()
+	{
+		if (!callbacksClaimed && !this.node.getCallbackTargets().isEmpty()) {
+			throw new IllegalStateException("Callbacks are defined, but not claimed by xtractorIndex=" + node.getIndex());
+		}
+	}
 	
-	private void validateFrame()
+	private void validateAndCloseFrame(int index)
+	{
+		if (index >= frame.getStartIndex()) return;
+		
+		if (!possibleFrameEnd) {
+			throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
+					", nodeFrame=" + index + ", nodeIndex=" + (node.getIndex() + 1));
+		}
+		if (frame.getOuterFrame().getStartIndex() != index) {
+			throw new IllegalStateException("Inconsistent close frame sequence, currentFrame=" + frame.getStartIndex() +
+				", nodeFrame=" + index + ", nodeIndex=" + node.getIndex() + ", outerFrame=" + frame.getOuterFrame().getStartIndex());
+		}
+		
+		frame = frame.getOuterFrame();
+	}
+
+	private void validateFrame(boolean strict)
 	{
 		int index = node.getFrameOwnerIndex();
-		
-		if (index == frame.getStartIndex()) return; 
-			
-		if (possibleFrameEnd) {
-			if (frame.getOuterFrame().getStartIndex() == index) return;
-		}
+		if (strict ? index == frame.getStartIndex() : index >= frame.getStartIndex()) return; 
 
 		throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
 			", nodeFrame=" + index + ", nodeIndex=" + node.getIndex());

@@ -3,6 +3,7 @@ package org.cybcode.stix;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
+import org.cybcode.stix.core.xecutors.StiXecutorContextInspector;
 import org.cybcode.stix.core.xecutors.XecutorContextBuilder;
 import org.cybcode.stix.core.xecutors.XpressionRunnerBuilder;
 
@@ -12,9 +13,9 @@ public class TestBase
 {
 	protected final StatsCollector stats = new StatsCollector();
 	
-	protected XpressionRunnerBuilder.ContextInspector B(StiXtractor<?> expression)
+	protected StiXecutorContextInspector B(StiXtractor<?> expression)
 	{
-		XecutorContextBuilder<XpressionRunnerBuilder.ContextInspector> builder = new XpressionRunnerBuilder().
+		XecutorContextBuilder<StiXecutorContextInspector> builder = new XpressionRunnerBuilder().
 			setStats(stats).createContextBuilder();
 		
 		B(expression, builder);

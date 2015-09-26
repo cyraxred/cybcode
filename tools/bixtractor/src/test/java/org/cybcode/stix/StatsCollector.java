@@ -11,6 +11,10 @@ class StatsCollector implements StiXecutorStatsCollector
 	public int pushEvaluateCount;
 	public int nodeCount;
 	public int fieldCount;
+	public int frameEntered;
+	public int frameSkipped;
+	public int frameResult;
+	public int frameCompleted;
 	
 	@Override public void resetStats(int nodeCount)
 	{
@@ -19,6 +23,10 @@ class StatsCollector implements StiXecutorStatsCollector
 		pushAttemptCount = 0;
 		pushEvaluateCount = 0;
 		fieldCount = 0;
+		frameEntered = 0;
+		frameSkipped = 0;
+		frameResult = 0;
+		frameCompleted = 0;
 	}
 
 	@Override public void onFieldSkipped()
@@ -47,5 +55,29 @@ class StatsCollector implements StiXecutorStatsCollector
 	{
 		System.out.println("P_IN: " + param.toNameString() + ":" + pushedValue + " >>= " + node);
 		pushAttemptCount++;
+	}
+
+	@Override public void onFrameEnter(int startIndex)
+	{
+		System.out.println("ENTR: " + startIndex);
+		frameEntered++;
+	}
+
+	@Override public void onFrameSkip(int startIndex)
+	{
+		System.out.println("SKIP: " + startIndex);
+		frameSkipped++;
+	}
+
+	@Override public void onFrameResolve(int startIndex, boolean completed)
+	{
+		frameResult++;
+		if (!completed) {
+			System.out.println("EXIT: " + startIndex);
+			return;
+		} else {
+			System.out.println("PART: " + startIndex);
+		}
+		frameCompleted++;
 	}
 }

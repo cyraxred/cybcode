@@ -82,7 +82,7 @@ public abstract class StiXtractorAggregate<P0, A, T> extends AbstractXtractor<T>
 	 * @param pushedValue 
 	 * @return true when the final state was reached
 	 */
-	protected boolean aggregateNextAndIsFinal(StiXecutorContext context, Object pushedValue)
+	protected boolean aggregateNextAndIsFinal(StiXecutorPushContext context, Object pushedValue)
 	{
 		@SuppressWarnings("unchecked") final P0 pv0 = (P0) pushedValue;
 		A accumOut;

@@ -1,48 +1,20 @@
 package org.cybcode.stix.core.xecutors;
 
-import java.util.List;
-
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
+import org.cybcode.stix.api.StiXecutorContextBinder;
 
 import com.google.common.base.Function;
 
 public class XpressionRunnerBuilder
 {
-	public interface ContextInspector
-	{
-		int getNodeCount();
-	}
-	
 	public interface Runner extends Function<Object, Object>
 	{
-		boolean executePostponedTargetsBefore(StiXpressionNode stiXpressionNode);
-		boolean executeImmediateTargets();
-		
-		void setPushValueOf(int targetIndex, List<PushTarget> pushTargets, Object finalValue);
-		void setFinalValueOf(int xtractorIndex, List<PushTarget> notifyTargets);
-		
-		void discardPushTargets(int startIndex, int endIndex);
-		void jumpTo(int index);
-	}
-
-	protected interface Context extends ContextInspector
-	{
-		int getNodeCount();
-		void setStatsCollector(StiXecutorStatsCollector stats);
-
-		void resetContext(Object rootValue, Runner xecutorContextRunner);
-
-		StiXpressionNode setCurrentIndex(int xtractorIndex);
-		void evaluateFinalState(int xtractorIndex);
-		boolean evaluatePush(PushTarget pushTarget);
-
-		Object getPublicValue(int xecutorIndex);
+		boolean hasFinalState(int xtractorIndex);
 		boolean hasFrameFinalState();
 	}
 
 	private StiXecutorStatsCollector stats = StiXecutorStatsCollector.NULL;
 
-	protected Context createContext(StiXpressionNode[] nodes)
+	protected StiXecutorContextBinder createContext(StiXpressionNode[] nodes)
 	{
 		return new XecutorContext(nodes);
 	}
@@ -52,9 +24,11 @@ public class XpressionRunnerBuilder
 		return new SimpleXpressionSequencer();
 	}
 	
-	protected Runner createRunner(Context context, StiXpressionSequencer sequencer)
+	protected Runner createRunner(StiXecutorContextBinder context, StiXpressionSequencer sequencer)
 	{
-		return new XecutorContextRunner(context, sequencer);
+		XecutorContextRunner result = new XecutorContextRunner(context, sequencer);
+		result.setStatsCollector(stats);
+		return result;
 	}
 
 	public StiXecutorStatsCollector getStats()
@@ -70,17 +44,17 @@ public class XpressionRunnerBuilder
 
 	public Function<Object, Object> createRunner(StiXpressionNode[] nodes)
 	{
-		Context context = createContext(nodes);
-		context.setStatsCollector(stats);
+		StiXecutorContextBinder context = createContext(nodes);
 		StiXpressionSequencer sequencer = createSequencer();
-		return createRunner(context, sequencer);
+		Runner runner = createRunner(context, sequencer);
+		return runner;
 	}
 
-	public XecutorContextBuilder<ContextInspector> createContextBuilder()
+	public XecutorContextBuilder<StiXecutorContextInspector> createContextBuilder()
 	{
-		return new XecutorContextBuilder<ContextInspector>() 
+		return new XecutorContextBuilder<StiXecutorContextInspector>() 
 		{
-			@Override protected ContextInspector build(StiXpressionNode[] nodes)
+			@Override protected StiXecutorContextInspector build(StiXpressionNode[] nodes)
 			{
 				return createContext(nodes);
 			}

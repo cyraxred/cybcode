@@ -7,7 +7,7 @@ import java.util.Map;
 
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutorCallback;
-import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
 
@@ -16,7 +16,7 @@ public abstract class StiXourceByTags<S, C extends StiXourceByTags.FieldContaine
 {
 	public interface FieldHandler<V>
 	{
-		void process(StiXecutorContext context, V value);
+		void process(StiXecutorPushContext context, V value);
 		boolean isMultiple();
 	}
 

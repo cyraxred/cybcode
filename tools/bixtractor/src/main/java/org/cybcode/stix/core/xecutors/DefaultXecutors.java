@@ -23,6 +23,6 @@ enum DefaultXecutors implements StiXecutor
 	
 	@Override public Object evaluateFinal(StiXecutorPushContext context)
 	{
-		return context.getCurrentXtractor().apply(context);
+		return context.getCurrentXtractor().apply(context.getXecutorContext());
 	}
 }

@@ -36,7 +36,7 @@ public abstract class StiXource<S, C, D, T> extends AbstractXtractor<T>
 
 		@Override public Object evaluateFinal(StiXecutorPushContext context)
 		{
-			return context.getCurrentXtractor().apply(context);
+			return context.getCurrentXtractor().apply(context.getXecutorContext());
 		}
 	}
 	

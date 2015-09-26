@@ -44,6 +44,7 @@ class CtxFrame
 	private int resultCount;
 	
 	private boolean isFinal;
+	private int	returnPosition;
 	
 	CtxFrame(int startIndex, CtxFrame outerFrame)
 	{
@@ -139,6 +140,16 @@ class CtxFrame
 		if (results != null && !results.isEmpty()) throw new IllegalStateException();
 		frame.enterFrame();
 		return frame;
+	}
+
+	public void setReturnPosition(int position)
+	{
+		returnPosition = position;
+	}
+
+	public int getReturnPosition()
+	{
+		return returnPosition;
 	}
 }
 

@@ -7,8 +7,34 @@ import org.cybcode.stix.api.StiXtractor.Parameter;
 class XecutorStartFrame implements StiXecutor
 {
 	private final CtxFrame frame;
+	private final StiXecutor startedState; 
 	
 	public XecutorStartFrame(CtxFrame frame)
+	{
+		if (frame == null) throw new NullPointerException();
+		this.frame = frame;
+		startedState = new XecutorStartedFrame(frame);
+	}
+
+	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
+	{
+		if (pushedValue == null) return null;
+		context.setNextState(startedState);
+		return pushedValue;
+	}
+
+	@Override public Object evaluateFinal(StiXecutorPushContext context)
+	{
+		((XecutorContextRunner) context).skipFrame(frame);
+		return null;
+	}
+}
+
+class XecutorStartedFrame implements StiXecutor
+{
+	private final CtxFrame frame;
+	
+	public XecutorStartedFrame(CtxFrame frame)
 	{
 		if (frame == null) throw new NullPointerException();
 		this.frame = frame;
@@ -16,16 +42,12 @@ class XecutorStartFrame implements StiXecutor
 
 	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
-		if (pushedParameter.getParamIndex() != 0) return new IllegalArgumentException(); //this is a derived dependency parameter, it must be disabled for push.
-		
-		context.setFinalState();
-		((XecutorContext) context).enterFrame(frame);
-		return pushedValue;
+		throw new IllegalStateException();
 	}
 
 	@Override public Object evaluateFinal(StiXecutorPushContext context)
 	{
-		((XecutorContext) context).skipFrame(frame);
-		return null;
+		((XecutorContextRunner) context).enterFrame(frame);
+		return KEEP_LAST_VALUE;
 	}
 }

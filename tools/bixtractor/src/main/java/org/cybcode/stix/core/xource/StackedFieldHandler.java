@@ -1,7 +1,7 @@
 package org.cybcode.stix.core.xource;
 
 import org.cybcode.stix.api.StiXecutorCallback;
-import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXecutorPushContext;
 
 class StackedFieldHandler<T> extends SingleFieldHandler<T>
 {
@@ -20,7 +20,7 @@ class StackedFieldHandler<T> extends SingleFieldHandler<T>
 		this.next = prev;
 	}
 	
-	@Override public void process(StiXecutorContext context, T value)
+	@Override public void process(StiXecutorPushContext context, T value)
 	{
 		StackedFieldHandler<T> current = this;
 		do {

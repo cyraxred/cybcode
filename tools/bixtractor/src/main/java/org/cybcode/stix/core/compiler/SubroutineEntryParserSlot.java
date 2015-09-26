@@ -1,5 +1,6 @@
 package org.cybcode.stix.core.compiler;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.cybcode.stix.ops.StiX_Subroutine;
@@ -8,6 +9,7 @@ public class SubroutineEntryParserSlot extends RegularParserSlot
 {
 //	private final List<StiXpressionParserSubroutineSlot> inners;
 	private final SubroutineParserSlot subroutineSlot;
+	private final Map<Integer, SlotLink> outerDependencies = new HashMap<>();
 
 	public SubroutineEntryParserSlot(StiX_Subroutine<?, ?>.EntryPoint node, SubroutineParserSlot nextToResult, ParserContext parserContext)
 	{
@@ -30,12 +32,21 @@ public class SubroutineEntryParserSlot extends RegularParserSlot
 
 	void addOuterDependencies(Map<Integer, SlotLink> outerDependencies)
 	{
-		for (int i = size() - 1; i >= 0; i--) {
-			outerDependencies.remove(get(i).target.getParsedIndex());
-		}
+		this.outerDependencies.putAll(outerDependencies);
+	}
+	
+	@Override protected void beforeLink()
+	{
+		super.beforeLink();
+		if (outerDependencies.isEmpty()) return;
+		SlotLink source = get(0);
+		clear();
+		outerDependencies.remove(source.target.getParsedIndex());
 		for (SlotLink link : outerDependencies.values()) {
 			add(link);
 		}
+		outerDependencies.clear();
+		add(source);
 	}
 
 	public SubroutineParserSlot getSubroutineSlot()

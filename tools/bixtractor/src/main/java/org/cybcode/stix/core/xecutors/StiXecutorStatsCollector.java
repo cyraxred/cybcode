@@ -12,6 +12,9 @@ public interface StiXecutorStatsCollector
 		@Override public void resetStats(int nodeCount) {}
 		@Override public void onFieldSkipped() {}
 		@Override public void onFieldParsed() {}
+		@Override public void onFrameEnter(int startIndex) {}
+		@Override public void onFrameSkip(int startIndex) {}
+		@Override public void onFrameResolve(int startIndex, boolean completed) {}
 	};
 
 	void onPushEvaluated(StiXpressionNode node, Object value);
@@ -20,4 +23,7 @@ public interface StiXecutorStatsCollector
 	void resetStats(int nodeCount);
 	void onFieldSkipped();
 	void onFieldParsed();
+	void onFrameEnter(int startIndex);
+	void onFrameSkip(int startIndex);
+	void onFrameResolve(int startIndex, boolean completed);
 }

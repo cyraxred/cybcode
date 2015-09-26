@@ -262,6 +262,7 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 	public void link(Map<RegularParserSlot, Boolean> processedSlots)
 	{
 		if (processedSlots.put(this, Boolean.TRUE) != null) return;
+		beforeLink();
 		for (int i = 0; i < size(); i++) {
 			SlotLink slotParam = get(i);
 			RegularParserSlot slot = slotParam.target;
@@ -269,6 +270,8 @@ public class RegularParserSlot extends SmallListCollector<SlotLink> implements S
 			slot.addTarget(this, slotParam.parameter);
 		}
 	}
+
+	protected void beforeLink() {}
 
 	public void print(Map<RegularParserSlot, Boolean> processedSlots)
 	{

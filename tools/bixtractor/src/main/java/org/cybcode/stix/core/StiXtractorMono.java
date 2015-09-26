@@ -15,7 +15,7 @@ public abstract class StiXtractorMono<P0, T> extends AbstractXtractorMono<P0, T>
 			@Override public Object evaluatePush(StiXecutorPushContext context, Object pushedValue)
 			{
 				context.setFinalState();
-				return context.getCurrentXtractor().apply(context);
+				return context.getCurrentXtractor().apply(context.getXecutorContext());
 			}
 		});
 	}

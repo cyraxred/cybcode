@@ -17,13 +17,13 @@ class XecutorResolveFrame implements StiXecutor
 	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
 	{
 		context.setFinalState();
-		((XecutorContext) context).resolveFrame(marker, pushedParameter.isRepeatable());
+		((XecutorContextRunner) context).resolveFrame(marker, pushedParameter.isRepeatable());
 		return pushedValue;
 	}
 
 	@Override public Object evaluateFinal(StiXecutorPushContext context)
 	{
-		((XecutorContext) context).resolveFrame(marker, false);
+		((XecutorContextRunner) context).resolveFrame(marker, false);
 		return null;
 	}
 }

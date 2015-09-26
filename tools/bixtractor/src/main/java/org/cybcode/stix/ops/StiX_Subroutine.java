@@ -53,9 +53,7 @@ public final class StiX_Subroutine<S, T> extends AbstractXtractor<T>
 
 	@Override public StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
-		return null;
-//		throw new UnsupportedOperationException();
-//		return isRepeatable() ? XECUTOR_PUSH : XECUTOR;
+		return context.createFrameResultXecutor();
 	}
 
 	@Override public T apply(StiXecutorContext context)

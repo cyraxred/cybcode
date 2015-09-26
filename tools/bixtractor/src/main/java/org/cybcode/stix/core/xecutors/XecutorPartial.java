@@ -1,5 +1,6 @@
 package org.cybcode.stix.core.xecutors;
 
+import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorPushContext;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
@@ -66,21 +67,22 @@ public class XecutorPartial extends AbstractXecutor
 		return valueOf(nextState);
 	}
 	
-	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
+	@Override public Object evaluatePush(StiXecutorPushContext pContext, Parameter<?> pushedParameter, Object pushedValue)
 	{
+		StiXecutorContext context = pContext.getXecutorContext();
 		if (pushedParameter.hasFinalValue(context)) {
 			XecutorPartial nextState = this.resolveParameter(pushedParameter.getParamIndex());
 			if (nextState.hasAllParametersResolved()) {
-				context.setFinalState();
+				pContext.setFinalState();
 				return context.getCurrentXtractor().apply(context);
 			}
-			context.setNextState(nextState);
+			pContext.setNextState(nextState);
 		}
-		return pushedParameter.evaluatePush(context, pushedValue);
+		return pushedParameter.evaluatePush(pContext, pushedValue);
 	}
 
 	@Override public Object evaluateFinal(StiXecutorPushContext context)
 	{
-		return context.getCurrentXtractor().apply(context);
+		return context.getCurrentXtractor().apply(context.getXecutorContext());
 	}
 }
