@@ -1,17 +1,6 @@
 package org.cybcode.stix;
 
-import static org.cybcode.stix.ops.StiX_Ops.add;
-import static org.cybcode.stix.ops.StiX_Ops.addA;
-import static org.cybcode.stix.ops.StiX_Ops.and;
-import static org.cybcode.stix.ops.StiX_Ops.andA;
-import static org.cybcode.stix.ops.StiX_Ops.andIfNull;
-import static org.cybcode.stix.ops.StiX_Ops.constOf;
-import static org.cybcode.stix.ops.StiX_Ops.div;
-import static org.cybcode.stix.ops.StiX_Ops.mul;
-import static org.cybcode.stix.ops.StiX_Ops.mux;
-import static org.cybcode.stix.ops.StiX_Ops.neg;
-import static org.cybcode.stix.ops.StiX_Ops.root;
-import static org.cybcode.stix.ops.StiX_Ops.subr;
+import static org.cybcode.stix.ops.StiX_Ops.*;
 import static org.junit.Assert.assertEquals;
 
 import org.cybcode.stix.ops.StiX_Ops;
@@ -61,14 +50,14 @@ public class StiXpressionsTest extends TestBase
 		))).getNodeCount());
 	}
 
-	@Ignore
+//	@Ignore
 	@Test public void test_subroutine()
 	{
 		assertEquals(13L, E(1L, addA(
 			subr(mux(constOf(2), constOf(1)), 
 				add(
-					subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot())),
-					subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot()))
+					first(subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot()))),
+					first(subr(add(StiX_Ops.<Long>subrRoot(), constOf(3)), mul(StiX_Ops.<Long>subrRoot(1), StiX_Ops.<Long>subrRoot())))
 				)
 		))));
 	}

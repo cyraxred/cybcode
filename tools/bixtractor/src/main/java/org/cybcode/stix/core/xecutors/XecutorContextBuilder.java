@@ -189,9 +189,9 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 	private static class Node implements StiXpressionNode
 	{
 		private final int	xtractorIndex;
-		private final StiXtractor<?>	xtractor;
+		private final StiXtractor<?> xtractor;
 		private final int[] params;
-		private final int frameOwnerIndex;
+		private final int frameStartIndex;
 		private List<PushTarget> pushTargets;
 		private List<PushTarget> notifyTargets;
 		private List<PushTarget> callbackTargets;
@@ -199,7 +199,7 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 		Node(int xtractorIndex, int	frameOwnerIndex, StiXtractor<?> xtractor, int[] params)
 		{
 			this.xtractorIndex = xtractorIndex;
-			this.frameOwnerIndex = frameOwnerIndex;
+			this.frameStartIndex = frameOwnerIndex;
 			this.xtractor = xtractor;
 			this.params = params;
 		}
@@ -248,9 +248,9 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 			return notifyTargets;
 		}
 
-		@Override public int getFrameOwnerIndex()
+		@Override public int getFrameStartIndex()
 		{
-			return frameOwnerIndex;
+			return frameStartIndex;
 		}
 
 		@Override public String toString()
@@ -258,8 +258,8 @@ public abstract class XecutorContextBuilder<T> implements StiXecutorContextBuild
 			StringBuilder result = new StringBuilder();
 			result.append(xtractor);
 			result.append("(#").append(xtractorIndex);
-			if (frameOwnerIndex != 0) {
-				result.append(",F:").append(frameOwnerIndex);
+			if (frameStartIndex != 0) {
+				result.append(",F:").append(frameStartIndex);
 			}
 			if (!callbackTargets.isEmpty()) {
 				result.append(",CT:").append(callbackTargets.size());

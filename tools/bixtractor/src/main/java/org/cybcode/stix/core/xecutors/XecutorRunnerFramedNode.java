@@ -27,7 +27,7 @@ class XecutorRunnerFramedNode extends XecutorRunnerNode
 		return frame;
 	};
 	
-	@Override public StiXpressionSequencer getSequencer()
+	@Override public StiXpressionSequencer getNodeFrameSequencer()
 	{
 		return frame.getSequencer();
 	}

@@ -20,5 +20,5 @@ public interface StiXpressionNode
 	List<StiXpressionNode.PushTarget> getPushTargets();
 	List<StiXpressionNode.PushTarget> getNotifyTargets();
 
-	int getFrameOwnerIndex();
+	int getFrameStartIndex();
 }

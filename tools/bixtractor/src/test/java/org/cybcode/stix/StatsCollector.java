@@ -2,6 +2,7 @@ package org.cybcode.stix;
 
 import org.cybcode.stix.api.StiXecutorStatsCollector;
 import org.cybcode.stix.api.StiXpressionNode;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
 class StatsCollector implements StiXecutorStatsCollector
@@ -73,11 +74,21 @@ class StatsCollector implements StiXecutorStatsCollector
 	{
 		frameResult++;
 		if (!completed) {
-			System.out.println("EXIT: " + startIndex);
+			System.out.println("PART: " + startIndex);
 			return;
 		} else {
-			System.out.println("PART: " + startIndex);
+			System.out.println("EXIT: " + startIndex);
 		}
 		frameCompleted++;
+	}
+
+	@Override public void onNextNode(StiXpressionNode node, int frameIndex)
+	{
+		System.out.println("NEXT: (" + frameIndex + ") "+ node);
+	}
+
+	@Override public void onPushSkipped(StiXpressionNode.PushTarget pushTarget)
+	{
+		System.out.println("IGNR: " + pushTarget);
 	}
 }

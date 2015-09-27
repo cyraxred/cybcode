@@ -15,6 +15,8 @@ public interface StiXecutorStatsCollector
 		@Override public void onFrameEnter(int startIndex) {}
 		@Override public void onFrameSkip(int startIndex) {}
 		@Override public void onFrameResolve(int startIndex, boolean completed) {}
+		@Override public void onNextNode(StiXpressionNode node, int frameIndex) {}
+		@Override public void onPushSkipped(StiXpressionNode.PushTarget pushTarget) {}
 	};
 
 	void onPushEvaluated(StiXpressionNode node, Object value);
@@ -26,4 +28,6 @@ public interface StiXecutorStatsCollector
 	void onFrameEnter(int startIndex);
 	void onFrameSkip(int startIndex);
 	void onFrameResolve(int startIndex, boolean completed);
+	void onNextNode(StiXpressionNode node, int frameIndex);
+	void onPushSkipped(StiXpressionNode.PushTarget pushTarget);
 }

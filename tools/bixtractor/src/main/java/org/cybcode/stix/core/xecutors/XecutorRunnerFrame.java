@@ -42,12 +42,12 @@ class XecutorRunnerFrame
 	private final int frameLevel;
 	private final int startIndex;
 	private int endIndex;
+	private int nextIndex;
 	
 	private BitSet results;
 	private int resultCount;
 	
 	private boolean isFinal;
-	private int	returnPosition;
 	
 	XecutorRunnerFrame(int startIndex, XecutorRunnerFrame outerFrame, StiXpressionSequencer sequencer)
 	{
@@ -90,28 +90,29 @@ class XecutorRunnerFrame
 
 	private void enterFrame()
 	{
+		if (results != null && !results.isEmpty()) throw new IllegalStateException();
 		sequencer.resetSequencer();
 		if (results == null) {
 			if (resultCount == 0) throw new IllegalStateException();
 			results = new BitSet(resultCount);
-		} else {
-			results.set(0, resultCount);
 		}
+		results.set(0, resultCount);
 		isFinal = false;
-		returnPosition = 0;
+		nextIndex = startIndex;
 	}
 	
-	public void resetFrame()
-	{
-		resetFrame(false);
-	}
-	
-	public void resetFrame(boolean finalState)
+	public void setFrameFinal()
 	{
 		if (results == null) throw new IllegalStateException();
 		results.clear();
-		isFinal = finalState;
-		returnPosition = 0;
+		isFinal = true;
+	}
+	
+	public void resetFrameFinal()
+	{
+		if (results == null) throw new IllegalStateException();
+		results.set(0, resultCount);
+		isFinal = true;
 	}
 	
 	public boolean hasFinalState()
@@ -142,27 +143,35 @@ class XecutorRunnerFrame
 			if (resultCount == 0) {
 				resultCount++;
 			}
-		} else {
-			if (frame.getOuterFrame() != this) throw new IllegalStateException();
+		} else if (frame.getOuterFrame() != this) {
+			throw new IllegalStateException();
+		} else if (results == null || results.isEmpty()) {
+			throw new IllegalStateException();
 		}
-		if (results != null && !results.isEmpty()) throw new IllegalStateException();
 		frame.enterFrame();
 		return frame;
-	}
-
-	public void setReturnPosition(int position)
-	{
-		returnPosition = position;
-	}
-
-	public int getReturnPosition()
-	{
-		return returnPosition;
 	}
 
 	public StiXpressionSequencer getSequencer()
 	{
 		return sequencer;
+	}
+	
+	public void jumpTo(int index)
+	{
+		if (index < startIndex || index > endIndex) throw new IllegalArgumentException();
+		nextIndex = index;
+	}
+	
+	public int nextIndex()
+	{
+		if (nextIndex == endIndex) return -1;
+		return nextIndex++; 
+	}
+	
+	@Override public String toString()
+	{
+		return "Frame#" + startIndex;
 	}
 }
 

@@ -12,6 +12,6 @@ class XecutorRunnerResultNode extends XecutorRunnerFramedNode
 	@Override public void setFinalState()
 	{
 		super.setFinalState();
-		frame.resetFrame(true); //this will only work properly for the outermost frame
+		frame.setFrameFinal(); //this will only work properly for the outermost frame
 	}
 }

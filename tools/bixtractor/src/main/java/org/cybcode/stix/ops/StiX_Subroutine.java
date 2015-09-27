@@ -58,7 +58,7 @@ public final class StiX_Subroutine<S, T> extends AbstractXtractor<T>
 
 	@Override public T apply(StiXecutorContext context)
 	{
-		return null;
+		return p1.getValue(context);
 	}
 
 	@Override public void visit(StiXtractor.Visitor visitor)

@@ -60,7 +60,7 @@ abstract class XecutorRunnerNode implements StiXecutorPushContext
 
 	public boolean isValidFrameOfNextNode(int frameOwnerIndex)
 	{
-		return getXpressionNode().getFrameOwnerIndex() == frameOwnerIndex;
+		return getXpressionNode().getFrameStartIndex() == frameOwnerIndex;
 	}
 
 	public abstract XecutorRunnerFrame getFrame();
@@ -116,14 +116,14 @@ abstract class XecutorRunnerNode implements StiXecutorPushContext
 		return storage.hasInterimValue(index);
 	}
 
-	public abstract StiXpressionSequencer getSequencer();
+	public abstract StiXpressionSequencer getNodeFrameSequencer();
 	
 	public void setFinalValue(Object value)
 	{
 		setFinalState();
 		storage.setResultValue(index, value);
 		if (value == null) return;
-		getSequencer().addPostponeTargets(getXpressionNode().getNotifyTargets());
+		getNodeFrameSequencer().addPostponeTargets(getXpressionNode().getNotifyTargets());
 	}
 	
 	@Override public void setNextState(StiXecutor xecutor)
@@ -148,11 +148,11 @@ abstract class XecutorRunnerNode implements StiXecutorPushContext
 //			}
 			storage.setResultValue(index, finalValue);
 			if (finalValue == null) return null;
-			getSequencer().addPostponeTargets(getXpressionNode().getNotifyTargets());
+			getNodeFrameSequencer().addPostponeTargets(getXpressionNode().getNotifyTargets());
 		} else {
 			if (finalValue == null) return null;
 			storage.setResultValue(index, finalValue);
-			getSequencer().addImmediateTargets(getXpressionNode().getPushTargets());
+			getNodeFrameSequencer().addImmediateTargets(getXpressionNode().getPushTargets());
 		}
 		return finalValue;
 	}
