@@ -1,5 +1,6 @@
 package org.cybcode.stix.core.xecutors;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutorCallback;
@@ -9,7 +10,7 @@ import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 
 class XecutorCallbackGroup implements StiXecutorCallback
 {
-	private final PushTarget[] targets;
+	private final List<PushTarget> targets;
 	
 	@SuppressWarnings("unchecked") public static XecutorCallbackGroup newInstance(List<StiXecutorCallback> targets)  
 	{
@@ -22,12 +23,12 @@ class XecutorCallbackGroup implements StiXecutorCallback
 		for (int i = targetArray.length - 1; i >= 0; i--) {
 			targetArray[i] = targets.get(i).target;
 		}
-		this.targets = targetArray;
+		this.targets = Arrays.asList(targetArray);
 	}
 	
-	@Override public void push(StiXecutorPushContext context, Object nestedSource)
+	@Override public void push(StiXecutorPushContext context, Object pushedValue)
 	{
-		((XecutorContextRunner) context).evaluateDirectPush(targets, nestedSource);
+		((XecutorContextRunnerNode) context).evaluateDirectPush(targets, pushedValue);
 	}
 
 	@Override public Parameter<?> getFieldParameter()

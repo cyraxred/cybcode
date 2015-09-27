@@ -6,7 +6,7 @@ import org.cybcode.stix.api.StiXtractor.Parameter;
 
 enum DefaultXecutors implements StiXecutor 
 {
-	FINAL, PUSH_FINAL,
+	FINAL,
 	
 	FAIL {
 		@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)
@@ -14,6 +14,10 @@ enum DefaultXecutors implements StiXecutor
 			throw new XecutorFailException();
 		}
 	},
+	
+	FRAME_START,
+	FRAME_STARTED,
+	FRAME_RESULT,
 	;
 
 	@Override public Object evaluatePush(StiXecutorPushContext context, Parameter<?> pushedParameter, Object pushedValue)

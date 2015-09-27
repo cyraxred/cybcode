@@ -2,7 +2,7 @@ package org.cybcode.stix.core.xecutors;
 
 import java.util.BitSet;
 
-class CtxFrame
+class RunnerFrame
 {
 	class ResultMarker
 	{
@@ -29,13 +29,14 @@ class CtxFrame
 			return true;
 		}
 
-		public CtxFrame getFrame()
+		public RunnerFrame getFrame()
 		{
-			return CtxFrame.this;
+			return RunnerFrame.this;
 		}
 	}
 	
-	private final CtxFrame outerFrame;
+	private final RunnerFrame outerFrame;
+	private final StiXpressionSequencer sequencer;
 	private final int frameLevel;
 	private final int startIndex;
 	private int endIndex;
@@ -46,21 +47,23 @@ class CtxFrame
 	private boolean isFinal;
 	private int	returnPosition;
 	
-	CtxFrame(int startIndex, CtxFrame outerFrame)
+	RunnerFrame(int startIndex, RunnerFrame outerFrame, StiXpressionSequencer sequencer)
 	{
 		if (startIndex <= 0) throw new IllegalArgumentException();
 		this.frameLevel = outerFrame.frameLevel + 1;
 		this.outerFrame = outerFrame;
 		this.startIndex = startIndex;
+		this.sequencer = sequencer;
 	}
 	
-	CtxFrame(int endIndex)
+	RunnerFrame(int endIndex, StiXpressionSequencer sequencer)
 	{
 		if (endIndex < 0) throw new IllegalArgumentException();
 		this.frameLevel = 0;
 		this.outerFrame = null;
 		this.startIndex = 0;
 		this.endIndex = endIndex;
+		this.sequencer = sequencer;
 	}
 	
 	public int getStartIndex()
@@ -85,6 +88,7 @@ class CtxFrame
 
 	private void enterFrame()
 	{
+		sequencer.resetSequencer();
 		if (results == null) {
 			if (resultCount == 0) throw new IllegalStateException();
 			results = new BitSet(resultCount);
@@ -92,6 +96,7 @@ class CtxFrame
 			results.set(0, resultCount);
 		}
 		isFinal = false;
+		returnPosition = 0;
 	}
 	
 	public void resetFrame()
@@ -104,6 +109,7 @@ class CtxFrame
 		if (results == null) throw new IllegalStateException();
 		results.clear();
 		isFinal = finalState;
+		returnPosition = 0;
 	}
 	
 	public boolean hasFinalState()
@@ -116,7 +122,7 @@ class CtxFrame
 		return frameLevel > 0;
 	}
 	
-	public CtxFrame getOuterFrame()
+	public RunnerFrame getOuterFrame()
 	{
 		return outerFrame;
 	}
@@ -126,7 +132,7 @@ class CtxFrame
 		return xtractorIndex >= startIndex && xtractorIndex < endIndex;
 	}
 
-	public CtxFrame enterFrame(CtxFrame frame)
+	public RunnerFrame enterFrame(RunnerFrame frame)
 	{
 		if (frame == this) {
 			//self entry - is only allowed for outer frame
@@ -150,6 +156,11 @@ class CtxFrame
 	public int getReturnPosition()
 	{
 		return returnPosition;
+	}
+
+	public StiXpressionSequencer getSequencer()
+	{
+		return sequencer;
 	}
 }
 

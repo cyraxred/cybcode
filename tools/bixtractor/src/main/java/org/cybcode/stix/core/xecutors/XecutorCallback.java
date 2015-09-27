@@ -16,7 +16,7 @@ class XecutorCallback implements StiXecutorCallback
 	
 	@Override public void push(StiXecutorPushContext context, Object nestedSource)
 	{
-		((XecutorContextRunner) context).evaluateDirectPush(target, nestedSource);
+		((XecutorContextRunnerNode) context).evaluateDirectPush(target, nestedSource);
 	}
 
 	@Override public Parameter<?> getFieldParameter()

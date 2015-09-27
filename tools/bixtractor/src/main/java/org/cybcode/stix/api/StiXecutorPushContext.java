@@ -7,13 +7,14 @@ public interface StiXecutorPushContext
 	void setNextState(StiXecutor xecutor);
 	void setFinalState();
 
-	void onXourceFieldSkipped();
-	void onXourceFieldParsed();
+//	void onXourceFieldSkipped();
+//	void onXourceFieldParsed();
 
 	StiXtractor<?> getCurrentXtractor();
 
 	Object getInterimValue();
 	void setInterimValue(Object value);
-	boolean hasFrameFinalState();
 	boolean hasInterimValue();
+
+	boolean hasFrameFinalState();
 }

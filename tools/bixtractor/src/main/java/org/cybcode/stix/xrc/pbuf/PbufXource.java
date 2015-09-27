@@ -45,10 +45,10 @@ public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 				FieldHandler<PbufFieldValue> handler = container.findFieldHandler(fieldId);
 				if (handler == null) {
 					in.skipField(tag);
-					context.onXourceFieldSkipped();
+//					context.onXourceFieldSkipped();
 					continue;
 				}
-				context.onXourceFieldParsed();
+//				context.onXourceFieldParsed();
 				
 				int wireType = tag & 7;
 				long rawValue;

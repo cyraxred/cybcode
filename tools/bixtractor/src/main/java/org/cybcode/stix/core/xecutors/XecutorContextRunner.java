@@ -1,46 +1,33 @@
 package org.cybcode.stix.core.xecutors;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorContext;
-import org.cybcode.stix.api.StiXecutorContextBinder;
-import org.cybcode.stix.api.StiXecutorPushContext;
-import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.api.StiXtractor.Parameter;
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
-class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Object, Object>, StiXecutorPushContext
+class XecutorContextRunner implements Function<Object, Object>, StiXecutorContextInspector
 {
-	private final StiXecutorContextControl context;
-	private final StiXpressionSequencer sequencer;
-	private final int nodeCount; 
-	private final StiXecutor[] initialState;
-	private final StiXecutor[] currentState;
-	
-	private final CtxFrame outerFrame;
-	private CtxFrame currentFrame;
+	private final Supplier<StiXpressionSequencer> sequencerSupplier;
+	private final XecutorContextRunnerNode[] nodes;
+	private final RunnerFrame outerFrame;
 
 	private StiXecutorStatsCollector stats;
 	
 	private int nextIndex;
-//	private StiXpressionNode currentNode;
 
-	public XecutorContextRunner(StiXecutorContextBinder contextBinder, StiXpressionSequencer sequencer)
+	public XecutorContextRunner(Collection<? extends XecutorContextNode> contextNodes, Supplier<StiXpressionSequencer> sequencerSupplier)
 	{
-		this.sequencer = sequencer;
-		setStatsCollector(null);
-
-		this.context = contextBinder.bind(this);
-		this.nodeCount = context.getNodeCount();
-		
-		this.initialState = new StiXecutor[nodeCount];
-		this.currentState = new StiXecutor[nodeCount];
-		this.outerFrame = new CtxFrame(nodeCount);
-		this.currentFrame = outerFrame;
+		int nodeCount = contextNodes.size();
+		if (nodeCount <= 0) throw new IllegalArgumentException();
+		this.sequencerSupplier = sequencerSupplier;
+		this.nodes = new XecutorContextRunnerNode[nodeCount];
+		this.outerFrame = new RunnerFrame(nodeCount, sequencerSupplier.get());
+		createInitialState(contextNodes);
 	}
 
 	public void setStatsCollector(StiXecutorStatsCollector stats)
@@ -51,327 +38,296 @@ class XecutorContextRunner implements XpressionRunnerBuilder.Runner, Function<Ob
 	private void resetContext(Object rootValue)
 	{
 		if (rootValue == null) throw new NullPointerException();
-		stats.resetStats(nodeCount);
-		sequencer.resetSequencer();
-		
-		if (initialState[0] == null) {
-			createInitialState();
-			initialState[0] = DefaultXecutors.FINAL;
-		} else {
-			Arrays.fill(currentState, null);
-		}
-		currentFrame = outerFrame.enterFrame(outerFrame);
-		
-		context.resetContext();
-		context.setValue(0, rootValue);
+		stats.resetStats(nodes.length);
 
-		/* Imitation of root being evaluated */
-		StiXpressionNode currentNode = context.setCurrentIndex(0);
-		currentState[0] = DefaultXecutors.FINAL;
-		stats.onEvaluated(currentNode, rootValue);
-		setFinalValueOf(0, currentNode.getNotifyTargets());
+		outerFrame.enterFrame(outerFrame);
+		XecutorContextRunnerFramedNode rootNode = (XecutorContextRunnerFramedNode) nodes[0]; 
+		rootNode.init(rootValue);
+		stats.onEvaluated(rootNode.getXpressionNode(), rootValue);
+		nextIndex = 1;
 	}
 	
-	private void createInitialState()
+	private void createInitialState(Collection<? extends XecutorContextNode> contextNodes)
 	{
-		XecutorConstructionContext context = new XecutorConstructionContext(nodeCount, outerFrame);
-		for (int i = 0; i < nodeCount - 1; i++) { //MUST BE in direct order, otherwise frame initialization will break 
-			StiXpressionNode node = this.context.getNode(i);
-			context.setNode(node);
-			StiXecutor xecutor = node.createXecutor(context);
-			initialState[i] = xecutor;
+		XecutorConstructionContext context = new XecutorConstructionContext();
+		Iterator<? extends XecutorContextNode> iter = contextNodes.iterator();
+		XecutorContextNode contextNode = iter.next();
+
+		if (contextNode.getXpressionNode().createXecutor(context) != null) {
+			throw new IllegalArgumentException("First node must be a final value node");
+		}
+		if (contextNode.getIndex() != 0) {
+			throw new IllegalArgumentException("Nodes must be ordered by index");
+		}
+		XecutorContextRunnerNode node = new XecutorContextRunnerRootNode(contextNode, outerFrame); 
+		nodes[0] = node; 
+		
+		int index = 0;
+		while (iter.hasNext()) {
+			index++;
+			contextNode = iter.next();
+			if (contextNode.getIndex() != index) {
+				throw new IllegalArgumentException("Nodes must be ordered by index");
+			}
+			if (nodes[index] != null) throw new IllegalStateException("Duplicate index=" + index);
+			node = createInitialState(context, contextNode, node, !iter.hasNext());
+			nodes[index] = node;
 		}
 	}
 
-//	private void setCurrentIndex(int xtractorIndex)
+	private XecutorContextRunnerNode createInitialState(XecutorConstructionContext context, XecutorContextNode contextNode, 
+		XecutorContextRunnerNode prevNode, boolean isLast)
+	{
+		StiXpressionNode xpressionNode = contextNode.getXpressionNode();
+		context.setNode(xpressionNode);
+		StiXecutor xecutor = xpressionNode.createXecutor(context);
+
+		RunnerFrame frame = prevNode.getFrame();
+		if (xecutor == null) {
+			if (isLast) {
+				return new XecutorContextRunnerResultNode(contextNode, frame, xecutor);
+			} 
+			return new XecutorContextRunnerStatelessNode(contextNode, frame);
+		} 
+
+		int nodeIndex = contextNode.getIndex();
+		
+		if (xecutor == DefaultXecutors.FRAME_START) {
+			if (isLast) throw new IllegalStateException("Frame result node is missing");
+			if (xpressionNode.getFrameOwnerIndex() != nodeIndex) {
+				throw new IllegalStateException("Node is not an frame entry, index=" + nodeIndex);
+			}
+			RunnerFrame innerFrame = new RunnerFrame(nodeIndex, frame, sequencerSupplier.get());
+			return new FrameStartNode(contextNode, innerFrame);
+		} 
+
+		if (!prevNode.isValidFrameOfNextNode(xpressionNode.getFrameOwnerIndex())) {
+			throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
+					", nodeFrame=" + xpressionNode.getFrameOwnerIndex() + ", nodeIndex=" + nodeIndex);
+		}
+		
+		if (xecutor == DefaultXecutors.FRAME_RESULT) {
+			RunnerFrame.ResultMarker frameResult = frame.registerFrameResult(nodeIndex);
+			return new FrameResultNode(contextNode, frameResult);
+		} 
+		
+		if (isLast) {
+			return new XecutorContextRunnerResultNode(contextNode, frame, xecutor);
+		} 
+		return new XecutorContextRunnerStatefulNode(contextNode, frame, xecutor);
+	}
+
+	private abstract class AbstractFrameNode extends XecutorContextRunnerFramedNode 
+	{
+		public AbstractFrameNode(XecutorContextNode contextNode, RunnerFrame frame) { super(contextNode, frame); }
+
+		@Override public StiXecutor getInitialState()
+		{
+			return null;
+		}
+
+		@Override public void setNextState(StiXecutor xecutor)
+		{
+			throw new IllegalStateException();
+		}
+
+		public boolean isValidFrameOfNextNode(int frameOwnerIndex)
+		{
+			if (super.isValidFrameOfNextNode(frameOwnerIndex)) return true;
+			RunnerFrame outerFrame = getFrame().getOuterFrame();
+			return outerFrame != null && outerFrame.getStartIndex() == frameOwnerIndex;
+		}
+	}
+	
+	private class FrameResultNode extends AbstractFrameNode
+	{
+		private final RunnerFrame.ResultMarker frameResult;
+		
+		public FrameResultNode(XecutorContextNode contextNode, RunnerFrame.ResultMarker frameResult)
+		{
+			super(contextNode, frameResult.getFrame());
+			this.frameResult = frameResult;
+		}
+
+		@Override protected Object internalEvaluateFinal()
+		{
+			evaluatePush(false);
+			return super.evaluateFinalState();
+		}
+		
+		@Override protected Object internalEvaluatePush(Parameter<?> targetParam, Object pushedValue)
+		{
+			evaluatePush(targetParam.isRepeatable());
+			return pushedValue;
+		}
+		
+		private void evaluatePush(boolean repeatable)
+		{
+			int startIndex = frame.getStartIndex();
+			if (!frameResult.setFinalState()) {
+				stats.onFrameResolve(startIndex, false);
+				return;
+			}
+			//TODO set final on all inner frames when an outer one is resolved
+
+			storage.clear(startIndex, repeatable ? getInitialState() : DefaultXecutors.FINAL);
+			stats.onFrameResolve(startIndex, true);
+			int returnPos = frame.getReturnPosition();
+			if (returnPos == 0) return;
+			jumpTo(returnPos);
+			frame.setReturnPosition(0);
+		}
+	}
+
+//	private void resolveInnerFrames(RunnerFrame resolvedFrame)
 //	{
-//		currentNode = context.setCurrentIndex(xtractorIndex);
+//		RunnerFrame frame = currentFrame;
+//		while (frame != resolvedFrame) {
+//			frame = frame.getOuterFrame();
+//			if (frame == outerFrame) {
+//				throw new IllegalStateException("Inactive frame was resolved");
+//			}
+//		}
 //	}
 
-	void jumpToFrame(CtxFrame frame)
+	private class FrameStartNode extends AbstractFrameNode
 	{
-		currentFrame.setReturnPosition(nextIndex);
-		jumpTo(frame.getStartIndex());
-	}
-	
-	void enterFrame(CtxFrame frame)
-	{
-		currentFrame = currentFrame.enterFrame(frame);
-		int startIndex = frame.getStartIndex(); 
-		int endIndex = frame.getEndIndex();
-		Arrays.fill(currentState, startIndex + 1, endIndex, null);
-		context.clearRange(startIndex + 1, endIndex);
-		stats.onFrameEnter(startIndex);
-	}
-
-	void skipFrame(CtxFrame frame)
-	{
-		int startIndex = frame.getStartIndex();
-		int endIndex = frame.getEndIndex();
-		currentState[startIndex] = DefaultXecutors.FINAL;
-		currentState[endIndex - 1] = DefaultXecutors.FINAL;
-		context.setValue(endIndex - 1, null);
-		jumpTo(endIndex);
-		stats.onFrameSkip(startIndex);
-	}
-
-	void resolveFrame(CtxFrame.ResultMarker frameMarker, boolean repeatable)
-	{
-		final CtxFrame resolvedFrame = frameMarker.getFrame();
-		if (currentFrame != resolvedFrame) throw new IllegalStateException();
-
-		int startIndex = resolvedFrame.getStartIndex();
-		if (!frameMarker.setFinalState()) {
-			stats.onFrameResolve(startIndex, false);
-			return;
+		public FrameStartNode(XecutorContextNode contextNode, RunnerFrame frame)
+		{
+			super(contextNode, frame);
 		}
 		
-		currentState[startIndex] = repeatable ? initialState[startIndex] : DefaultXecutors.FINAL;
-		
-		resolveInnerFrames(resolvedFrame);
-		
-		jumpTo(resolvedFrame.getOuterFrame().getReturnPosition());
-		stats.onFrameResolve(startIndex, true);
-	}
-	
-	private void resolveInnerFrames(CtxFrame resolvedFrame)
-	{
-		CtxFrame frame = currentFrame;
-		while (frame != resolvedFrame) {
-			frame = frame.getOuterFrame();
-			if (frame == outerFrame) {
-				throw new IllegalStateException("Inactive frame was resolved");
-			}
-		}
-	}
-
-	@Override public void onXourceFieldSkipped()
-	{
-		stats.onFieldSkipped();
-	}
-
-	@Override public void onXourceFieldParsed()
-	{
-		stats.onFieldParsed();
-	}
-
-	@Override public void setNextState(StiXecutor xecutor)
-	{
-		if (xecutor == null) throw new NullPointerException();
-		currentState[context.getCurrentIndex()] = xecutor;
-	}
-
-	@Override public void setFinalState()
-	{
-		setNextState(DefaultXecutors.FINAL);
-	}
-
-	public void evaluateFinalState(int index)
-	{
-		StiXecutor xecutor = currentState[index];
-		if (xecutor == DefaultXecutors.FINAL) return;
-		
-		while (!currentFrame.isInsideFrame(index)) {
-			currentFrame = currentFrame.getOuterFrame();
+		@Override public void validatePushFinalState()
+		{
+			throw new IllegalStateException("An incomplete or finalized frame is reentered");
 		}
 		
-		StiXpressionNode node = context.setCurrentIndex(index);
-		Object finalValue;
-		if (xecutor != null) {
-			finalValue = xecutor.evaluateFinal(this);
-		} else {
-			xecutor = initialState[index];
-			if (xecutor == null) {
-				finalValue = context.getCurrentXtractor().apply(getXecutorContext());
-			} else {
-				finalValue = xecutor.evaluateFinal(this);
-			}
+		@Override public Object evaluateFinalState()
+		{
+			int startIndex = frame.getStartIndex(); 
+			int endIndex = frame.getEndIndex();
+			stats.onFrameSkip(startIndex);
+			storage.clearRange(startIndex, endIndex, DefaultXecutors.FINAL);
+			jumpTo(endIndex);
+			return null;
 		}
-		currentState[index] = DefaultXecutors.FINAL;
-		stats.onEvaluated(node, finalValue);
-		if (!context.setValue(index, finalValue) || finalValue == null) return;
-		setFinalValueOf(index, node.getNotifyTargets());
+		
+		@Override public Object evaluatePush(XecutorContextRunnerNode originNode, Parameter<?> targetParam, Object pushedValue)
+		{
+			frame.enterFrame(originNode.getFrame());
+			return super.evaluatePush(originNode, targetParam, pushedValue);
+		}
+
+		@Override protected Object internalEvaluatePush(Parameter<?> targetParam, Object pushedValue)
+		{
+			int startIndex = frame.getStartIndex(); 
+			int endIndex = frame.getEndIndex();
+			stats.onFrameEnter(startIndex);
+			getSequencer().resetSequencer();
+			storage.clearRange(startIndex, endIndex, null);
+			setFinalValue(pushedValue);
+			int returnPos = jumpTo(endIndex);
+			frame.setReturnPosition(returnPos);
+			return pushedValue;
+		}
 	}
 	
 	public boolean evaluatePush(StiXpressionNode.PushTarget target)
 	{
 		int index = target.getXtractorIndex();
-		if (hasFinalState(index)) return false;
-		
-		Object pushedValue = context.getValue(target.getValueIndex());
+		XecutorContextRunnerNode node = nodes[index];
+		if (node.isFinalState()) {
+			node.validatePushFinalState();
+			return false;
+		}
+
+		XecutorContextRunnerNode originNode = nodes[target.getValueIndex()];
+		Object pushedValue = originNode.getPushOrFinalValue();
+		stats.onPushAttempt(node.getXpressionNode(), target.getXtractorParam(), pushedValue);
 		if (pushedValue == null) return false;
-		
-		evaluatePush0(index, target.getXtractorParam(), pushedValue);
+		Object resultValue = node.evaluatePush(originNode, target.getXtractorParam(), pushedValue);
+		if (resultValue == null) return false;
+		stats.onPushEvaluated(node.getXpressionNode(), resultValue);
 		return true;
 	}
-	
-	private void evaluatePush0(int targetIndex, Parameter<?> targetParam, Object pushedValue)
-	{
-		StiXpressionNode node = context.setCurrentIndex(targetIndex);
-		stats.onPushAttempt(node, targetParam, pushedValue);
 
-		Object finalValue;
-		StiXecutor xecutor = currentState[targetIndex];
-		if (xecutor == null) {
-			xecutor = initialState[targetIndex];
-			if (xecutor == null) {
-				finalValue = targetParam.evaluatePush(this, pushedValue);
-			} else {
-				currentState[targetIndex] = xecutor;
-				finalValue = xecutor.evaluatePush(this, targetParam, pushedValue);
-			}
-		} else {
-			if (xecutor == DefaultXecutors.FINAL) return;
-			finalValue = xecutor.evaluatePush(this, targetParam, pushedValue);
-		}
-		
-		if (currentState[targetIndex] == DefaultXecutors.FINAL) {
-			if (targetIndex + 1 == outerFrame.getEndIndex() && outerFrame == currentFrame) {
-				outerFrame.resetFrame(true);
-			}
-			if (!context.setValue(targetIndex, finalValue) || finalValue == null) return;
-			stats.onPushEvaluated(node, finalValue);
-	
-			setFinalValueOf(targetIndex, node.getNotifyTargets());
-		} else {
-			if (finalValue == null || !context.setValue(targetIndex, finalValue)) return;
-			stats.onPushEvaluated(node, finalValue);
-			
-			setPushValueOf(targetIndex, node.getPushTargets(), finalValue);
-		}
+	public void evaluateDirectPush(int originIndex, List<StiXpressionNode.PushTarget> targets, Object pushedValue)
+	{
+		if (targets.isEmpty() || pushedValue == null) return;
+		XecutorContextRunnerNode node = nodes[originIndex];
+		node.getSequencer().addImmediateTargets(targets);
+		executePostponedTargets(node);		
 	}
+	
+//	private boolean executeImmediateTargets(XecutorContextRunnerNode node)
+//	{
+//		StiXpressionSequencer sequencer = node.getSequencer();
+//		StiXpressionNode.PushTarget pushTarget;
+//		while ((pushTarget = sequencer.nextImmediateTarget()) != null) {
+//			if (!evaluatePush(pushTarget)) continue;
+//			if (node.hasFrameFinalState()) return true;
+//		}
+//		return false;
+//	}
+	
+	private boolean executePostponedTargets(XecutorContextRunnerNode node)
+	{
+		StiXpressionSequencer sequencer = node.getSequencer();
+		StiXpressionNode xpressionNode = node.getXpressionNode();
+		int nodeIndex = node.index;
 
-	void evaluateDirectPush(StiXpressionNode.PushTarget[] targets, Object pushedValue)
-	{
-		if (pushedValue == null || targets.length == 0) return;
-		
-		int callingNode = context.getCurrentIndex();
-		try {
-			for (StiXpressionNode.PushTarget target : targets) {
-				int index = target.getXtractorIndex();
-				if (hasFinalState(index)) continue;
-				if (executePostponedTargetsBefore(context.getNode(index))) return;
-				evaluatePush0(index, target.getXtractorParam(), pushedValue);
-				if (hasFrameFinalState()) break;
+		while (!node.hasFrameFinalState()) {
+			StiXpressionNode.PushTarget pushTarget = sequencer.nextImmediateTarget();
+			if (pushTarget == null) {
+				while (true) {
+					pushTarget = sequencer.nextPostponedTargetBefore(xpressionNode);
+					if (pushTarget == null) return false;
+					if (pushTarget.getXtractorIndex() > nodeIndex || pushTarget.getXtractorParam().getBehavior().isMandatory()) break;
+				}
 			}
-			executeImmediateTargets();
-		} finally {
-			context.setCurrentIndex(callingNode);
+			evaluatePush(pushTarget);
 		}
-	}
-	
-	void evaluateDirectPush(StiXpressionNode.PushTarget target, Object pushedValue)
-	{
-		if (pushedValue == null) return;
-		
-		int callingNode = context.getCurrentIndex();
-		try {
-			int index = target.getXtractorIndex();
-			if (hasFinalState(index)) return;
-			if (executePostponedTargetsBefore(context.getNode(index))) return;
-			evaluatePush0(index, target.getXtractorParam(), pushedValue);
-			executeImmediateTargets();		
-		} finally {
-			context.setCurrentIndex(callingNode);
-		}
-	}
-	
-	private boolean executeImmediateTargets()
-	{
-		StiXpressionNode.PushTarget pushTarget;
-		while ((pushTarget = sequencer.nextImmediateTarget()) != null) {
-			if (!evaluatePush(pushTarget)) continue;
-			if (hasFrameFinalState()) return true;
-		}
-		return false;
-	}
-	
-	private boolean executePostponedTargetsBefore(StiXpressionNode nextNode)
-	{
-		int nextNodeIndex = nextNode.getIndex();
-		StiXpressionNode.PushTarget pushTarget;
-		while ((pushTarget = sequencer.nextPostponedTargetBefore(nextNode)) != null) {
-			if (pushTarget.getXtractorIndex() <= nextNodeIndex && !pushTarget.getXtractorParam().getBehavior().isMandatory()) continue;
-			if (!evaluatePush(pushTarget)) continue;
-			if (hasFrameFinalState()) return true;
-		}
-		return false;
+		return true;
 	}
 
 	public Object apply(Object rootValue)
 	{
 		resetContext(rootValue);
 		runExpression();
-		return context.getPublicValue(nodeCount - 1);
-	}
-
-	private void setPushValueOf(int targetIndex, List<PushTarget> pushTargets, Object finalValue)
-	{
-		sequencer.addImmediateTargets(pushTargets);
-	}
-
-	private void setFinalValueOf(int xtractorIndex, List<PushTarget> targets)
-	{
-		sequencer.addPostponeTargets(targets);
+		return nodes[nodes.length - 1].getFinalValue();
 	}
 
 	private void runExpression()
 	{
-		while (nextIndex < nodeCount) {
+		while (nextIndex < nodes.length && !outerFrame.hasFinalState()) {
 			int currentIndex = nextIndex++;
-			StiXpressionNode node = context.setCurrentIndex(currentIndex);
-
-			if (node == null) continue;
+			XecutorContextRunnerNode node = nodes[currentIndex];
 			
-			if (executePostponedTargetsBefore(node)) break;
-			evaluateFinalState(currentIndex);
+			executePostponedTargets(node);
+			if (node.isFinalState()) continue;
+			if (outerFrame.hasFinalState()) break;
+			Object finalValue = node.evaluateFinalState();
+			stats.onEvaluated(node.getXpressionNode(), finalValue);
 		}
 	}
 	
-	private void jumpTo(int index)
+	private int jumpTo(int index)
 	{
 		if (index <= 0) throw new IllegalArgumentException();
+		if (nextIndex == index) return -1;
+		int result = nextIndex; 
 		nextIndex = index;
+		return result;
 	}
 
-	@Override public StiXecutorContext getXecutorContext()
+	@Override public int getNodeCount()
 	{
-		return context.getContext();
+		return nodes.length;
 	}
 
-	@Override public boolean hasFinalState(int xtractorIndex)
+	@Override public StiXpressionNode getNode(int xtractorIndex)
 	{
-		return currentState[xtractorIndex] == DefaultXecutors.FINAL;
-	}
-
-	@Override public boolean hasFrameFinalState()
-	{
-		return currentFrame.hasFinalState();
-	}
-
-	@Override public StiXtractor<?> getCurrentXtractor()
-	{
-		return context.getCurrentXtractor();
-	}
-
-	@Override public Object getInterimValue()
-	{
-		int index = context.getCurrentIndex();
-		if (hasFinalState(index)) throw new IllegalStateException();
-		return context.getValue(index);
-	}
-
-	@Override public void setInterimValue(Object value)
-	{
-		int index = context.getCurrentIndex();
-		if (hasFinalState(index)) throw new IllegalStateException();
-		context.setValue(index, value);
-	}
-
-	@Override public boolean hasInterimValue()
-	{
-		int index = context.getCurrentIndex();
-		if (hasFinalState(index)) return false;
-		return context.getValue(index) != null;
+		return nodes[xtractorIndex].getXpressionNode();
 	}
 }
+

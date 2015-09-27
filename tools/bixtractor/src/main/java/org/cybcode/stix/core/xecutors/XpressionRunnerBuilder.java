@@ -1,32 +1,42 @@
 package org.cybcode.stix.core.xecutors;
 
-import org.cybcode.stix.api.StiXecutorContextBinder;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 public class XpressionRunnerBuilder
 {
-	public interface Runner extends Function<Object, Object>
-	{
-		boolean hasFinalState(int xtractorIndex);
-		boolean hasFrameFinalState();
-	}
-
 	private StiXecutorStatsCollector stats = StiXecutorStatsCollector.NULL;
 
-	protected StiXecutorContextBinder createContext(StiXpressionNode[] nodes)
+	protected AbstractXecutorContextStorage createContextStorage(StiXpressionNode[] nodes)
 	{
-		return new XecutorContext(nodes);
+		return new XecutorContextBoxedStorage(nodes.length);
 	}
 	
-	protected StiXpressionSequencer createSequencer()
+	protected Collection<? extends XecutorContextNode> createContextNodes(StiXpressionNode[] nodes)
 	{
-		return new SimpleXpressionSequencer();
+		AbstractXecutorContextStorage storage = createContextStorage(nodes);
+		List<XecutorContextNode> result = new ArrayList<>(nodes.length);
+		for (StiXpressionNode node : nodes) {
+			result.add(new XecutorContextNode(node, storage));
+		}
+		return result;
 	}
 	
-	protected Runner createRunner(StiXecutorContextBinder context, StiXpressionSequencer sequencer)
+	protected Supplier<StiXpressionSequencer> createSequencerSupplier()
 	{
-		XecutorContextRunner result = new XecutorContextRunner(context, sequencer);
+		return new Supplier<StiXpressionSequencer>() 
+		{
+			@Override public StiXpressionSequencer get() { return new SimpleXpressionSequencer(); }
+		};
+	}
+	
+	protected XecutorContextRunner createRunner(Collection<? extends XecutorContextNode> contextNodes, Supplier<StiXpressionSequencer> sequencerSupplier)
+	{
+		XecutorContextRunner result = new XecutorContextRunner(contextNodes, sequencerSupplier);
 		result.setStatsCollector(stats);
 		return result;
 	}
@@ -42,12 +52,11 @@ public class XpressionRunnerBuilder
 		return this;
 	}
 
-	public Function<Object, Object> createRunner(StiXpressionNode[] nodes)
+	public XecutorContextRunner createRunner(StiXpressionNode[] nodes)
 	{
-		StiXecutorContextBinder context = createContext(nodes);
-		StiXpressionSequencer sequencer = createSequencer();
-		Runner runner = createRunner(context, sequencer);
-		return runner;
+		Collection<? extends XecutorContextNode> contextNodes = createContextNodes(nodes);
+		Supplier<StiXpressionSequencer> sequencerSupplier = createSequencerSupplier();
+		return createRunner(contextNodes, sequencerSupplier);
 	}
 
 	public XecutorContextBuilder<StiXecutorContextInspector> createContextBuilder()
@@ -56,7 +65,7 @@ public class XpressionRunnerBuilder
 		{
 			@Override protected StiXecutorContextInspector build(StiXpressionNode[] nodes)
 			{
-				return createContext(nodes);
+				return createRunner(nodes);
 			}
 		};
 	}

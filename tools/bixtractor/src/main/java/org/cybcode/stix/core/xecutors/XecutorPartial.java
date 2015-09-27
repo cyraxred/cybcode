@@ -74,7 +74,7 @@ public class XecutorPartial extends AbstractXecutor
 			XecutorPartial nextState = this.resolveParameter(pushedParameter.getParamIndex());
 			if (nextState.hasAllParametersResolved()) {
 				pContext.setFinalState();
-				return context.getCurrentXtractor().apply(context);
+				return pContext.getCurrentXtractor().apply(context);
 			}
 			pContext.setNextState(nextState);
 		}

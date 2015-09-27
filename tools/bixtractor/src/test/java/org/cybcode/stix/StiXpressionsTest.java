@@ -61,6 +61,7 @@ public class StiXpressionsTest extends TestBase
 		))).getNodeCount());
 	}
 
+	@Ignore
 	@Test public void test_subroutine()
 	{
 		assertEquals(13L, E(1L, addA(

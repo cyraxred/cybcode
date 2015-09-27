@@ -11,16 +11,9 @@ import com.google.common.collect.ImmutableList;
 
 class XecutorConstructionContext implements StiXecutorConstructionContext
 {
-	private CtxFrame frame;
 	private StiXpressionNode node;
 	private boolean callbacksClaimed;
-	private boolean possibleFrameEnd;
 	
-	public XecutorConstructionContext(int nodeCount, CtxFrame outerFrame)
-	{
-		this.frame = outerFrame;
-	}
-
 	@Override public List<StiXecutorCallback> getXecutorCallbacks()
 	{
 		List<PushTarget> targets = node.getCallbackTargets();
@@ -49,15 +42,12 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 
 	@Override public StiXecutor createFrameStartXecutor()
 	{
-		frame = new CtxFrame(node.getIndex(), frame);
-		return new XecutorStartFrame(frame);
+		return DefaultXecutors.FRAME_START;
 	}
 	
 	@Override public StiXecutor createFrameResultXecutor()
 	{
-		possibleFrameEnd = true;
-		CtxFrame.ResultMarker frameResult = frame.registerFrameResult(node.getIndex());
-		return new XecutorResolveFrame(frameResult);
+		return DefaultXecutors.FRAME_RESULT;
 	}
 
 	public StiXpressionNode getNode()
@@ -69,13 +59,12 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 	{
 		if (this.node != null) {
 			validateProcessedNode();
-			validateFrame(true);
-			validateAndCloseFrame(node.getFrameOwnerIndex());
+//			validateFrame(true);
+//			validateAndCloseFrame(node.getFrameOwnerIndex());
 		}
 		this.callbacksClaimed = false;
 		this.node = node;
-		validateFrame(false);
-		this.possibleFrameEnd = false;
+//		validateFrame(false);
 	}
 
 	private void validateProcessedNode()
@@ -85,30 +74,30 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 		}
 	}
 	
-	private void validateAndCloseFrame(int index)
-	{
-		if (index >= frame.getStartIndex()) return;
-		
-		if (!possibleFrameEnd) {
-			throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
-					", nodeFrame=" + index + ", nodeIndex=" + (node.getIndex() + 1));
-		}
-		if (frame.getOuterFrame().getStartIndex() != index) {
-			throw new IllegalStateException("Inconsistent close frame sequence, currentFrame=" + frame.getStartIndex() +
-				", nodeFrame=" + index + ", nodeIndex=" + node.getIndex() + ", outerFrame=" + frame.getOuterFrame().getStartIndex());
-		}
-		
-		frame = frame.getOuterFrame();
-	}
-
-	private void validateFrame(boolean strict)
-	{
-		int index = node.getFrameOwnerIndex();
-		if (strict ? index == frame.getStartIndex() : index >= frame.getStartIndex()) return; 
-
-		throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
-			", nodeFrame=" + index + ", nodeIndex=" + node.getIndex());
-	}
+//	private void validateAndCloseFrame(int index)
+//	{
+//		if (index >= frame.getStartIndex()) return;
+//		
+//		if (!possibleFrameEnd) {
+//			throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
+//					", nodeFrame=" + index + ", nodeIndex=" + (node.getIndex() + 1));
+//		}
+//		if (frame.getOuterFrame().getStartIndex() != index) {
+//			throw new IllegalStateException("Inconsistent close frame sequence, currentFrame=" + frame.getStartIndex() +
+//				", nodeFrame=" + index + ", nodeIndex=" + node.getIndex() + ", outerFrame=" + frame.getOuterFrame().getStartIndex());
+//		}
+//		
+//		frame = frame.getOuterFrame();
+//	}
+//
+//	private void validateFrame(boolean strict)
+//	{
+//		int index = node.getFrameOwnerIndex();
+//		if (strict ? index == frame.getStartIndex() : index >= frame.getStartIndex()) return; 
+//
+//		throw new IllegalStateException("Inconsistent frame sequence, currentFrame=" + frame.getStartIndex() +
+//			", nodeFrame=" + index + ", nodeIndex=" + node.getIndex());
+//	}
 
 	@Override public boolean hasSortedFields()
 	{

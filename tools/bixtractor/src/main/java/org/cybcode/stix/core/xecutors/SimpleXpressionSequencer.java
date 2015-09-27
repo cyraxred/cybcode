@@ -12,7 +12,7 @@ public class SimpleXpressionSequencer implements StiXpressionSequencer
 	
 	@Override public void addImmediateTargets(List<PushTarget> targets)
 	{
-		immediateQueue.addAll(targets);
+		immediateQueue.addAll(0, targets); //LIFO-style behavior for batches
 	}
 
 	@Override public void addPostponeTargets(List<PushTarget> targets)
@@ -34,7 +34,7 @@ public class SimpleXpressionSequencer implements StiXpressionSequencer
 
 	@Override public PushTarget nextPostponedTargetBefore(StiXpressionNode node)
 	{
-		if (!immediateQueue.isEmpty()) return immediateQueue.removeLast();
+//		if (!immediateQueue.isEmpty()) return immediateQueue.removeLast();
 		if (!postponeQueue.isEmpty()) return postponeQueue.removeLast();
 		return null;
 	}
