@@ -7,9 +7,10 @@ import java.util.List;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
 import org.cybcode.stix.api.StiXecutorContextBuilder;
+import org.cybcode.stix.api.StiXpressionNode;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 import org.cybcode.stix.api.StiXtractor.Parameter;
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 
 import com.google.common.collect.ImmutableList;
 

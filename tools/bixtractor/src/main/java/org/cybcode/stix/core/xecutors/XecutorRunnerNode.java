@@ -5,23 +5,57 @@ import java.util.List;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorContext;
 import org.cybcode.stix.api.StiXecutorPushContext;
+import org.cybcode.stix.api.StiXpressionNode;
+import org.cybcode.stix.api.StiXpressionSequencer;
 import org.cybcode.stix.api.StiXtractor;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 import org.cybcode.stix.api.StiXtractor.Parameter;
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 
-abstract class XecutorContextRunnerNode implements StiXecutorPushContext
+abstract class XecutorRunnerNode implements StiXecutorPushContext
 {
+	private final StiXecutor initialState;
 	protected final int index;
 	private final XecutorContextNode contextNode;
 	protected final AbstractXecutorContextStorage storage;
 
-	public XecutorContextRunnerNode(XecutorContextNode contextNode)
+	public XecutorRunnerNode(XecutorContextNode contextNode, StiXecutor initialState)
 	{
 		this.contextNode = contextNode;
+		this.initialState = initialState;
 		this.index = contextNode.getIndex();
 		this.storage = contextNode.getStorage();
 	}
 
+	protected StiXecutor getXecutor()
+	{
+		StiXecutor state = storage.getState(index);
+		if (state != null) return state;
+		return initialState;
+	}
+	
+	protected Object internalEvaluateFinal()
+	{
+		StiXecutor xecutor = getXecutor();
+		if (xecutor != null) {
+			return xecutor.evaluateFinal(this);
+		}
+		return getCurrentXtractor().apply(getXecutorContext());
+	}
+	
+	protected Object internalEvaluatePush(Parameter<?> targetParam, Object pushedValue)
+	{
+		StiXecutor xecutor = getXecutor();
+		if (xecutor != null) {
+			return xecutor.evaluatePush(this, targetParam, pushedValue);
+		}
+		return targetParam.evaluatePush(this, pushedValue);
+	}
+
+	public StiXecutor getInitialState()
+	{
+		return initialState;
+	}
+	
 	public void validatePushFinalState() {}
 
 	public boolean isValidFrameOfNextNode(int frameOwnerIndex)
@@ -29,7 +63,7 @@ abstract class XecutorContextRunnerNode implements StiXecutorPushContext
 		return getXpressionNode().getFrameOwnerIndex() == frameOwnerIndex;
 	}
 
-	public abstract RunnerFrame getFrame();
+	public abstract XecutorRunnerFrame getFrame();
 
 	public StiXpressionNode getXpressionNode()
 	{
@@ -82,7 +116,6 @@ abstract class XecutorContextRunnerNode implements StiXecutorPushContext
 		return storage.hasInterimValue(index);
 	}
 
-	public abstract StiXecutor getInitialState();
 	public abstract StiXpressionSequencer getSequencer();
 	
 	public void setFinalValue(Object value)
@@ -92,15 +125,10 @@ abstract class XecutorContextRunnerNode implements StiXecutorPushContext
 		if (value == null) return;
 		getSequencer().addPostponeTargets(getXpressionNode().getNotifyTargets());
 	}
-
-	protected Object internalEvaluateFinal()
-	{
-		return getCurrentXtractor().apply(getXecutorContext());
-	}
 	
-	protected Object internalEvaluatePush(Parameter<?> targetParam, Object pushedValue)
+	@Override public void setNextState(StiXecutor xecutor)
 	{
-		return targetParam.evaluatePush(this, pushedValue);
+		storage.setState(index, xecutor);
 	}
 	
 	public Object evaluateFinalState()
@@ -110,7 +138,7 @@ abstract class XecutorContextRunnerNode implements StiXecutorPushContext
 		return finalValue;
 	}
 	
-	public Object evaluatePush(XecutorContextRunnerNode originNode, Parameter<?> targetParam, Object pushedValue)
+	public Object evaluatePush(XecutorRunnerNode originNode, Parameter<?> targetParam, Object pushedValue)
 	{
 		Object finalValue = internalEvaluatePush(targetParam, pushedValue);
 		

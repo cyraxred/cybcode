@@ -5,7 +5,9 @@ import java.util.List;
 import org.cybcode.stix.api.StiXecutor;
 import org.cybcode.stix.api.StiXecutorCallback;
 import org.cybcode.stix.api.StiXecutorConstructionContext;
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
+import org.cybcode.stix.api.StiXecutorStatsCollector;
+import org.cybcode.stix.api.StiXpressionNode;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 
 import com.google.common.collect.ImmutableList;
 
@@ -13,7 +15,13 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 {
 	private StiXpressionNode node;
 	private boolean callbacksClaimed;
+	private final StiXecutorStatsCollector stats;
 	
+	public XecutorConstructionContext(StiXecutorStatsCollector stats)
+	{
+		this.stats = stats;
+	}
+
 	@Override public List<StiXecutorCallback> getXecutorCallbacks()
 	{
 		List<PushTarget> targets = node.getCallbackTargets();
@@ -102,5 +110,10 @@ class XecutorConstructionContext implements StiXecutorConstructionContext
 	@Override public boolean hasSortedFields()
 	{
 		return false; //TODO configurable
+	}
+
+	@Override public StiXecutorStatsCollector getStatsCollector()
+	{
+		return stats;
 	}
 }

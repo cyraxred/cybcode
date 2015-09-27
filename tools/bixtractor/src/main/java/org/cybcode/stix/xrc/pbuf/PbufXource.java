@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.cybcode.stix.api.StiXFunction;
 import org.cybcode.stix.api.StiXecutorPushContext;
+import org.cybcode.stix.api.StiXecutorStatsCollector;
 import org.cybcode.stix.api.StiXource;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.xource.StiXourceByIntTags;
@@ -27,6 +28,7 @@ public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 		Settings settings, final PbufFieldValue pushedValue)
 	{
 		if (container == null) return pushedValue;
+		StiXecutorStatsCollector stats = settings.getStatsCollector();
 
 		//TODO silent fail mode
 		pushedValue.ensureWireType(WireFormat.WIRETYPE_LENGTH_DELIMITED);
@@ -45,10 +47,10 @@ public class PbufXource<S> extends StiXourceByIntTags<S, PbufFieldValue>
 				FieldHandler<PbufFieldValue> handler = container.findFieldHandler(fieldId);
 				if (handler == null) {
 					in.skipField(tag);
-//					context.onXourceFieldSkipped();
+					stats.onFieldSkipped();
 					continue;
 				}
-//				context.onXourceFieldParsed();
+				stats.onFieldParsed();
 				
 				int wireType = tag & 7;
 				long rawValue;

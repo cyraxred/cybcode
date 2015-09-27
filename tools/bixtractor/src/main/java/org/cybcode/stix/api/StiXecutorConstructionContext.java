@@ -10,4 +10,5 @@ public interface StiXecutorConstructionContext
 	boolean hasSortedFields();
 	StiXecutor createFrameStartXecutor();
 	StiXecutor createFrameResultXecutor();
+	StiXecutorStatsCollector getStatsCollector();
 }

@@ -1,6 +1,7 @@
 package org.cybcode.stix.core.xecutors;
 
 import org.cybcode.stix.api.StiXecutorContext;
+import org.cybcode.stix.api.StiXpressionNode;
 import org.cybcode.stix.api.StiXtractor;
 
 public class XecutorContextNode implements StiXecutorContext

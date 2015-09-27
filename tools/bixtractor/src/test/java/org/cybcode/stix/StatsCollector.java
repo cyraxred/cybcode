@@ -1,8 +1,8 @@
 package org.cybcode.stix;
 
+import org.cybcode.stix.api.StiXecutorStatsCollector;
+import org.cybcode.stix.api.StiXpressionNode;
 import org.cybcode.stix.api.StiXtractor.Parameter;
-import org.cybcode.stix.core.xecutors.StiXecutorStatsCollector;
-import org.cybcode.stix.core.xecutors.StiXpressionNode;
 
 class StatsCollector implements StiXecutorStatsCollector
 {

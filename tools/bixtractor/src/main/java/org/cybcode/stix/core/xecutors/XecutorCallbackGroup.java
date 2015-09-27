@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.cybcode.stix.api.StiXecutorCallback;
 import org.cybcode.stix.api.StiXecutorPushContext;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 import org.cybcode.stix.api.StiXtractor.Parameter;
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
 
 class XecutorCallbackGroup implements StiXecutorCallback
 {
@@ -28,7 +28,7 @@ class XecutorCallbackGroup implements StiXecutorCallback
 	
 	@Override public void push(StiXecutorPushContext context, Object pushedValue)
 	{
-		((XecutorContextRunnerNode) context).evaluateDirectPush(targets, pushedValue);
+		((XecutorRunnerNode) context).evaluateDirectPush(targets, pushedValue);
 	}
 
 	@Override public Parameter<?> getFieldParameter()

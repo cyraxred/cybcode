@@ -1,4 +1,5 @@
-package org.cybcode.stix.core.xecutors;
+package org.cybcode.stix.api;
+
 
 public interface StiXecutorContextInspector
 {

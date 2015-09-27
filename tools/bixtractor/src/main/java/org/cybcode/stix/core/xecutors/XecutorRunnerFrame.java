@@ -2,7 +2,9 @@ package org.cybcode.stix.core.xecutors;
 
 import java.util.BitSet;
 
-class RunnerFrame
+import org.cybcode.stix.api.StiXpressionSequencer;
+
+class XecutorRunnerFrame
 {
 	class ResultMarker
 	{
@@ -29,13 +31,13 @@ class RunnerFrame
 			return true;
 		}
 
-		public RunnerFrame getFrame()
+		public XecutorRunnerFrame getFrame()
 		{
-			return RunnerFrame.this;
+			return XecutorRunnerFrame.this;
 		}
 	}
 	
-	private final RunnerFrame outerFrame;
+	private final XecutorRunnerFrame outerFrame;
 	private final StiXpressionSequencer sequencer;
 	private final int frameLevel;
 	private final int startIndex;
@@ -47,7 +49,7 @@ class RunnerFrame
 	private boolean isFinal;
 	private int	returnPosition;
 	
-	RunnerFrame(int startIndex, RunnerFrame outerFrame, StiXpressionSequencer sequencer)
+	XecutorRunnerFrame(int startIndex, XecutorRunnerFrame outerFrame, StiXpressionSequencer sequencer)
 	{
 		if (startIndex <= 0) throw new IllegalArgumentException();
 		this.frameLevel = outerFrame.frameLevel + 1;
@@ -56,7 +58,7 @@ class RunnerFrame
 		this.sequencer = sequencer;
 	}
 	
-	RunnerFrame(int endIndex, StiXpressionSequencer sequencer)
+	XecutorRunnerFrame(int endIndex, StiXpressionSequencer sequencer)
 	{
 		if (endIndex < 0) throw new IllegalArgumentException();
 		this.frameLevel = 0;
@@ -122,7 +124,7 @@ class RunnerFrame
 		return frameLevel > 0;
 	}
 	
-	public RunnerFrame getOuterFrame()
+	public XecutorRunnerFrame getOuterFrame()
 	{
 		return outerFrame;
 	}
@@ -132,7 +134,7 @@ class RunnerFrame
 		return xtractorIndex >= startIndex && xtractorIndex < endIndex;
 	}
 
-	public RunnerFrame enterFrame(RunnerFrame frame)
+	public XecutorRunnerFrame enterFrame(XecutorRunnerFrame frame)
 	{
 		if (frame == this) {
 			//self entry - is only allowed for outer frame

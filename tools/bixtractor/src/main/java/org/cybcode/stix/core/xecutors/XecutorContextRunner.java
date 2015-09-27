@@ -5,6 +5,11 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.cybcode.stix.api.StiXecutor;
+import org.cybcode.stix.api.StiXecutorContextInspector;
+import org.cybcode.stix.api.StiXecutorStatsCollector;
+import org.cybcode.stix.api.StiXpressionNode;
+import org.cybcode.stix.api.StiXpressionSequencer;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 import org.cybcode.stix.api.StiXtractor.Parameter;
 
 import com.google.common.base.Function;
@@ -13,35 +18,31 @@ import com.google.common.base.Supplier;
 class XecutorContextRunner implements Function<Object, Object>, StiXecutorContextInspector
 {
 	private final Supplier<StiXpressionSequencer> sequencerSupplier;
-	private final XecutorContextRunnerNode[] nodes;
-	private final RunnerFrame outerFrame;
-
-	private StiXecutorStatsCollector stats;
+	private final XecutorRunnerNode[] nodes;
+	private final XecutorRunnerFrame outerFrame;
+	private final StiXecutorStatsCollector stats;
 	
 	private int nextIndex;
 
-	public XecutorContextRunner(Collection<? extends XecutorContextNode> contextNodes, Supplier<StiXpressionSequencer> sequencerSupplier)
+	public XecutorContextRunner(Collection<? extends XecutorContextNode> contextNodes, Supplier<StiXpressionSequencer> sequencerSupplier, StiXecutorStatsCollector stats)
 	{
 		int nodeCount = contextNodes.size();
 		if (nodeCount <= 0) throw new IllegalArgumentException();
 		this.sequencerSupplier = sequencerSupplier;
-		this.nodes = new XecutorContextRunnerNode[nodeCount];
-		this.outerFrame = new RunnerFrame(nodeCount, sequencerSupplier.get());
+		this.nodes = new XecutorRunnerNode[nodeCount];
+		this.outerFrame = new XecutorRunnerFrame(nodeCount, sequencerSupplier.get());
+		this.stats = stats == null ? StiXecutorStatsCollector.NULL : stats;
 		createInitialState(contextNodes);
 	}
 
-	public void setStatsCollector(StiXecutorStatsCollector stats)
-	{
-		this.stats = stats == null ? StiXecutorStatsCollector.NULL : stats;
-	}
-	
 	private void resetContext(Object rootValue)
 	{
 		if (rootValue == null) throw new NullPointerException();
 		stats.resetStats(nodes.length);
 
+		/* Imitates execution of the root node  */
 		outerFrame.enterFrame(outerFrame);
-		XecutorContextRunnerFramedNode rootNode = (XecutorContextRunnerFramedNode) nodes[0]; 
+		XecutorRunnerFramedNode rootNode = (XecutorRunnerFramedNode) nodes[0]; 
 		rootNode.init(rootValue);
 		stats.onEvaluated(rootNode.getXpressionNode(), rootValue);
 		nextIndex = 1;
@@ -49,7 +50,7 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 	
 	private void createInitialState(Collection<? extends XecutorContextNode> contextNodes)
 	{
-		XecutorConstructionContext context = new XecutorConstructionContext();
+		XecutorConstructionContext context = new XecutorConstructionContext(stats);
 		Iterator<? extends XecutorContextNode> iter = contextNodes.iterator();
 		XecutorContextNode contextNode = iter.next();
 
@@ -59,7 +60,7 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 		if (contextNode.getIndex() != 0) {
 			throw new IllegalArgumentException("Nodes must be ordered by index");
 		}
-		XecutorContextRunnerNode node = new XecutorContextRunnerRootNode(contextNode, outerFrame); 
+		XecutorRunnerNode node = new XecutorRunnerRootNode(contextNode, outerFrame); 
 		nodes[0] = node; 
 		
 		int index = 0;
@@ -70,34 +71,32 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 				throw new IllegalArgumentException("Nodes must be ordered by index");
 			}
 			if (nodes[index] != null) throw new IllegalStateException("Duplicate index=" + index);
-			node = createInitialState(context, contextNode, node, !iter.hasNext());
+			StiXpressionNode xpressionNode = contextNode.getXpressionNode();
+			context.setNode(xpressionNode);
+			StiXecutor xecutor = xpressionNode.createXecutor(context);
+			if (xecutor == null) {
+				node = createRunnerNode(contextNode, null, node.getFrame(), !iter.hasNext());
+			} else {
+				node = createRunnerNode(contextNode, node, xecutor, !iter.hasNext());
+			}
 			nodes[index] = node;
 		}
 	}
 
-	private XecutorContextRunnerNode createInitialState(XecutorConstructionContext context, XecutorContextNode contextNode, 
-		XecutorContextRunnerNode prevNode, boolean isLast)
+	private XecutorRunnerNode createRunnerNode(XecutorContextNode contextNode, XecutorRunnerNode prevNode, StiXecutor xecutor, boolean isLast)
 	{
-		StiXpressionNode xpressionNode = contextNode.getXpressionNode();
-		context.setNode(xpressionNode);
-		StiXecutor xecutor = xpressionNode.createXecutor(context);
-
-		RunnerFrame frame = prevNode.getFrame();
-		if (xecutor == null) {
-			if (isLast) {
-				return new XecutorContextRunnerResultNode(contextNode, frame, xecutor);
-			} 
-			return new XecutorContextRunnerStatelessNode(contextNode, frame);
-		} 
+		XecutorRunnerFrame frame = prevNode.getFrame();
 
 		int nodeIndex = contextNode.getIndex();
+		
+		StiXpressionNode xpressionNode = contextNode.getXpressionNode();
 		
 		if (xecutor == DefaultXecutors.FRAME_START) {
 			if (isLast) throw new IllegalStateException("Frame result node is missing");
 			if (xpressionNode.getFrameOwnerIndex() != nodeIndex) {
 				throw new IllegalStateException("Node is not an frame entry, index=" + nodeIndex);
 			}
-			RunnerFrame innerFrame = new RunnerFrame(nodeIndex, frame, sequencerSupplier.get());
+			XecutorRunnerFrame innerFrame = new XecutorRunnerFrame(nodeIndex, frame, sequencerSupplier.get());
 			return new FrameStartNode(contextNode, innerFrame);
 		} 
 
@@ -107,24 +106,56 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 		}
 		
 		if (xecutor == DefaultXecutors.FRAME_RESULT) {
-			RunnerFrame.ResultMarker frameResult = frame.registerFrameResult(nodeIndex);
+			XecutorRunnerFrame.ResultMarker frameResult = frame.registerFrameResult(nodeIndex);
 			return new FrameResultNode(contextNode, frameResult);
 		} 
 		
-		if (isLast) {
-			return new XecutorContextRunnerResultNode(contextNode, frame, xecutor);
-		} 
-		return new XecutorContextRunnerStatefulNode(contextNode, frame, xecutor);
+		return createRunnerNode(contextNode, xecutor, frame, isLast);
 	}
 
-	private abstract class AbstractFrameNode extends XecutorContextRunnerFramedNode 
+	private XecutorRunnerNode createRunnerNode(XecutorContextNode contextNode, StiXecutor xecutor, XecutorRunnerFrame frame, boolean isLast)
 	{
-		public AbstractFrameNode(XecutorContextNode contextNode, RunnerFrame frame) { super(contextNode, frame); }
-
-		@Override public StiXecutor getInitialState()
-		{
-			return null;
+		boolean hasCallbacks = !contextNode.getXpressionNode().getCallbackTargets().isEmpty();
+		
+		if (isLast) {
+			if (hasCallbacks) throw new IllegalStateException("Xource can't be an expression result");
+			return new XecutorRunnerResultNode(contextNode, frame, xecutor);
 		}
+		if (hasCallbacks) {
+			if (xecutor == null) throw new IllegalStateException("Xource must define a Xecutor");
+			return new XourceNode(contextNode, frame, xecutor);
+		}
+		
+		return new XecutorRunnerFramedNode(contextNode, frame, xecutor);
+	}
+
+	private class XourceNode extends XecutorRunnerFramedNode 
+	{
+		public XourceNode(XecutorContextNode contextNode, XecutorRunnerFrame frame, StiXecutor initialState)
+		{
+			super(contextNode, frame, initialState);
+		}
+
+		@Override public void evaluateDirectPush(List<PushTarget> targets, Object pushedValue)
+		{
+			if (targets.isEmpty() || pushedValue == null) return;
+			for (PushTarget target : targets) {
+				XecutorContextRunner.this.evaluatePush(this, target, pushedValue);
+			}
+			executePostponedTargets(this);		
+		}
+	
+		@Override public void evaluateDirectPush(PushTarget target, Object pushedValue)
+		{
+			if (pushedValue == null) return;
+			XecutorContextRunner.this.evaluatePush(this, target, pushedValue);
+			executePostponedTargets(this);		
+		}
+	}
+	
+	private abstract class FrameNode extends XecutorRunnerFramedNode 
+	{
+		public FrameNode(XecutorContextNode contextNode, XecutorRunnerFrame frame) { super(contextNode, frame, null); }
 
 		@Override public void setNextState(StiXecutor xecutor)
 		{
@@ -134,16 +165,16 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 		public boolean isValidFrameOfNextNode(int frameOwnerIndex)
 		{
 			if (super.isValidFrameOfNextNode(frameOwnerIndex)) return true;
-			RunnerFrame outerFrame = getFrame().getOuterFrame();
+			XecutorRunnerFrame outerFrame = getFrame().getOuterFrame();
 			return outerFrame != null && outerFrame.getStartIndex() == frameOwnerIndex;
 		}
 	}
 	
-	private class FrameResultNode extends AbstractFrameNode
+	private class FrameResultNode extends FrameNode
 	{
-		private final RunnerFrame.ResultMarker frameResult;
+		private final XecutorRunnerFrame.ResultMarker frameResult;
 		
-		public FrameResultNode(XecutorContextNode contextNode, RunnerFrame.ResultMarker frameResult)
+		public FrameResultNode(XecutorContextNode contextNode, XecutorRunnerFrame.ResultMarker frameResult)
 		{
 			super(contextNode, frameResult.getFrame());
 			this.frameResult = frameResult;
@@ -190,9 +221,9 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 //		}
 //	}
 
-	private class FrameStartNode extends AbstractFrameNode
+	private class FrameStartNode extends FrameNode
 	{
-		public FrameStartNode(XecutorContextNode contextNode, RunnerFrame frame)
+		public FrameStartNode(XecutorContextNode contextNode, XecutorRunnerFrame frame)
 		{
 			super(contextNode, frame);
 		}
@@ -212,7 +243,7 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 			return null;
 		}
 		
-		@Override public Object evaluatePush(XecutorContextRunnerNode originNode, Parameter<?> targetParam, Object pushedValue)
+		@Override public Object evaluatePush(XecutorRunnerNode originNode, Parameter<?> targetParam, Object pushedValue)
 		{
 			frame.enterFrame(originNode.getFrame());
 			return super.evaluatePush(originNode, targetParam, pushedValue);
@@ -235,13 +266,13 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 	public boolean evaluatePush(StiXpressionNode.PushTarget target)
 	{
 		int index = target.getXtractorIndex();
-		XecutorContextRunnerNode node = nodes[index];
+		XecutorRunnerNode node = nodes[index];
 		if (node.isFinalState()) {
 			node.validatePushFinalState();
 			return false;
 		}
 
-		XecutorContextRunnerNode originNode = nodes[target.getValueIndex()];
+		XecutorRunnerNode originNode = nodes[target.getValueIndex()];
 		Object pushedValue = originNode.getPushOrFinalValue();
 		stats.onPushAttempt(node.getXpressionNode(), target.getXtractorParam(), pushedValue);
 		if (pushedValue == null) return false;
@@ -251,26 +282,24 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 		return true;
 	}
 
-	public void evaluateDirectPush(int originIndex, List<StiXpressionNode.PushTarget> targets, Object pushedValue)
+	public boolean evaluatePush(XecutorRunnerNode originNode, StiXpressionNode.PushTarget target, Object pushedValue)
 	{
-		if (targets.isEmpty() || pushedValue == null) return;
-		XecutorContextRunnerNode node = nodes[originIndex];
-		node.getSequencer().addImmediateTargets(targets);
-		executePostponedTargets(node);		
+		int index = target.getXtractorIndex();
+		XecutorRunnerNode node = nodes[index];
+		if (node.isFinalState()) {
+			node.validatePushFinalState();
+			return false;
+		}
+
+		stats.onPushAttempt(node.getXpressionNode(), target.getXtractorParam(), pushedValue);
+		if (pushedValue == null) return false;
+		Object resultValue = node.evaluatePush(originNode, target.getXtractorParam(), pushedValue);
+		if (resultValue == null) return false;
+		stats.onPushEvaluated(node.getXpressionNode(), resultValue);
+		return true;
 	}
-	
-//	private boolean executeImmediateTargets(XecutorContextRunnerNode node)
-//	{
-//		StiXpressionSequencer sequencer = node.getSequencer();
-//		StiXpressionNode.PushTarget pushTarget;
-//		while ((pushTarget = sequencer.nextImmediateTarget()) != null) {
-//			if (!evaluatePush(pushTarget)) continue;
-//			if (node.hasFrameFinalState()) return true;
-//		}
-//		return false;
-//	}
-	
-	private boolean executePostponedTargets(XecutorContextRunnerNode node)
+
+	public boolean executePostponedTargets(XecutorRunnerNode node)
 	{
 		StiXpressionSequencer sequencer = node.getSequencer();
 		StiXpressionNode xpressionNode = node.getXpressionNode();
@@ -301,7 +330,7 @@ class XecutorContextRunner implements Function<Object, Object>, StiXecutorContex
 	{
 		while (nextIndex < nodes.length && !outerFrame.hasFinalState()) {
 			int currentIndex = nextIndex++;
-			XecutorContextRunnerNode node = nodes[currentIndex];
+			XecutorRunnerNode node = nodes[currentIndex];
 			
 			executePostponedTargets(node);
 			if (node.isFinalState()) continue;

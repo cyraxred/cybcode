@@ -3,7 +3,9 @@ package org.cybcode.stix.core.xecutors;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.cybcode.stix.core.xecutors.StiXpressionNode.PushTarget;
+import org.cybcode.stix.api.StiXpressionNode;
+import org.cybcode.stix.api.StiXpressionSequencer;
+import org.cybcode.stix.api.StiXpressionNode.PushTarget;
 
 public class SimpleXpressionSequencer implements StiXpressionSequencer
 {
@@ -13,6 +15,11 @@ public class SimpleXpressionSequencer implements StiXpressionSequencer
 	@Override public void addImmediateTargets(List<PushTarget> targets)
 	{
 		immediateQueue.addAll(0, targets); //LIFO-style behavior for batches
+	}
+	
+	@Override public void addImmediateTarget(PushTarget target)
+	{
+		immediateQueue.add(0, target); //LIFO-style behavior for batches
 	}
 
 	@Override public void addPostponeTargets(List<PushTarget> targets)

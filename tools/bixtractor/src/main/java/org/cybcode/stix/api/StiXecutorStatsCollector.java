@@ -1,4 +1,4 @@
-package org.cybcode.stix.core.xecutors;
+package org.cybcode.stix.api;
 
 import org.cybcode.stix.api.StiXtractor.Parameter;
 

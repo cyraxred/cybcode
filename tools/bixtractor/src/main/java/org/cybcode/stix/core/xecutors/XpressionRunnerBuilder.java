@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.cybcode.stix.api.StiXecutorContextInspector;
+import org.cybcode.stix.api.StiXecutorStatsCollector;
+import org.cybcode.stix.api.StiXpressionNode;
+import org.cybcode.stix.api.StiXpressionSequencer;
+
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 
@@ -36,8 +41,7 @@ public class XpressionRunnerBuilder
 	
 	protected XecutorContextRunner createRunner(Collection<? extends XecutorContextNode> contextNodes, Supplier<StiXpressionSequencer> sequencerSupplier)
 	{
-		XecutorContextRunner result = new XecutorContextRunner(contextNodes, sequencerSupplier);
-		result.setStatsCollector(stats);
+		XecutorContextRunner result = new XecutorContextRunner(contextNodes, sequencerSupplier, stats);
 		return result;
 	}
 

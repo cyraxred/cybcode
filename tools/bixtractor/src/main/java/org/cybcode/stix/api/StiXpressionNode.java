@@ -1,10 +1,6 @@
-package org.cybcode.stix.core.xecutors;
+package org.cybcode.stix.api;
 
 import java.util.List;
-
-import org.cybcode.stix.api.StiXecutor;
-import org.cybcode.stix.api.StiXecutorConstructionContext;
-import org.cybcode.stix.api.StiXtractor;
 
 public interface StiXpressionNode
 {

@@ -93,9 +93,11 @@ public abstract class StiXource<S, C, D, T> extends AbstractXtractor<T>
 	{
 		private boolean hasPushTargets;
 		private boolean hasSortedFields;
+		private StiXecutorStatsCollector stats;
 
 		public boolean hasPushTargets() { return hasPushTargets; }
 		public boolean hasSortedFields() { return hasSortedFields; }
+		public StiXecutorStatsCollector getStatsCollector() { return stats; }		
 	}
 	
 	private final SpecialParameter<T> p0;
@@ -133,6 +135,7 @@ public abstract class StiXource<S, C, D, T> extends AbstractXtractor<T>
 	@Override public final StiXecutor createXecutor(StiXecutorConstructionContext context)
 	{
 		Settings settings = new Settings();
+		settings.stats = context.getStatsCollector();
 		settings.hasPushTargets = context.hasPushTargets();
 		settings.hasSortedFields = context.hasSortedFields();
 		

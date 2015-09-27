@@ -1,9 +1,9 @@
 package org.cybcode.stix;
 
 import org.cybcode.stix.api.StiXecutorContextBuilder;
+import org.cybcode.stix.api.StiXecutorContextInspector;
 import org.cybcode.stix.api.StiXtractor;
 import org.cybcode.stix.core.compiler.StiXpressionRecursiveParser;
-import org.cybcode.stix.core.xecutors.StiXecutorContextInspector;
 import org.cybcode.stix.core.xecutors.XecutorContextBuilder;
 import org.cybcode.stix.core.xecutors.XpressionRunnerBuilder;
 
